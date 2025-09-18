@@ -1,8 +1,11 @@
 import { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { Button } from "@/components/ui/button";
 import { Moon, Sun } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import ProductList from './ProductList';
 import ProductForm from './ProductForm';
 import ProductDetail from './ProductDetail';
@@ -11,20 +14,87 @@ import { Product, InsertProduct, ProductSearch } from '@shared/schema';
 
 type ViewMode = 'list' | 'search' | 'detail' | 'form' | 'create';
 
-interface DashboardProps {
-  initialProducts?: Product[];
-}
-
-export default function Dashboard({ initialProducts = [] }: DashboardProps) {
+export default function Dashboard() {
   const [currentView, setCurrentView] = useState<ViewMode>('search');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [searchFilters, setSearchFilters] = useState<ProductSearch>({});
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const { toast } = useToast();
+
+  // Fetch products with search filters
+  const { data: products = [], isLoading: isLoadingProducts } = useQuery<Product[]>({
+    queryKey: ['/api/products', searchFilters],
+    enabled: currentView === 'list',
+  });
+
+  // Product count for sidebar
+  const { data: allProducts = [] } = useQuery<Product[]>({
+    queryKey: ['/api/products'],
+  });
+
+  // Delete product mutation
+  const deleteProductMutation = useMutation({
+    mutationFn: async (productId: string) => {
+      const response = await apiRequest('DELETE', `/api/products/${productId}`);
+      return response;
+    },
+    onSuccess: () => {
+      toast({ title: "Product deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      setCurrentView('list');
+    },
+    onError: (error: Error) => {
+      toast({ 
+        title: "Error deleting product", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
+
+  // Create product mutation
+  const createProductMutation = useMutation({
+    mutationFn: async (productData: InsertProduct) => {
+      const response = await apiRequest('POST', '/api/products', productData);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Product created successfully" });
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      setCurrentView('list');
+    },
+    onError: (error: Error) => {
+      toast({ 
+        title: "Error creating product", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
+
+  // Update product mutation
+  const updateProductMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string, data: InsertProduct }) => {
+      const response = await apiRequest('PUT', `/api/products/${id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Product updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      setCurrentView('list');
+    },
+    onError: (error: Error) => {
+      toast({ 
+        title: "Error updating product", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
     document.documentElement.classList.toggle('dark');
-    console.log('Theme toggled:', !isDarkMode ? 'dark' : 'light');
   };
 
   const handleViewProduct = (product: Product) => {
@@ -38,9 +108,7 @@ export default function Dashboard({ initialProducts = [] }: DashboardProps) {
   };
 
   const handleDeleteProduct = (product: Product) => {
-    console.log('Delete product:', product.productCode);
-    setProducts(prev => prev.filter(p => p.id !== product.id));
-    // todo: remove mock functionality - implement actual delete
+    deleteProductMutation.mutate(product.id);
   };
 
   const handleCreateNew = () => {
@@ -49,66 +117,72 @@ export default function Dashboard({ initialProducts = [] }: DashboardProps) {
   };
 
   const handleSaveProduct = (productData: InsertProduct) => {
-    console.log('Save product:', productData);
-    // todo: remove mock functionality - implement actual save
-    
     if (selectedProduct) {
-      // Edit existing
-      const updated: Product = {
-        ...selectedProduct,
-        ...productData,
-        totalCapacity: productData.totalCapacity || null,
-        weightWithAccessories: productData.weightWithAccessories || null,
-        closingSystem: productData.closingSystem || null,
-        sealingType: productData.sealingType || null,
-        handlingSystem: productData.handlingSystem || null,
-        certifications: productData.certifications || null,
-        markings: productData.markings || null,
-        packaging: productData.packaging || null,
-        specialFeatures: productData.specialFeatures || null,
-        notes: productData.notes || null,
-        foodContact: productData.foodContact ?? false,
-        isActive: productData.isActive ?? true,
-        updatedAt: new Date(),
-      };
-      setProducts(prev => prev.map(p => p.id === selectedProduct.id ? updated : p));
+      // Update existing product
+      updateProductMutation.mutate({ id: selectedProduct.id, data: productData });
     } else {
-      // Create new
-      const newProduct: Product = {
-        ...productData,
-        id: `product-${Date.now()}`,
-        totalCapacity: productData.totalCapacity || null,
-        weightWithAccessories: productData.weightWithAccessories || null,
-        closingSystem: productData.closingSystem || null,
-        sealingType: productData.sealingType || null,
-        handlingSystem: productData.handlingSystem || null,
-        certifications: productData.certifications || null,
-        markings: productData.markings || null,
-        packaging: productData.packaging || null,
-        specialFeatures: productData.specialFeatures || null,
-        notes: productData.notes || null,
-        foodContact: productData.foodContact ?? false,
-        isActive: productData.isActive ?? true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      setProducts(prev => [...prev, newProduct]);
+      // Create new product
+      createProductMutation.mutate(productData);
     }
-    
-    setCurrentView('list');
   };
 
   const handleSearch = (filters: ProductSearch) => {
-    console.log('Search with filters:', filters);
-    // todo: remove mock functionality - implement actual search
-    
-    // For now, just switch to list view to show results
+    setSearchFilters(filters);
     setCurrentView('list');
   };
 
+  // PDF generation mutation
+  const generatePDFMutation = useMutation({
+    mutationFn: async (productId: string) => {
+      const response = await fetch(`/api/products/${productId}/pdf`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to generate PDF');
+      }
+      return response.blob();
+    },
+    onSuccess: (pdfBlob, productId) => {
+      // Find the product to get the product code for filename
+      const product = products.find(p => p.id === productId) || 
+                    allProducts.find(p => p.id === productId) || 
+                    selectedProduct;
+      
+      if (product) {
+        // Create download link
+        const url = window.URL.createObjectURL(pdfBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${product.productCode}-Datasheet.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        
+        // Cleanup
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        toast({ 
+          title: "PDF generated successfully", 
+          description: `Datasheet for ${product.productCode} has been downloaded.`
+        });
+      } else {
+        toast({ 
+          title: "PDF generated successfully", 
+          description: "Technical datasheet has been downloaded."
+        });
+      }
+    },
+    onError: (error: Error) => {
+      console.error('PDF generation error:', error);
+      toast({ 
+        title: "Error generating PDF", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
+
   const handleGeneratePDF = (product: Product) => {
-    console.log('Generate PDF for product:', product.productCode);
-    // todo: remove mock functionality - implement PDF generation
+    generatePDFMutation.mutate(product.id);
   };
 
   const handleBack = () => {
@@ -134,11 +208,13 @@ export default function Dashboard({ initialProducts = [] }: DashboardProps) {
         return (
           <ProductList
             products={products}
+            loading={isLoadingProducts}
             onView={handleViewProduct}
             onEdit={handleEditProduct}
             onDelete={handleDeleteProduct}
             onCreateNew={handleCreateNew}
             onGeneratePDF={handleGeneratePDF}
+            isGeneratingPDF={generatePDFMutation.isPending}
           />
         );
       
@@ -149,6 +225,7 @@ export default function Dashboard({ initialProducts = [] }: DashboardProps) {
             onEdit={handleEditProduct}
             onGeneratePDF={handleGeneratePDF}
             onBack={handleBack}
+            isGeneratingPDF={generatePDFMutation.isPending}
           />
         ) : null;
       
@@ -158,6 +235,7 @@ export default function Dashboard({ initialProducts = [] }: DashboardProps) {
             product={selectedProduct || undefined}
             onSave={handleSaveProduct}
             onCancel={handleBack}
+            isLoading={updateProductMutation.isPending}
           />
         );
       
@@ -166,6 +244,7 @@ export default function Dashboard({ initialProducts = [] }: DashboardProps) {
           <ProductForm
             onSave={handleSaveProduct}
             onCancel={handleBack}
+            isLoading={createProductMutation.isPending}
           />
         );
       
@@ -180,7 +259,7 @@ export default function Dashboard({ initialProducts = [] }: DashboardProps) {
         <AppSidebar
           currentView={currentView}
           onNavigate={setCurrentView}
-          productCount={products.length}
+          productCount={allProducts.length}
         />
         
         <div className="flex flex-col flex-1">
@@ -196,16 +275,12 @@ export default function Dashboard({ initialProducts = [] }: DashboardProps) {
                     <span className="text-sm font-bold text-primary-foreground">PD</span>
                   </div>
                   <div>
-                    <h1 className="text-lg font-semibold text-foreground leading-tight">
-                      Product Database
-                    </h1>
-                    <p className="text-xs text-muted-foreground leading-tight">
-                      Industrial Management System
-                    </p>
+                    <h1 className="text-lg font-semibold text-foreground">Product Database</h1>
+                    <p className="text-sm text-muted-foreground">Manage your product catalog</p>
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"
@@ -215,17 +290,21 @@ export default function Dashboard({ initialProducts = [] }: DashboardProps) {
                   data-testid="button-theme-toggle"
                 >
                   {isDarkMode ? (
-                    <Sun className="w-4 h-4" />
+                    <Sun className="h-4 w-4" />
                   ) : (
-                    <Moon className="w-4 h-4" />
+                    <Moon className="h-4 w-4" />
                   )}
                 </Button>
               </div>
             </div>
           </header>
-          
-          <main className="flex-1 overflow-auto p-6">
-            {renderCurrentView()}
+
+          <main className="flex-1 overflow-hidden bg-background">
+            <div className="h-full overflow-y-auto">
+              <div className="container mx-auto px-6 py-8 max-w-7xl">
+                {renderCurrentView()}
+              </div>
+            </div>
           </main>
         </div>
       </div>

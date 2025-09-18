@@ -11,9 +11,10 @@ interface ProductDetailProps {
   onEdit?: (product: Product) => void;
   onGeneratePDF?: (product: Product) => void;
   onBack?: () => void;
+  isGeneratingPDF?: boolean;
 }
 
-export default function ProductDetail({ product, onEdit, onGeneratePDF, onBack }: ProductDetailProps) {
+export default function ProductDetail({ product, onEdit, onGeneratePDF, onBack, isGeneratingPDF = false }: ProductDetailProps) {
   const handleEdit = () => {
     console.log('Edit product triggered', product.productCode);
     onEdit?.(product);
@@ -93,9 +94,13 @@ export default function ProductDetail({ product, onEdit, onGeneratePDF, onBack }
                 <Edit className="w-4 h-4 mr-1" />
                 Edit
               </Button>
-              <Button onClick={handleGeneratePDF} data-testid="button-generate-pdf">
+              <Button 
+                onClick={handleGeneratePDF} 
+                disabled={isGeneratingPDF}
+                data-testid="button-generate-pdf"
+              >
                 <FileText className="w-4 h-4 mr-1" />
-                Generate PDF
+                {isGeneratingPDF ? 'Generating...' : 'Generate PDF'}
               </Button>
             </div>
           </div>

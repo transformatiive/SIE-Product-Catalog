@@ -15,6 +15,7 @@ interface ProductListProps {
   onDelete?: (product: Product) => void;
   onCreateNew?: () => void;
   onGeneratePDF?: (product: Product) => void;
+  isGeneratingPDF?: boolean;
 }
 
 export default function ProductList({ 
@@ -24,7 +25,8 @@ export default function ProductList({
   onEdit,
   onDelete,
   onCreateNew,
-  onGeneratePDF
+  onGeneratePDF,
+  isGeneratingPDF = false
 }: ProductListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -225,6 +227,7 @@ export default function ProductList({
                             size="icon"
                             className="h-8 w-8 hover-elevate"
                             onClick={() => handleGeneratePDF(product)}
+                            disabled={isGeneratingPDF}
                             data-testid={`button-pdf-${product.id}`}
                           >
                             <FileText className="w-4 h-4" />

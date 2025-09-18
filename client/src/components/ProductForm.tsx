@@ -16,6 +16,7 @@ interface ProductFormProps {
   product?: Product;
   onSave?: (product: InsertProduct) => void;
   onCancel?: () => void;
+  isLoading?: boolean;
 }
 
 interface DimensionField {
@@ -29,7 +30,7 @@ interface CertificationField {
   value: string;
 }
 
-export default function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
+export default function ProductForm({ product, onSave, onCancel, isLoading = false }: ProductFormProps) {
   const [dimensions, setDimensions] = useState<DimensionField[]>(() => {
     if (product?.dimensions) {
       try {
@@ -650,9 +651,13 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
                   type="submit" 
                   data-testid="button-save"
                   className="min-w-32 font-medium"
+                  disabled={isLoading}
                 >
                   <Save className="w-4 h-4 mr-2" />
-                  {product ? 'Update Product' : 'Save Product'}
+                  {isLoading 
+                    ? (product ? 'Updating...' : 'Saving...') 
+                    : (product ? 'Update Product' : 'Save Product')
+                  }
                 </Button>
               </div>
             </div>
