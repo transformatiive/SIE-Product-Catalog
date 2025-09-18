@@ -39,7 +39,7 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
       priority: "high",
     },
     {
-      title: "Criar Produto",
+      title: "Novo Produto",
       url: "create",
       icon: Plus,
       description: "Adicionar novo produto",
