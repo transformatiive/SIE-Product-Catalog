@@ -120,7 +120,7 @@ export default function ProductList({
           <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
             <p>
               A mostrar {currentProducts.length} de {filteredProducts.length} produtos
-              {searchQuery && ` for "${searchQuery}"`}
+              {searchQuery && ` para "${searchQuery}"`}
             </p>
             <p>Total: {products.length} produtos</p>
           </div>

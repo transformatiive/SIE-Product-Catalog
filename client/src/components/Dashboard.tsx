@@ -56,13 +56,13 @@ export default function Dashboard() {
       return response;
     },
     onSuccess: () => {
-      toast({ title: "Product deleted successfully" });
+      toast({ title: "Produto eliminado com sucesso" });
       queryClient.invalidateQueries({ queryKey: ['/api/products'] });
       setCurrentView('list');
     },
     onError: (error: Error) => {
       toast({ 
-        title: "Error deleting product", 
+        title: "Erro ao eliminar produto", 
         description: error.message,
         variant: "destructive" 
       });
@@ -76,13 +76,13 @@ export default function Dashboard() {
       return response.json();
     },
     onSuccess: () => {
-      toast({ title: "Product created successfully" });
+      toast({ title: "Produto criado com sucesso" });
       queryClient.invalidateQueries({ queryKey: ['/api/products'] });
       setCurrentView('list');
     },
     onError: (error: Error) => {
       toast({ 
-        title: "Error creating product", 
+        title: "Erro ao criar produto", 
         description: error.message,
         variant: "destructive" 
       });
@@ -96,13 +96,13 @@ export default function Dashboard() {
       return response.json();
     },
     onSuccess: () => {
-      toast({ title: "Product updated successfully" });
+      toast({ title: "Produto atualizado com sucesso" });
       queryClient.invalidateQueries({ queryKey: ['/api/products'] });
       setCurrentView('list');
     },
     onError: (error: Error) => {
       toast({ 
-        title: "Error updating product", 
+        title: "Erro ao atualizar produto", 
         description: error.message,
         variant: "destructive" 
       });
@@ -154,7 +154,7 @@ export default function Dashboard() {
       const response = await fetch(`/api/products/${productId}/pdf`);
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to generate PDF');
+        throw new Error(errorData.message || 'Falhou a gerar PDF');
       }
       return response.blob();
     },
@@ -178,20 +178,20 @@ export default function Dashboard() {
         window.URL.revokeObjectURL(url);
         
         toast({ 
-          title: "PDF generated successfully", 
-          description: `Datasheet for ${product.productCode} has been downloaded.`
+          title: "PDF gerado com sucesso", 
+          description: `Ficha técnica para ${product.productCode} foi descarregada.`
         });
       } else {
         toast({ 
-          title: "PDF generated successfully", 
-          description: "Technical datasheet has been downloaded."
+          title: "PDF gerado com sucesso", 
+          description: "Ficha técnica foi descarregada."
         });
       }
     },
     onError: (error: Error) => {
       console.error('PDF generation error:', error);
       toast({ 
-        title: "Error generating PDF", 
+        title: "Erro ao gerar PDF", 
         description: error.message,
         variant: "destructive" 
       });

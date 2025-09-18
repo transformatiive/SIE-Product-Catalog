@@ -121,7 +121,7 @@ export default function SearchFilters({ onSearch, onReset }: SearchFiltersProps)
                 <Label htmlFor="product-code">Código do Produto</Label>
                 <Input
                   id="product-code"
-                  placeholder="e.g., GRF-1315"
+                  placeholder="ex., GRF-1315"
                   value={filters.productCode || ''}
                   onChange={(e) => handleInputChange('productCode', e.target.value)}
                   data-testid="input-product-code"
@@ -132,7 +132,7 @@ export default function SearchFilters({ onSearch, onReset }: SearchFiltersProps)
                 <Label htmlFor="model">Modelo</Label>
                 <Input
                   id="model"
-                  placeholder="e.g., 1315"
+                  placeholder="ex., 1315"
                   value={filters.model || ''}
                   onChange={(e) => handleInputChange('model', e.target.value)}
                   data-testid="input-model"
@@ -152,7 +152,7 @@ export default function SearchFilters({ onSearch, onReset }: SearchFiltersProps)
                     <SelectItem value="all">Todas as Famílias</SelectItem>
                     <SelectItem value="Embalagem">Embalagem</SelectItem>
                     <SelectItem value="Container">Container</SelectItem>
-                    <SelectItem value="Bottle">Bottle</SelectItem>
+                    <SelectItem value="Bottle">Garrafa</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
