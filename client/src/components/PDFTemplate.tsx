@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   dimensionsTable: {
-    border: 1,
+    borderWidth: 1,
     borderColor: '#CCCCCC',
     borderRadius: 5,
   },
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   technicalDrawing: {
-    border: 1,
+    borderWidth: 1,
     borderColor: '#CCCCCC',
     borderRadius: 5,
     padding: 15,
