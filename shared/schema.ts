@@ -30,6 +30,10 @@ export const products = pgTable("products", {
   packaging: text("packaging"), // JSON string for packaging details
   specialFeatures: text("special_features"), // JSON array as string
   
+  // Image fields
+  productImage: text("product_image"), // File path to product image
+  technicalDrawing: text("technical_drawing"), // File path to technical drawing/3D blueprint
+  
   // Date tracking for versioning
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

@@ -1,5 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import path from "path";
+import multer from "multer";
+import fs from "fs-extra";
 import { storage } from "./storage";
 import { insertProductSchema, updateProductSchema, productSearchSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
@@ -183,6 +186,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         message: "Falha ao gerar PDF", 
         error: error instanceof Error ? error.message : "Erro desconhecido" 
+      });
+    }
+  });
+
+  // File upload configuration
+  const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+  
+  // Ensure uploads directory exists
+  fs.ensureDirSync(uploadsDir);
+
+  // Configure multer for file uploads
+  const storage_config = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, uploadsDir);
+    },
+    filename: function (req, file, cb) {
+      // Generate unique filename with timestamp and original extension
+      const timestamp = Date.now();
+      const extension = path.extname(file.originalname);
+      const nameWithoutExt = path.basename(file.originalname, extension);
+      const sanitizedName = nameWithoutExt.replace(/[^a-zA-Z0-9-_]/g, '');
+      cb(null, `${sanitizedName}-${timestamp}${extension}`);
+    }
+  });
+
+  // File filter for images only
+  const fileFilter = (req: any, file: any, cb: any) => {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    const extName = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimeType = allowedTypes.test(file.mimetype);
+    
+    if (mimeType && extName) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Apenas imagens são permitidas (JPEG, JPG, PNG, GIF, WebP)'));
+    }
+  };
+
+  const upload = multer({
+    storage: storage_config,
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
+    fileFilter: fileFilter,
+  });
+
+  // POST /api/upload - Upload image files
+  app.post("/api/upload", upload.single('image'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "Nenhum arquivo foi enviado" });
+      }
+
+      // Return the file path relative to public directory
+      const filePath = `/uploads/${req.file.filename}`;
+      
+      res.json({
+        message: "Arquivo enviado com sucesso",
+        filePath: filePath,
+        originalName: req.file.originalname,
+        size: req.file.size,
+      });
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      res.status(500).json({ 
+        message: "Falha ao enviar arquivo",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
+  // DELETE /api/upload - Delete uploaded file
+  app.delete("/api/upload", async (req, res) => {
+    try {
+      const { filePath } = req.body;
+      
+      if (!filePath) {
+        return res.status(400).json({ message: "Caminho do arquivo é obrigatório" });
+      }
+
+      // Security: ensure the file path is within uploads directory
+      const fullPath = path.join(process.cwd(), 'public', filePath);
+      const uploadsPath = path.join(process.cwd(), 'public', 'uploads');
+      
+      if (!fullPath.startsWith(uploadsPath)) {
+        return res.status(400).json({ message: "Caminho de arquivo inválido" });
+      }
+
+      // Check if file exists and delete
+      if (await fs.pathExists(fullPath)) {
+        await fs.remove(fullPath);
+        res.json({ message: "Arquivo deletado com sucesso" });
+      } else {
+        res.status(404).json({ message: "Arquivo não encontrado" });
+      }
+    } catch (error) {
+      console.error("Error deleting file:", error);
+      res.status(500).json({ 
+        message: "Falha ao deletar arquivo",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
       });
     }
   });

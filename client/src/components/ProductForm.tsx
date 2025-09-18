@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Save, X, Plus, Trash2 } from "lucide-react";
 import { InsertProduct, insertProductSchema, Product } from "@shared/schema";
+import ImageUpload from "./ImageUpload";
 
 interface ProductFormProps {
   product?: Product;
@@ -28,6 +29,23 @@ interface DimensionField {
 interface CertificationField {
   id: string;
   value: string;
+}
+
+interface MarkingField {
+  id: string;
+  value: string;
+}
+
+interface SpecialFeatureField {
+  id: string;
+  value: string;
+}
+
+interface PackagingData {
+  unitsPerPallet: string;
+  unitsPerTruck: string;
+  palletDimensions: string;
+  stackHeight: string;
 }
 
 export default function ProductForm({ product, onSave, onCancel, isLoading = false }: ProductFormProps) {
@@ -62,6 +80,67 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
     return [{ id: 'cert-1', value: '' }];
   });
 
+  const [markings, setMarkings] = useState<MarkingField[]>(() => {
+    if (product?.markings) {
+      try {
+        const parsed = JSON.parse(product.markings);
+        return parsed.map((marking: string, index: number) => ({
+          id: `marking-${index}`,
+          value: marking,
+        }));
+      } catch {
+        return [{ id: 'marking-1', value: '' }];
+      }
+    }
+    return [{ id: 'marking-1', value: '' }];
+  });
+
+  const [specialFeatures, setSpecialFeatures] = useState<SpecialFeatureField[]>(() => {
+    if (product?.specialFeatures) {
+      try {
+        const parsed = JSON.parse(product.specialFeatures);
+        return parsed.map((feature: string, index: number) => ({
+          id: `feature-${index}`,
+          value: feature,
+        }));
+      } catch {
+        return [{ id: 'feature-1', value: '' }];
+      }
+    }
+    return [{ id: 'feature-1', value: '' }];
+  });
+
+  const [packagingData, setPackagingData] = useState<PackagingData>(() => {
+    if (product?.packaging) {
+      try {
+        const parsed = JSON.parse(product.packaging);
+        return {
+          unitsPerPallet: parsed.unitsPerPallet?.toString() || '',
+          unitsPerTruck: parsed.unitsPerTruck?.toString() || '',
+          palletDimensions: parsed.palletDimensions || '',
+          stackHeight: parsed.stackHeight?.toString() || '',
+        };
+      } catch {
+        return {
+          unitsPerPallet: '',
+          unitsPerTruck: '',
+          palletDimensions: '',
+          stackHeight: '',
+        };
+      }
+    }
+    return {
+      unitsPerPallet: '',
+      unitsPerTruck: '',
+      palletDimensions: '',
+      stackHeight: '',
+    };
+  });
+
+  // State for image uploads
+  const [productImage, setProductImage] = useState<string | null>(product?.productImage || null);
+  const [technicalDrawing, setTechnicalDrawing] = useState<string | null>(product?.technicalDrawing || null);
+
   const form = useForm<InsertProduct>({
     resolver: zodResolver(insertProductSchema),
     defaultValues: {
@@ -85,6 +164,8 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
       foodContact: product?.foodContact ?? false,
       packaging: product?.packaging || '',
       specialFeatures: product?.specialFeatures || '',
+      productImage: product?.productImage || '',
+      technicalDrawing: product?.technicalDrawing || '',
       notes: product?.notes || '',
       isActive: product?.isActive ?? true,
     },
@@ -120,6 +201,40 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
     ));
   };
 
+  const addMarking = () => {
+    const newId = `marking-${Date.now()}`;
+    setMarkings(prev => [...prev, { id: newId, value: '' }]);
+  };
+
+  const removeMarking = (id: string) => {
+    setMarkings(prev => prev.filter(marking => marking.id !== id));
+  };
+
+  const updateMarking = (id: string, value: string) => {
+    setMarkings(prev => prev.map(marking => 
+      marking.id === id ? { ...marking, value } : marking
+    ));
+  };
+
+  const addSpecialFeature = () => {
+    const newId = `feature-${Date.now()}`;
+    setSpecialFeatures(prev => [...prev, { id: newId, value: '' }]);
+  };
+
+  const removeSpecialFeature = (id: string) => {
+    setSpecialFeatures(prev => prev.filter(feature => feature.id !== id));
+  };
+
+  const updateSpecialFeature = (id: string, value: string) => {
+    setSpecialFeatures(prev => prev.map(feature => 
+      feature.id === id ? { ...feature, value } : feature
+    ));
+  };
+
+  const updatePackagingData = (field: keyof PackagingData, value: string) => {
+    setPackagingData(prev => ({ ...prev, [field]: value }));
+  };
+
   const onSubmit = (data: InsertProduct) => {
     // Serialize dimensions
     const dimensionsObject = dimensions.reduce((acc, dim) => {
@@ -134,10 +249,38 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
       .map(cert => cert.value)
       .filter(value => value.trim() !== '');
 
+    // Serialize markings
+    const markingsArray = markings
+      .map(marking => marking.value)
+      .filter(value => value.trim() !== '');
+
+    // Serialize special features
+    const specialFeaturesArray = specialFeatures
+      .map(feature => feature.value)
+      .filter(value => value.trim() !== '');
+
+    // Serialize packaging data
+    const packagingObject = {
+      unitsPerPallet: packagingData.unitsPerPallet ? parseInt(packagingData.unitsPerPallet) : undefined,
+      unitsPerTruck: packagingData.unitsPerTruck ? parseInt(packagingData.unitsPerTruck) : undefined,
+      palletDimensions: packagingData.palletDimensions || undefined,
+      stackHeight: packagingData.stackHeight ? parseInt(packagingData.stackHeight) : undefined,
+    };
+    
+    // Remove undefined values from packaging object
+    const cleanPackagingObject = Object.fromEntries(
+      Object.entries(packagingObject).filter(([_, value]) => value !== undefined)
+    );
+
     const finalData = {
       ...data,
       dimensions: JSON.stringify(dimensionsObject),
       certifications: JSON.stringify(certificationsArray),
+      markings: JSON.stringify(markingsArray),
+      specialFeatures: JSON.stringify(specialFeaturesArray),
+      packaging: Object.keys(cleanPackagingObject).length > 0 ? JSON.stringify(cleanPackagingObject) : '',
+      productImage: productImage || '',
+      technicalDrawing: technicalDrawing || '',
     };
 
     console.log('Form submitted with data:', finalData);
@@ -318,6 +461,26 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                     </div>
                   </div>
                 </div>
+
+                {/* Product Image Section */}
+                <div className="space-y-4">
+                  <div className="border-b pb-3">
+                    <h3 className="text-lg font-semibold text-foreground">Imagem do Produto</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Imagem principal do produto para visualização e documentação</p>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="lg:col-span-2">
+                      <ImageUpload
+                        label="Imagem do Produto"
+                        description="Carregue uma imagem do produto (JPEG, PNG, GIF, WebP - máx. 10MB)"
+                        value={productImage ?? undefined}
+                        onChange={setProductImage}
+                        disabled={isLoading}
+                        data-testid="upload-product-image"
+                      />
+                    </div>
+                  </div>
+                </div>
               </TabsContent>
 
               <TabsContent value="technical" className="space-y-6 mt-6">
@@ -474,6 +637,26 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                         )}
                       </div>
                     ))}
+                  </div>
+                </div>
+
+                {/* Technical Drawing Section */}
+                <div className="space-y-4">
+                  <div className="border-b pb-3">
+                    <h3 className="text-lg font-semibold text-foreground">Desenho Técnico / Blueprint 3D</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Desenho técnico ou blueprint 3D para especificações detalhadas</p>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="lg:col-span-2">
+                      <ImageUpload
+                        label="Desenho Técnico / Blueprint 3D"
+                        description="Carregue o desenho técnico ou blueprint 3D do produto (JPEG, PNG, GIF, WebP - máx. 10MB)"
+                        value={technicalDrawing ?? undefined}
+                        onChange={setTechnicalDrawing}
+                        disabled={isLoading}
+                        data-testid="upload-technical-drawing"
+                      />
+                    </div>
                   </div>
                 </div>
               </TabsContent>
