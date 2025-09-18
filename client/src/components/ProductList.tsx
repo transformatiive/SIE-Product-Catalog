@@ -165,7 +165,11 @@ export default function ProductList({
                         </span>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary" data-testid={`badge-family-${product.id}`}>
+                        <Badge 
+                          variant="outline" 
+                          className="bg-muted/50 text-muted-foreground border-border"
+                          data-testid={`badge-family-${product.id}`}
+                        >
                           {product.family}
                         </Badge>
                       </TableCell>
@@ -187,6 +191,7 @@ export default function ProductList({
                       <TableCell>
                         <Badge 
                           variant={product.isActive ? "default" : "secondary"}
+                          className={product.isActive ? "bg-success text-success-foreground" : ""}
                           data-testid={`badge-status-${product.id}`}
                         >
                           {product.isActive ? 'Active' : 'Inactive'}
