@@ -75,62 +75,62 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
       
       // Basic product information
       h(View, { style: styles.section },
-        h(Text, { style: styles.sectionTitle }, 'PRODUCT INFORMATION'),
+        h(Text, { style: styles.sectionTitle }, 'INFORMAÇÃO DO PRODUTO'),
         
         h(View, { style: styles.row },
-          h(Text, { style: styles.label }, 'Product Code:'),
+          h(Text, { style: styles.label }, 'Código do Produto:'),
           h(Text, { style: styles.value }, product.productCode)
         ),
         
         h(View, { style: styles.row },
-          h(Text, { style: styles.label }, 'Model:'),
+          h(Text, { style: styles.label }, 'Modelo:'),
           h(Text, { style: styles.value }, product.model)
         ),
         
         h(View, { style: styles.row },
-          h(Text, { style: styles.label }, 'Family:'),
+          h(Text, { style: styles.label }, 'Família:'),
           h(Text, { style: styles.value }, product.family)
         ),
         
         h(View, { style: styles.row },
-          h(Text, { style: styles.label }, 'Type:'),
+          h(Text, { style: styles.label }, 'Tipo:'),
           h(Text, { style: styles.value }, product.type)
         ),
         
         h(View, { style: styles.row },
-          h(Text, { style: styles.label }, 'Nominal Capacity:'),
+          h(Text, { style: styles.label }, 'Capacidade Nominal:'),
           h(Text, { style: styles.value }, product.nominalCapacity)
         ),
         
         h(View, { style: styles.row },
-          h(Text, { style: styles.label }, 'Raw Material:'),
+          h(Text, { style: styles.label }, 'Material de Base:'),
           h(Text, { style: styles.value }, product.rawMaterial)
         ),
         
         h(View, { style: styles.row },
-          h(Text, { style: styles.label }, 'Weight:'),
+          h(Text, { style: styles.label }, 'Peso:'),
           h(Text, { style: styles.value }, product.weight)
         ),
         
         h(View, { style: styles.row },
-          h(Text, { style: styles.label }, 'Colors:'),
+          h(Text, { style: styles.label }, 'Cores:'),
           h(Text, { style: styles.value }, product.colors)
         ),
         
         h(View, { style: styles.row },
-          h(Text, { style: styles.label }, 'Food Contact:'),
-          h(Text, { style: styles.value }, product.foodContact ? 'YES' : 'NO')
+          h(Text, { style: styles.label }, 'Contacto Alimentar:'),
+          h(Text, { style: styles.value }, product.foodContact ? 'SIM' : 'NÃO')
         ),
         
         h(View, { style: styles.row },
-          h(Text, { style: styles.label }, 'Status:'),
-          h(Text, { style: styles.value }, product.isActive ? 'ACTIVE' : 'INACTIVE')
+          h(Text, { style: styles.label }, 'Estado:'),
+          h(Text, { style: styles.value }, product.isActive ? 'ATIVO' : 'INATIVO')
         )
       ),
 
       // Footer
       h(View, { style: styles.footer },
-        h(Text, { style: styles.footerText }, `Generated: ${formatDate(null)} | Technical Datasheet | ${product.productCode}`)
+        h(Text, { style: styles.footerText }, `Gerado: ${formatDate(null)} | Ficha Técnica | ${product.productCode}`)
       )
     )
   );
