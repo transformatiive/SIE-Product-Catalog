@@ -86,7 +86,7 @@ export default function SearchFilters({ onSearch, onReset }: SearchFiltersProps)
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Search className="w-5 h-5" />
-            Product Search
+            Pesquisar Produtos
           </CardTitle>
           <Button
             variant="ghost"
@@ -95,7 +95,7 @@ export default function SearchFilters({ onSearch, onReset }: SearchFiltersProps)
             data-testid="button-toggle-filters"
           >
             <Filter className="w-4 h-4 mr-1" />
-            {isExpanded ? 'Simple' : 'Advanced'}
+            {isExpanded ? 'Simples' : 'Avançado'}
           </Button>
         </div>
       </CardHeader>
@@ -103,10 +103,10 @@ export default function SearchFilters({ onSearch, onReset }: SearchFiltersProps)
       <CardContent className="space-y-4">
         {/* Basic Search */}
         <div className="space-y-2">
-          <Label htmlFor="search-query">Search Products</Label>
+          <Label htmlFor="search-query">Pesquisar Produtos</Label>
           <Input
             id="search-query"
-            placeholder="Search by name, code, or description..."
+            placeholder="Pesquisar por nome, código ou descrição..."
             value={filters.query || ''}
             onChange={(e) => handleInputChange('query', e.target.value)}
             data-testid="input-search-query"
@@ -118,7 +118,7 @@ export default function SearchFilters({ onSearch, onReset }: SearchFiltersProps)
           <div className="space-y-4 pt-4 border-t">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="product-code">Product Code</Label>
+                <Label htmlFor="product-code">Código do Produto</Label>
                 <Input
                   id="product-code"
                   placeholder="e.g., GRF-1315"
@@ -129,7 +129,7 @@ export default function SearchFilters({ onSearch, onReset }: SearchFiltersProps)
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="model">Model</Label>
+                <Label htmlFor="model">Modelo</Label>
                 <Input
                   id="model"
                   placeholder="e.g., 1315"
@@ -140,16 +140,16 @@ export default function SearchFilters({ onSearch, onReset }: SearchFiltersProps)
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="family">Family</Label>
+                <Label htmlFor="family">Família</Label>
                 <Select
                   value={filters.family || ''}
                   onValueChange={(value) => handleInputChange('family', value === 'all' ? '' : value)}
                 >
                   <SelectTrigger data-testid="select-family">
-                    <SelectValue placeholder="Select family" />
+                    <SelectValue placeholder="Selecionar família" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Families</SelectItem>
+                    <SelectItem value="all">Todas as Famílias</SelectItem>
                     <SelectItem value="Embalagem">Embalagem</SelectItem>
                     <SelectItem value="Container">Container</SelectItem>
                     <SelectItem value="Bottle">Bottle</SelectItem>
@@ -158,16 +158,16 @@ export default function SearchFilters({ onSearch, onReset }: SearchFiltersProps)
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="type">Type</Label>
+                <Label htmlFor="type">Tipo</Label>
                 <Select
                   value={filters.type || ''}
                   onValueChange={(value) => handleInputChange('type', value === 'all' ? '' : value)}
                 >
                   <SelectTrigger data-testid="select-type">
-                    <SelectValue placeholder="Select type" />
+                    <SelectValue placeholder="Selecionar tipo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="all">Todos os Tipos</SelectItem>
                     <SelectItem value="Boca Estreita">Boca Estreita</SelectItem>
                     <SelectItem value="Boca Larga">Boca Larga</SelectItem>
                     <SelectItem value="Standard">Standard</SelectItem>
@@ -176,7 +176,7 @@ export default function SearchFilters({ onSearch, onReset }: SearchFiltersProps)
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
+                <Label htmlFor="status">Estado</Label>
                 <Select
                   value={filters.isActive === undefined ? 'all' : filters.isActive ? 'active' : 'inactive'}
                   onValueChange={(value) => {
@@ -185,12 +185,12 @@ export default function SearchFilters({ onSearch, onReset }: SearchFiltersProps)
                   }}
                 >
                   <SelectTrigger data-testid="select-status">
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder="Selecionar estado" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Products</SelectItem>
-                    <SelectItem value="active">Active Only</SelectItem>
-                    <SelectItem value="inactive">Inactive Only</SelectItem>
+                    <SelectItem value="all">Todos os Produtos</SelectItem>
+                    <SelectItem value="active">Apenas Ativos</SelectItem>
+                    <SelectItem value="inactive">Apenas Inativos</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -199,7 +199,7 @@ export default function SearchFilters({ onSearch, onReset }: SearchFiltersProps)
             {/* Date Range Filters */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>Purchase Date (for matching)</Label>
+                <Label>Data de Compra (para correspondência)</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -208,7 +208,7 @@ export default function SearchFilters({ onSearch, onReset }: SearchFiltersProps)
                       data-testid="button-purchase-date"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {purchaseDate ? format(purchaseDate, "PPP") : "Select date"}
+                      {purchaseDate ? format(purchaseDate, "PPP") : "Selecionar data"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -223,7 +223,7 @@ export default function SearchFilters({ onSearch, onReset }: SearchFiltersProps)
               </div>
 
               <div className="space-y-2">
-                <Label>Created After</Label>
+                <Label>Criado Após</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -232,7 +232,7 @@ export default function SearchFilters({ onSearch, onReset }: SearchFiltersProps)
                       data-testid="button-created-after"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {createdAfter ? format(createdAfter, "PPP") : "Select date"}
+                      {createdAfter ? format(createdAfter, "PPP") : "Selecionar data"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -247,7 +247,7 @@ export default function SearchFilters({ onSearch, onReset }: SearchFiltersProps)
               </div>
 
               <div className="space-y-2">
-                <Label>Created Before</Label>
+                <Label>Criado Antes</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -256,7 +256,7 @@ export default function SearchFilters({ onSearch, onReset }: SearchFiltersProps)
                       data-testid="button-created-before"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {createdBefore ? format(createdBefore, "PPP") : "Select date"}
+                      {createdBefore ? format(createdBefore, "PPP") : "Selecionar data"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -280,7 +280,7 @@ export default function SearchFilters({ onSearch, onReset }: SearchFiltersProps)
             data-testid="button-search"
           >
             <Search className="w-4 h-4 mr-1" />
-            Search
+            Pesquisar
           </Button>
           {hasActiveFilters && (
             <Button 
@@ -289,7 +289,7 @@ export default function SearchFilters({ onSearch, onReset }: SearchFiltersProps)
               data-testid="button-reset"
             >
               <X className="w-4 h-4 mr-1" />
-              Reset
+              Repor
             </Button>
           )}
         </div>
@@ -297,8 +297,8 @@ export default function SearchFilters({ onSearch, onReset }: SearchFiltersProps)
         {/* Search Help */}
         {isExpanded && (
           <div className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
-            <p className="font-medium mb-1">Date Range Search Logic:</p>
-            <p>When you specify a purchase date, the system finds the correct product version by matching it against creation dates. For products with multiple versions, the system shows the version that was active on your purchase date.</p>
+            <p className="font-medium mb-1">Lógica de Pesquisa por Intervalo de Datas:</p>
+            <p>Quando especifica uma data de compra, o sistema encontra a versão correta do produto fazendo a correspondência com as datas de criação. Para produtos com múltiplas versões, o sistema mostra a versão que estava ativa na sua data de compra.</p>
           </div>
         )}
       </CardContent>
