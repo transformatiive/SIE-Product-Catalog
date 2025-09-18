@@ -292,8 +292,8 @@ export default function Dashboard() {
                     <span className="text-sm font-bold text-primary-foreground">PD</span>
                   </div>
                   <div>
-                    <h1 className="text-lg font-semibold text-foreground">Product Database</h1>
-                    <p className="text-sm text-muted-foreground">Manage your product catalog</p>
+                    <h1 className="text-lg font-semibold text-foreground">Base de Dados de Produtos</h1>
+                    <p className="text-sm text-muted-foreground">Gerir o seu catálogo de produtos</p>
                   </div>
                 </div>
               </div>

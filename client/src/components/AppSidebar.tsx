@@ -24,33 +24,33 @@ interface AppSidebarProps {
 export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebarProps) {
   const navigationItems = [
     {
-      title: "Advanced Search",
+      title: "Pesquisa Avançada",
       url: "search",
       icon: Search,
-      description: "Search products by criteria",
+      description: "Pesquisar produtos por critérios",
       priority: "high",
     },
     {
-      title: "Product List",
+      title: "Lista de Produtos",
       url: "list", 
       icon: List,
-      description: `View all products`,
+      description: `Ver todos`,
       badge: productCount,
       priority: "high",
     },
     {
-      title: "Create Product",
+      title: "Criar Produto",
       url: "create",
       icon: Plus,
-      description: "Add new product",
+      description: "Adicionar novo produto",
       priority: "medium",
     },
   ];
 
   const analyticsItems = [
     {
-      title: "Reports",
-      description: "Coming soon",
+      title: "Relatórios",
+      description: "Em breve",
       icon: BarChart3,
       disabled: true,
       status: "development",
@@ -59,8 +59,8 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
 
   const systemItems = [
     {
-      title: "Settings",
-      description: "Configuration",
+      title: "Definições",
+      description: "Configuração",
       icon: Settings,
       disabled: true,
       status: "maintenance",
@@ -80,8 +80,8 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
             <Package className="w-4 h-4 text-primary-foreground" />
           </div>
           <div className="flex flex-col">
-            <h2 className="text-sm font-semibold text-sidebar-foreground">Product Database</h2>
-            <p className="text-xs text-muted-foreground">Management System</p>
+            <h2 className="text-sm font-semibold text-sidebar-foreground">Base de Dados de Produtos</h2>
+            <p className="text-xs text-muted-foreground">Sistema de Gestão</p>
           </div>
         </div>
       </SidebarHeader>
@@ -92,7 +92,7 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
           <SidebarGroupLabel className="flex items-center justify-between text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-primary/60"></div>
-              Navigation
+              NAVEGAÇÃO
             </div>
             <div className="w-12 h-px bg-gradient-to-r from-border to-transparent"></div>
           </SidebarGroupLabel>
@@ -164,7 +164,7 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
           <SidebarGroupLabel className="flex items-center justify-between text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-chart-2/60"></div>
-              Analytics
+              ANÁLISES
             </div>
             <div className="w-12 h-px bg-gradient-to-r from-border to-transparent"></div>
           </SidebarGroupLabel>
@@ -208,7 +208,7 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
           <SidebarGroupLabel className="flex items-center justify-between text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-muted-foreground/40"></div>
-              System
+              SISTEMA
             </div>
             <div className="w-12 h-px bg-gradient-to-r from-border to-transparent"></div>
           </SidebarGroupLabel>
@@ -230,7 +230,7 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
                             {item.title}
                           </span>
                           <Badge variant="outline" className="h-5 text-xs px-2 ml-2 border-muted-foreground/30 text-muted-foreground">
-                            Soon
+                            Em breve
                           </Badge>
                         </div>
                         <span className="text-xs text-muted-foreground/60 text-left">

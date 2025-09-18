@@ -71,7 +71,7 @@ export default function ProductList({
   };
 
   const formatDate = (date: Date | null) => {
-    if (!date) return 'N/A';
+    if (!date) return 'N/D';
     return new Date(date).toLocaleDateString();
   };
 
@@ -80,7 +80,7 @@ export default function ProductList({
       <Card>
         <CardContent className="p-8">
           <div className="flex items-center justify-center">
-            <p className="text-muted-foreground">Loading products...</p>
+            <p className="text-muted-foreground">A carregar produtos...</p>
           </div>
         </CardContent>
       </Card>
@@ -93,10 +93,10 @@ export default function ProductList({
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Product Database</CardTitle>
+            <CardTitle>Base de Dados de Produtos</CardTitle>
             <Button onClick={handleCreateNew} data-testid="button-create-new">
               <Plus className="w-4 h-4 mr-1" />
-              New Product
+              Novo Produto
             </Button>
           </div>
         </CardHeader>
@@ -107,7 +107,7 @@ export default function ProductList({
             <div className="relative flex-1">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search products by code, name, or model..."
+                placeholder="Pesquisar produtos por código, nome ou modelo..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -119,10 +119,10 @@ export default function ProductList({
           {/* Results Summary */}
           <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
             <p>
-              Showing {currentProducts.length} of {filteredProducts.length} products
+              A mostrar {currentProducts.length} de {filteredProducts.length} produtos
               {searchQuery && ` for "${searchQuery}"`}
             </p>
-            <p>Total: {products.length} products</p>
+            <p>Total: {products.length} produtos</p>
           </div>
 
           {/* Products Table */}
@@ -131,16 +131,16 @@ export default function ProductList({
               <Table>
                 <TableHeader className="bg-muted/50">
                   <TableRow className="border-b hover:bg-transparent">
-                    <TableHead className="font-semibold">Code</TableHead>
-                    <TableHead className="font-semibold">Product</TableHead>
-                    <TableHead className="font-semibold">Model</TableHead>
-                    <TableHead className="font-semibold">Family</TableHead>
-                    <TableHead className="font-semibold">Type</TableHead>
-                    <TableHead className="font-semibold text-right">Capacity</TableHead>
+                    <TableHead className="font-semibold">Código</TableHead>
+                    <TableHead className="font-semibold">Produto</TableHead>
+                    <TableHead className="font-semibold">Modelo</TableHead>
+                    <TableHead className="font-semibold">Família</TableHead>
+                    <TableHead className="font-semibold">Tipo</TableHead>
+                    <TableHead className="font-semibold text-right">Capacidade</TableHead>
                     <TableHead className="font-semibold">Material</TableHead>
-                    <TableHead className="font-semibold">Status</TableHead>
-                    <TableHead className="font-semibold">Created</TableHead>
-                    <TableHead className="font-semibold text-right">Actions</TableHead>
+                    <TableHead className="font-semibold">Estado</TableHead>
+                    <TableHead className="font-semibold">Criado</TableHead>
+                    <TableHead className="font-semibold text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -196,7 +196,7 @@ export default function ProductList({
                           className={product.isActive ? "bg-success text-success-foreground" : ""}
                           data-testid={`badge-status-${product.id}`}
                         >
-                          {product.isActive ? 'Active' : 'Inactive'}
+                          {product.isActive ? 'Ativo' : 'Inativo'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
@@ -251,7 +251,7 @@ export default function ProductList({
           ) : (
             <div className="text-center py-8">
               <p className="text-muted-foreground">
-                {searchQuery ? 'No products found matching your search.' : 'No products found.'}
+                {searchQuery ? 'Nenhuns produtos encontrados na pesquisa.' : 'Nenhuns produtos encontrados.'}
               </p>
               {!searchQuery && (
                 <Button 
@@ -260,7 +260,7 @@ export default function ProductList({
                   onClick={handleCreateNew}
                 >
                   <Plus className="w-4 h-4 mr-1" />
-                  Create First Product
+                  Criar Primeiro Produto
                 </Button>
               )}
             </div>
@@ -277,11 +277,11 @@ export default function ProductList({
                 data-testid="button-prev-page"
               >
                 <ChevronLeft className="w-4 h-4 mr-1" />
-                Previous
+                Anterior
               </Button>
               
               <span className="text-sm text-muted-foreground">
-                Page {currentPage} of {totalPages}
+                Página {currentPage} de {totalPages}
               </span>
               
               <Button
@@ -291,7 +291,7 @@ export default function ProductList({
                 disabled={currentPage === totalPages}
                 data-testid="button-next-page"
               >
-                Next
+                Seguinte
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             </div>
