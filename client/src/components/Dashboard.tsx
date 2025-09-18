@@ -68,6 +68,7 @@ export default function Dashboard({ initialProducts = [] }: DashboardProps) {
         specialFeatures: productData.specialFeatures || null,
         notes: productData.notes || null,
         foodContact: productData.foodContact ?? false,
+        isActive: productData.isActive ?? true,
         updatedAt: new Date(),
       };
       setProducts(prev => prev.map(p => p.id === selectedProduct.id ? updated : p));
@@ -87,6 +88,7 @@ export default function Dashboard({ initialProducts = [] }: DashboardProps) {
         specialFeatures: productData.specialFeatures || null,
         notes: productData.notes || null,
         foodContact: productData.foodContact ?? false,
+        isActive: productData.isActive ?? true,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -182,29 +184,44 @@ export default function Dashboard({ initialProducts = [] }: DashboardProps) {
         />
         
         <div className="flex flex-col flex-1">
-          <header className="flex items-center justify-between p-4 border-b">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger data-testid="button-sidebar-toggle" />
-              <div>
-                <h1 className="font-semibold">Product Database</h1>
-                <p className="text-sm text-muted-foreground">
-                  Industrial product management system
-                </p>
+          <header className="sticky top-0 z-50 w-full bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 border-b border-border">
+            <div className="flex h-16 items-center justify-between px-6">
+              <div className="flex items-center gap-4">
+                <SidebarTrigger 
+                  className="hover-elevate" 
+                  data-testid="button-sidebar-toggle" 
+                />
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 bg-primary rounded-md flex items-center justify-center">
+                    <span className="text-sm font-bold text-primary-foreground">PD</span>
+                  </div>
+                  <div>
+                    <h1 className="text-lg font-semibold text-foreground leading-tight">
+                      Product Database
+                    </h1>
+                    <p className="text-xs text-muted-foreground leading-tight">
+                      Industrial Management System
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleTheme}
+                  className="hover-elevate"
+                  data-testid="button-theme-toggle"
+                >
+                  {isDarkMode ? (
+                    <Sun className="w-4 h-4" />
+                  ) : (
+                    <Moon className="w-4 h-4" />
+                  )}
+                </Button>
               </div>
             </div>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              data-testid="button-theme-toggle"
-            >
-              {isDarkMode ? (
-                <Sun className="w-5 h-5" />
-              ) : (
-                <Moon className="w-5 h-5" />
-              )}
-            </Button>
           </header>
           
           <main className="flex-1 overflow-auto p-6">

@@ -125,25 +125,30 @@ export default function ProductList({
 
           {/* Products Table */}
           {currentProducts.length > 0 ? (
-            <div className="rounded-md border">
+            <div className="rounded-md border bg-card">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Model</TableHead>
-                    <TableHead>Family</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Capacity</TableHead>
-                    <TableHead>Material</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                <TableHeader className="bg-muted/50">
+                  <TableRow className="border-b hover:bg-transparent">
+                    <TableHead className="font-semibold">Code</TableHead>
+                    <TableHead className="font-semibold">Product</TableHead>
+                    <TableHead className="font-semibold">Model</TableHead>
+                    <TableHead className="font-semibold">Family</TableHead>
+                    <TableHead className="font-semibold">Type</TableHead>
+                    <TableHead className="font-semibold text-right">Capacity</TableHead>
+                    <TableHead className="font-semibold">Material</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="font-semibold">Created</TableHead>
+                    <TableHead className="font-semibold text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {currentProducts.map((product) => (
-                    <TableRow key={product.id} className="hover-elevate">
+                  {currentProducts.map((product, index) => (
+                    <TableRow 
+                      key={product.id} 
+                      className={`hover:bg-muted/50 transition-colors ${
+                        index % 2 === 0 ? 'bg-background' : 'bg-muted/20'
+                      }`}
+                    >
                       <TableCell className="font-mono font-medium">
                         <span data-testid={`text-code-${product.id}`}>
                           {product.productCode}
@@ -169,7 +174,7 @@ export default function ProductList({
                           {product.type}
                         </span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-right font-mono">
                         <span data-testid={`text-capacity-${product.id}`}>
                           {product.nominalCapacity}
                         </span>
@@ -191,10 +196,11 @@ export default function ProductList({
                         {formatDate(product.createdAt)}
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex gap-1 justify-end">
+                        <div className="flex gap-1 justify-end opacity-60 hover:opacity-100 transition-opacity">
                           <Button 
                             variant="ghost" 
-                            size="sm"
+                            size="icon"
+                            className="h-8 w-8 hover-elevate"
                             onClick={() => handleView(product)}
                             data-testid={`button-view-${product.id}`}
                           >
@@ -202,7 +208,8 @@ export default function ProductList({
                           </Button>
                           <Button 
                             variant="ghost" 
-                            size="sm"
+                            size="icon"
+                            className="h-8 w-8 hover-elevate"
                             onClick={() => handleEdit(product)}
                             data-testid={`button-edit-${product.id}`}
                           >
@@ -210,7 +217,8 @@ export default function ProductList({
                           </Button>
                           <Button 
                             variant="ghost" 
-                            size="sm"
+                            size="icon"
+                            className="h-8 w-8 hover-elevate"
                             onClick={() => handleGeneratePDF(product)}
                             data-testid={`button-pdf-${product.id}`}
                           >
@@ -218,7 +226,8 @@ export default function ProductList({
                           </Button>
                           <Button 
                             variant="ghost" 
-                            size="sm"
+                            size="icon"
+                            className="h-8 w-8 hover-elevate text-destructive hover:text-destructive"
                             onClick={() => handleDelete(product)}
                             data-testid={`button-delete-${product.id}`}
                           >

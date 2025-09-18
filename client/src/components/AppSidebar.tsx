@@ -1,4 +1,4 @@
-import { Search, List, Plus, Package, BarChart3, Settings } from "lucide-react";
+import { Search, List, Plus, Package, BarChart3, Settings, ChevronRight } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -8,7 +8,10 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarHeader,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
 
 type ViewMode = 'list' | 'search' | 'detail' | 'form' | 'create';
 
@@ -25,18 +28,42 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
       url: "search",
       icon: Search,
       description: "Search products by criteria",
+      priority: "high",
     },
     {
       title: "Product List",
       url: "list", 
       icon: List,
-      description: `View all products (${productCount})`,
+      description: `View all products`,
+      badge: productCount,
+      priority: "high",
     },
     {
       title: "Create Product",
       url: "create",
       icon: Plus,
       description: "Add new product",
+      priority: "medium",
+    },
+  ];
+
+  const analyticsItems = [
+    {
+      title: "Reports",
+      description: "Coming soon",
+      icon: BarChart3,
+      disabled: true,
+      status: "development",
+    },
+  ];
+
+  const systemItems = [
+    {
+      title: "Settings",
+      description: "Configuration",
+      icon: Settings,
+      disabled: true,
+      status: "maintenance",
     },
   ];
 
@@ -46,28 +73,126 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
   };
 
   return (
-    <Sidebar>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center gap-2">
-            <Package className="w-4 h-4" />
-            Product Management
+    <Sidebar className="border-r border-sidebar-border/50 bg-gradient-to-b from-sidebar via-sidebar to-sidebar/95">
+      <SidebarHeader className="p-6 border-b border-sidebar-border/30">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-md bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-sm">
+            <Package className="w-4 h-4 text-primary-foreground" />
+          </div>
+          <div className="flex flex-col">
+            <h2 className="text-sm font-semibold text-sidebar-foreground">Product Database</h2>
+            <p className="text-xs text-muted-foreground">Management System</p>
+          </div>
+        </div>
+      </SidebarHeader>
+
+      <SidebarContent className="p-4 space-y-8">
+        {/* Primary Navigation Section */}
+        <SidebarGroup className="space-y-4">
+          <SidebarGroupLabel className="flex items-center justify-between text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-primary/60"></div>
+              Navigation
+            </div>
+            <div className="w-12 h-px bg-gradient-to-r from-border to-transparent"></div>
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-2">
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
                     onClick={() => handleNavigation(item.url)}
                     isActive={currentView === item.url}
                     data-testid={`nav-${item.url}`}
+                    className={`
+                      group h-12 px-4 rounded-lg transition-all duration-200 relative overflow-hidden
+                      ${currentView === item.url 
+                        ? 'bg-gradient-to-r from-primary/15 via-primary/10 to-primary/5 border border-primary/20 text-primary shadow-sm' 
+                        : 'hover-elevate border border-transparent hover:border-sidebar-border/30 hover:shadow-sm'
+                      }
+                    `}
                   >
-                    <item.icon className="w-4 h-4" />
-                    <div className="flex flex-col items-start">
-                      <span>{item.title}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {item.description}
-                      </span>
+                    <div className="flex items-center gap-4 w-full">
+                      <div className={`
+                        w-8 h-8 rounded-md flex items-center justify-center transition-all duration-200
+                        ${currentView === item.url 
+                          ? 'bg-primary/20 text-primary' 
+                          : 'bg-muted/50 text-muted-foreground group-hover:bg-muted group-hover:text-foreground'
+                        }
+                      `}>
+                        <item.icon className="w-4 h-4" />
+                      </div>
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className={`
+                            text-sm font-medium transition-colors
+                            ${currentView === item.url ? 'text-primary' : 'text-foreground'}
+                          `}>
+                            {item.title}
+                          </span>
+                          {item.badge && (
+                            <Badge 
+                              variant={currentView === item.url ? "default" : "secondary"} 
+                              className="h-5 text-xs px-2 ml-2"
+                            >
+                              {item.badge}
+                            </Badge>
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground text-left">
+                          {item.description}
+                        </span>
+                      </div>
+                      {currentView === item.url && (
+                        <ChevronRight className="w-3 h-3 text-primary/60" />
+                      )}
+                    </div>
+                    {currentView === item.url && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent pointer-events-none"></div>
+                    )}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator className="bg-gradient-to-r from-transparent via-border to-transparent" />
+
+        {/* Analytics Section */}
+        <SidebarGroup className="space-y-4">
+          <SidebarGroupLabel className="flex items-center justify-between text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-chart-2/60"></div>
+              Analytics
+            </div>
+            <div className="w-12 h-px bg-gradient-to-r from-border to-transparent"></div>
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-2">
+              {analyticsItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton 
+                    disabled={item.disabled}
+                    className="group h-12 px-4 rounded-lg border border-transparent opacity-60 cursor-not-allowed"
+                  >
+                    <div className="flex items-center gap-4 w-full">
+                      <div className="w-8 h-8 rounded-md bg-muted/30 flex items-center justify-center">
+                        <item.icon className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">
+                            {item.title}
+                          </span>
+                          <Badge variant="outline" className="h-5 text-xs px-2 ml-2 border-warning/30 text-warning">
+                            Beta
+                          </Badge>
+                        </div>
+                        <span className="text-xs text-muted-foreground/60 text-left">
+                          {item.description}
+                        </span>
+                      </div>
                     </div>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -76,46 +201,46 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4" />
-            Analytics
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton disabled>
-                  <BarChart3 className="w-4 h-4" />
-                  <div className="flex flex-col items-start">
-                    <span>Reports</span>
-                    <span className="text-xs text-muted-foreground">
-                      Coming soon
-                    </span>
-                  </div>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        <SidebarSeparator className="bg-gradient-to-r from-transparent via-border to-transparent" />
 
-        <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center gap-2">
-            <Settings className="w-4 h-4" />
-            System
+        {/* System Section */}
+        <SidebarGroup className="space-y-4">
+          <SidebarGroupLabel className="flex items-center justify-between text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-muted-foreground/40"></div>
+              System
+            </div>
+            <div className="w-12 h-px bg-gradient-to-r from-border to-transparent"></div>
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton disabled>
-                  <Settings className="w-4 h-4" />
-                  <div className="flex flex-col items-start">
-                    <span>Settings</span>
-                    <span className="text-xs text-muted-foreground">
-                      Configuration
-                    </span>
-                  </div>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+            <SidebarMenu className="space-y-2">
+              {systemItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton 
+                    disabled={item.disabled}
+                    className="group h-12 px-4 rounded-lg border border-transparent opacity-60 cursor-not-allowed"
+                  >
+                    <div className="flex items-center gap-4 w-full">
+                      <div className="w-8 h-8 rounded-md bg-muted/30 flex items-center justify-center">
+                        <item.icon className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">
+                            {item.title}
+                          </span>
+                          <Badge variant="outline" className="h-5 text-xs px-2 ml-2 border-muted-foreground/30 text-muted-foreground">
+                            Soon
+                          </Badge>
+                        </div>
+                        <span className="text-xs text-muted-foreground/60 text-left">
+                          {item.description}
+                        </span>
+                      </div>
+                    </div>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
