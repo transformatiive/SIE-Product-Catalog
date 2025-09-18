@@ -41,10 +41,10 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
           value: String(value),
         }));
       } catch {
-        return [{ id: 'dim-1', name: 'height', value: '' }];
+        return [{ id: 'dim-1', name: 'altura', value: '' }];
       }
     }
-    return [{ id: 'dim-1', name: 'height', value: '' }];
+    return [{ id: 'dim-1', name: 'altura', value: '' }];
   });
 
   const [certifications, setCertifications] = useState<CertificationField[]>(() => {
@@ -154,12 +154,12 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
       <Card className="shadow-lg">
         <CardHeader className="pb-4">
           <CardTitle className="text-2xl font-semibold text-foreground">
-            {product ? 'Edit Product' : 'Create New Product'}
+            {product ? 'Editar Produto' : 'Criar Novo Produto'}
           </CardTitle>
           <p className="text-sm text-muted-foreground mt-2">
             {product 
-              ? 'Update product information and technical specifications' 
-              : 'Enter detailed information for the new product including specifications and certifications'
+              ? 'Actualizar informações do produto e especificações técnicas' 
+              : 'Inserir informações detalhadas do novo produto incluindo especificações e certificações'
             }
           </p>
         </CardHeader>
@@ -168,63 +168,63 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <Tabs defaultValue="basic" className="w-full">
               <TabsList className="grid w-full grid-cols-4 h-11">
-                <TabsTrigger value="basic" className="font-medium">Basic Information</TabsTrigger>
-                <TabsTrigger value="technical" className="font-medium">Technical Details</TabsTrigger>
-                <TabsTrigger value="specs" className="font-medium">Specifications</TabsTrigger>
-                <TabsTrigger value="packaging" className="font-medium">Packaging & Notes</TabsTrigger>
+                <TabsTrigger value="basic" className="font-medium">Informação Básica</TabsTrigger>
+                <TabsTrigger value="technical" className="font-medium">Detalhes Técnicos</TabsTrigger>
+                <TabsTrigger value="specs" className="font-medium">Especificações</TabsTrigger>
+                <TabsTrigger value="packaging" className="font-medium">Embalagem e Notas</TabsTrigger>
               </TabsList>
 
               <TabsContent value="basic" className="space-y-6 mt-6">
                 {/* Product Identification Section */}
                 <div className="space-y-4">
                   <div className="border-b pb-3">
-                    <h3 className="text-lg font-semibold text-foreground">Product Identification</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Basic product information and identification codes</p>
+                    <h3 className="text-lg font-semibold text-foreground">Identificação do Produto</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Informações básicas do produto e códigos de identificação</p>
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="model" className="text-sm font-medium text-foreground">Model *</Label>
+                      <Label htmlFor="model" className="text-sm font-medium text-foreground">Modelo *</Label>
                       <Input
                         id="model"
                         {...form.register('model')}
                         data-testid="input-model"
                         className="h-9"
                       />
-                      <p className="text-xs text-muted-foreground">Product model identifier</p>
+                      <p className="text-xs text-muted-foreground">Identificador do modelo do produto</p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="productCode" className="text-sm font-medium text-foreground">Product Code *</Label>
+                      <Label htmlFor="productCode" className="text-sm font-medium text-foreground">Código do Produto *</Label>
                       <Input
                         id="productCode"
                         {...form.register('productCode')}
                         data-testid="input-product-code"
                         className="h-9 font-mono"
                       />
-                      <p className="text-xs text-muted-foreground">Unique product identification code</p>
+                      <p className="text-xs text-muted-foreground">Código único de identificação do produto</p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="product" className="text-sm font-medium text-foreground">Product Name *</Label>
+                      <Label htmlFor="product" className="text-sm font-medium text-foreground">Nome do Produto *</Label>
                       <Input
                         id="product"
                         {...form.register('product')}
                         data-testid="input-product-name"
                         className="h-9"
                       />
-                      <p className="text-xs text-muted-foreground">Full product name or description</p>
+                      <p className="text-xs text-muted-foreground">Nome completo ou descrição do produto</p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="rawMaterial" className="text-sm font-medium text-foreground">Raw Material *</Label>
+                      <Label htmlFor="rawMaterial" className="text-sm font-medium text-foreground">Material de Base *</Label>
                       <Input
                         id="rawMaterial"
                         {...form.register('rawMaterial')}
-                        placeholder="e.g., PEAD"
+                        placeholder="ex.: PEAD"
                         data-testid="input-raw-material"
                         className="h-9"
                       />
-                      <p className="text-xs text-muted-foreground">Primary material composition</p>
+                      <p className="text-xs text-muted-foreground">Composição principal do material</p>
                     </div>
                   </div>
                 </div>
@@ -232,36 +232,36 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                 {/* Product Classification Section */}
                 <div className="space-y-4">
                   <div className="border-b pb-3">
-                    <h3 className="text-lg font-semibold text-foreground">Product Classification</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Category and type classification</p>
+                    <h3 className="text-lg font-semibold text-foreground">Classificação do Produto</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Classificação por categoria e tipo</p>
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="family" className="text-sm font-medium text-foreground">Family *</Label>
+                      <Label htmlFor="family" className="text-sm font-medium text-foreground">Família *</Label>
                       <Select
                         value={form.watch('family')}
                         onValueChange={(value) => form.setValue('family', value)}
                       >
                         <SelectTrigger data-testid="select-family" className="h-9">
-                          <SelectValue placeholder="Select product family" />
+                          <SelectValue placeholder="Seleccionar família do produto" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="Embalagem">Embalagem</SelectItem>
                           <SelectItem value="Container">Container</SelectItem>
-                          <SelectItem value="Bottle">Bottle</SelectItem>
+                          <SelectItem value="Bottle">Garrafa</SelectItem>
                         </SelectContent>
                       </Select>
-                      <p className="text-xs text-muted-foreground">Product family or category</p>
+                      <p className="text-xs text-muted-foreground">Família ou categoria do produto</p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="type" className="text-sm font-medium text-foreground">Type *</Label>
+                      <Label htmlFor="type" className="text-sm font-medium text-foreground">Tipo *</Label>
                       <Select
                         value={form.watch('type')}
                         onValueChange={(value) => form.setValue('type', value)}
                       >
                         <SelectTrigger data-testid="select-type" className="h-9">
-                          <SelectValue placeholder="Select product type" />
+                          <SelectValue placeholder="Seleccionar tipo de produto" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="Boca Estreita">Boca Estreita</SelectItem>
@@ -269,7 +269,7 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                           <SelectItem value="Standard">Standard</SelectItem>
                         </SelectContent>
                       </Select>
-                      <p className="text-xs text-muted-foreground">Specific product type or variant</p>
+                      <p className="text-xs text-muted-foreground">Tipo específico ou variante do produto</p>
                     </div>
                   </div>
                 </div>
@@ -277,44 +277,44 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                 {/* Capacity & Appearance Section */}
                 <div className="space-y-4">
                   <div className="border-b pb-3">
-                    <h3 className="text-lg font-semibold text-foreground">Capacity & Appearance</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Volume specifications and available colors</p>
+                    <h3 className="text-lg font-semibold text-foreground">Capacidade e Aparência</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Especificações de volume e cores disponíveis</p>
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="nominalCapacity" className="text-sm font-medium text-foreground">Nominal Capacity *</Label>
+                      <Label htmlFor="nominalCapacity" className="text-sm font-medium text-foreground">Capacidade Nominal *</Label>
                       <Input
                         id="nominalCapacity"
                         {...form.register('nominalCapacity')}
-                        placeholder="e.g., 15L"
+                        placeholder="ex.: 15L"
                         data-testid="input-nominal-capacity"
                         className="h-9"
                       />
-                      <p className="text-xs text-muted-foreground">Standard capacity rating</p>
+                      <p className="text-xs text-muted-foreground">Capacidade nominal padrão</p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="totalCapacity" className="text-sm font-medium text-foreground">Total Capacity</Label>
+                      <Label htmlFor="totalCapacity" className="text-sm font-medium text-foreground">Capacidade Total</Label>
                       <Input
                         id="totalCapacity"
                         {...form.register('totalCapacity')}
-                        placeholder="e.g., 17.8L"
+                        placeholder="ex.: 17,8L"
                         data-testid="input-total-capacity"
                         className="h-9"
                       />
-                      <p className="text-xs text-muted-foreground">Maximum capacity when filled to the brim</p>
+                      <p className="text-xs text-muted-foreground">Capacidade máxima quando cheio até ao bordo</p>
                     </div>
 
                     <div className="space-y-2 lg:col-span-2">
-                      <Label htmlFor="colors" className="text-sm font-medium text-foreground">Available Colors *</Label>
+                      <Label htmlFor="colors" className="text-sm font-medium text-foreground">Cores Disponíveis *</Label>
                       <Input
                         id="colors"
                         {...form.register('colors')}
-                        placeholder="e.g., Branco, Azul, Verde (comma-separated)"
+                        placeholder="ex.: Branco, Azul, Verde (separados por vírgula)"
                         data-testid="input-colors"
                         className="h-9"
                       />
-                      <p className="text-xs text-muted-foreground">List all available color options, separated by commas</p>
+                      <p className="text-xs text-muted-foreground">Listar todas as opções de cor disponíveis, separadas por vírgulas</p>
                     </div>
                   </div>
                 </div>
@@ -324,32 +324,32 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                 {/* Weight & Physical Properties Section */}
                 <div className="space-y-4">
                   <div className="border-b pb-3">
-                    <h3 className="text-lg font-semibold text-foreground">Weight & Physical Properties</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Weight specifications and material properties</p>
+                    <h3 className="text-lg font-semibold text-foreground">Peso e Propriedades Físicas</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Especificações de peso e propriedades do material</p>
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="weight" className="text-sm font-medium text-foreground">Weight *</Label>
+                      <Label htmlFor="weight" className="text-sm font-medium text-foreground">Peso *</Label>
                       <Input
                         id="weight"
                         {...form.register('weight')}
-                        placeholder="e.g., 700g"
+                        placeholder="ex.: 700g"
                         data-testid="input-weight"
                         className="h-9"
                       />
-                      <p className="text-xs text-muted-foreground">Base weight without accessories</p>
+                      <p className="text-xs text-muted-foreground">Peso base sem acessórios</p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="weightWithAccessories" className="text-sm font-medium text-foreground">Weight with Accessories</Label>
+                      <Label htmlFor="weightWithAccessories" className="text-sm font-medium text-foreground">Peso com Acessórios</Label>
                       <Input
                         id="weightWithAccessories"
                         {...form.register('weightWithAccessories')}
-                        placeholder="e.g., 750g"
+                        placeholder="ex.: 750g"
                         data-testid="input-weight-accessories"
                         className="h-9"
                       />
-                      <p className="text-xs text-muted-foreground">Total weight including all accessories</p>
+                      <p className="text-xs text-muted-foreground">Peso total incluindo todos os acessórios</p>
                     </div>
 
                     <div className="space-y-2 lg:col-span-2">
@@ -361,8 +361,8 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                           data-testid="switch-food-contact"
                         />
                         <div className="space-y-1">
-                          <Label htmlFor="foodContact" className="text-sm font-medium text-foreground">Food Contact Approved</Label>
-                          <p className="text-xs text-muted-foreground">Product is approved for direct food contact</p>
+                          <Label htmlFor="foodContact" className="text-sm font-medium text-foreground">Aprovado para Contacto Alimentar</Label>
+                          <p className="text-xs text-muted-foreground">Produto aprovado para contacto directo com alimentos</p>
                         </div>
                       </div>
                     </div>
@@ -372,44 +372,44 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                 {/* Closure & Sealing Section */}
                 <div className="space-y-4">
                   <div className="border-b pb-3">
-                    <h3 className="text-lg font-semibold text-foreground">Closure & Sealing Systems</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Closure mechanisms and sealing specifications</p>
+                    <h3 className="text-lg font-semibold text-foreground">Sistemas de Fecho e Selagem</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Mecanismos de fecho e especificações de selagem</p>
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="closingSystem" className="text-sm font-medium text-foreground">Closing System</Label>
+                      <Label htmlFor="closingSystem" className="text-sm font-medium text-foreground">Sistema de Fecho</Label>
                       <Input
                         id="closingSystem"
                         {...form.register('closingSystem')}
-                        placeholder="e.g., Tampa de Rosca"
+                        placeholder="ex.: Tampa de Rosca"
                         data-testid="input-closing-system"
                         className="h-9"
                       />
-                      <p className="text-xs text-muted-foreground">Type of closure mechanism</p>
+                      <p className="text-xs text-muted-foreground">Tipo de mecanismo de fecho</p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="sealingType" className="text-sm font-medium text-foreground">Sealing Type</Label>
+                      <Label htmlFor="sealingType" className="text-sm font-medium text-foreground">Tipo de Selagem</Label>
                       <Input
                         id="sealingType"
                         {...form.register('sealingType')}
-                        placeholder="e.g., PEAD, EPDM"
+                        placeholder="ex.: PEAD, EPDM"
                         data-testid="input-sealing-type"
                         className="h-9"
                       />
-                      <p className="text-xs text-muted-foreground">Sealing material and method</p>
+                      <p className="text-xs text-muted-foreground">Material e método de selagem</p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="handlingSystem" className="text-sm font-medium text-foreground">Handling System</Label>
+                      <Label htmlFor="handlingSystem" className="text-sm font-medium text-foreground">Sistema de Manuseamento</Label>
                       <Input
                         id="handlingSystem"
                         {...form.register('handlingSystem')}
-                        placeholder="e.g., Pegas laterais"
+                        placeholder="ex.: Pegas laterais"
                         data-testid="input-handling-system"
                         className="h-9"
                       />
-                      <p className="text-xs text-muted-foreground">Ergonomic handling features</p>
+                      <p className="text-xs text-muted-foreground">Características ergonómicas de manuseamento</p>
                     </div>
                   </div>
                 </div>
@@ -419,8 +419,8 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                   <div className="border-b pb-3">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="text-lg font-semibold text-foreground">Product Dimensions</h3>
-                        <p className="text-sm text-muted-foreground mt-1">Physical measurements and specifications</p>
+                        <h3 className="text-lg font-semibold text-foreground">Dimensões do Produto</h3>
+                        <p className="text-sm text-muted-foreground mt-1">Medições físicas e especificações</p>
                       </div>
                       <Button 
                         type="button" 
@@ -431,7 +431,7 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                         className="h-8"
                       >
                         <Plus className="w-4 h-4 mr-1" />
-                        Add Dimension
+                        Adicionar Dimensão
                       </Button>
                     </div>
                   </div>
@@ -439,9 +439,9 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                     {dimensions.map((dimension, index) => (
                       <div key={dimension.id} className="grid grid-cols-2 lg:grid-cols-5 gap-3 items-end p-3 border border-border rounded-md">
                         <div className="space-y-1">
-                          <Label className="text-xs font-medium text-muted-foreground">Dimension Name</Label>
+                          <Label className="text-xs font-medium text-muted-foreground">Nome da Dimensão</Label>
                           <Input
-                            placeholder="e.g., height"
+                            placeholder="ex.: altura"
                             value={dimension.name}
                             onChange={(e) => updateDimension(dimension.id, 'name', e.target.value)}
                             data-testid={`input-dimension-name-${index}`}
@@ -449,9 +449,9 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                           />
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-xs font-medium text-muted-foreground">Value</Label>
+                          <Label className="text-xs font-medium text-muted-foreground">Valor</Label>
                           <Input
-                            placeholder="e.g., 332mm"
+                            placeholder="ex.: 332mm"
                             value={dimension.value}
                             onChange={(e) => updateDimension(dimension.id, 'value', e.target.value)}
                             data-testid={`input-dimension-value-${index}`}
@@ -484,8 +484,8 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                   <div className="border-b pb-3">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="text-lg font-semibold text-foreground">Certifications & Compliance</h3>
-                        <p className="text-sm text-muted-foreground mt-1">Safety certifications and regulatory compliance</p>
+                        <h3 className="text-lg font-semibold text-foreground">Certificações e Conformidade</h3>
+                        <p className="text-sm text-muted-foreground mt-1">Certificações de segurança e conformidade regulamentar</p>
                       </div>
                       <Button 
                         type="button" 
@@ -496,7 +496,7 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                         className="h-8"
                       >
                         <Plus className="w-4 h-4 mr-1" />
-                        Add Certification
+                        Adicionar Certificação
                       </Button>
                     </div>
                   </div>
@@ -504,9 +504,9 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                     {certifications.map((certification, index) => (
                       <div key={certification.id} className="flex gap-3 items-center p-3 border border-border rounded-md">
                         <div className="flex-1 space-y-1">
-                          <Label className="text-xs font-medium text-muted-foreground">Certification {index + 1}</Label>
+                          <Label className="text-xs font-medium text-muted-foreground">Certificação {index + 1}</Label>
                           <Input
-                            placeholder="e.g., ADR 3H1/Y1,9/150"
+                            placeholder="ex.: ADR 3H1/Y1,9/150"
                             value={certification.value}
                             onChange={(e) => updateCertification(certification.id, e.target.value)}
                             data-testid={`input-certification-${index}`}
@@ -533,11 +533,11 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                 {/* Product Markings Section */}
                 <div className="space-y-4">
                   <div className="border-b pb-3">
-                    <h3 className="text-lg font-semibold text-foreground">Product Markings</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Required markings and labels on the product</p>
+                    <h3 className="text-lg font-semibold text-foreground">Marcações do Produto</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Marcações e etiquetas obrigatórias no produto</p>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="markings" className="text-sm font-medium text-foreground">Markings (JSON Array Format)</Label>
+                    <Label htmlFor="markings" className="text-sm font-medium text-foreground">Marcações (Formato JSON Array)</Label>
                     <Textarea
                       id="markings"
                       {...form.register('markings')}
@@ -546,18 +546,18 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                       rows={3}
                       className="font-mono text-sm"
                     />
-                    <p className="text-xs text-muted-foreground">Enter markings as a JSON array. Each marking should be in quotes and separated by commas.</p>
+                    <p className="text-xs text-muted-foreground">Inserir marcações como um array JSON. Cada marcação deve estar entre aspas e separadas por vírgulas.</p>
                   </div>
                 </div>
 
                 {/* Special Features Section */}
                 <div className="space-y-4">
                   <div className="border-b pb-3">
-                    <h3 className="text-lg font-semibold text-foreground">Special Features</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Unique product features and capabilities</p>
+                    <h3 className="text-lg font-semibold text-foreground">Características Especiais</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Características únicas e capacidades do produto</p>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="specialFeatures" className="text-sm font-medium text-foreground">Special Features (JSON Array Format)</Label>
+                    <Label htmlFor="specialFeatures" className="text-sm font-medium text-foreground">Características Especiais (Formato JSON Array)</Label>
                     <Textarea
                       id="specialFeatures"
                       {...form.register('specialFeatures')}
@@ -566,7 +566,7 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                       rows={3}
                       className="font-mono text-sm"
                     />
-                    <p className="text-xs text-muted-foreground">List special features as a JSON array. Examples: stackable, recyclable, UV-resistant, etc.</p>
+                    <p className="text-xs text-muted-foreground">Listar características especiais como um array JSON. Exemplos: empilhável, reciclável, resistente UV, etc.</p>
                   </div>
                 </div>
               </TabsContent>
@@ -575,11 +575,11 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                 {/* Packaging Information Section */}
                 <div className="space-y-4">
                   <div className="border-b pb-3">
-                    <h3 className="text-lg font-semibold text-foreground">Packaging & Logistics</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Shipping, storage, and packaging specifications</p>
+                    <h3 className="text-lg font-semibold text-foreground">Embalagem e Logística</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Especificações de envio, armazenamento e embalagem</p>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="packaging" className="text-sm font-medium text-foreground">Packaging Details (JSON Format)</Label>
+                    <Label htmlFor="packaging" className="text-sm font-medium text-foreground">Detalhes de Embalagem (Formato JSON)</Label>
                     <Textarea
                       id="packaging"
                       {...form.register('packaging')}
@@ -588,28 +588,28 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                       rows={4}
                       className="font-mono text-sm"
                     />
-                    <p className="text-xs text-muted-foreground">Specify packaging information in JSON format. Include units per pallet, truck capacity, dimensions, etc.</p>
+                    <p className="text-xs text-muted-foreground">Especificar informações de embalagem em formato JSON. Incluir unidades por palete, capacidade do camião, dimensões, etc.</p>
                   </div>
                 </div>
 
                 {/* Additional Information Section */}
                 <div className="space-y-4">
                   <div className="border-b pb-3">
-                    <h3 className="text-lg font-semibold text-foreground">Additional Information</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Notes, comments, and product status</p>
+                    <h3 className="text-lg font-semibold text-foreground">Informações Adicionais</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Notas, comentários e estado do produto</p>
                   </div>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="notes" className="text-sm font-medium text-foreground">Notes & Comments</Label>
+                      <Label htmlFor="notes" className="text-sm font-medium text-foreground">Notas e Comentários</Label>
                       <Textarea
                         id="notes"
                         {...form.register('notes')}
-                        placeholder="Additional notes, special instructions, or important information about this product..."
+                        placeholder="Notas adicionais, instruções especiais ou informações importantes sobre este produto..."
                         data-testid="textarea-notes"
                         rows={4}
                         className="text-sm"
                       />
-                      <p className="text-xs text-muted-foreground">Add any relevant notes, special instructions, or additional information</p>
+                      <p className="text-xs text-muted-foreground">Adicionar notas relevantes, instruções especiais ou informações adicionais</p>
                     </div>
 
                     <div className="pt-4">
@@ -621,8 +621,8 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                           data-testid="switch-is-active"
                         />
                         <div className="space-y-1">
-                          <Label htmlFor="isActive" className="text-sm font-medium text-foreground">Product is Active</Label>
-                          <p className="text-xs text-muted-foreground">Enable this product for use in the system</p>
+                          <Label htmlFor="isActive" className="text-sm font-medium text-foreground">Produto está Activo</Label>
+                          <p className="text-xs text-muted-foreground">Activar este produto para uso no sistema</p>
                         </div>
                       </div>
                     </div>
@@ -634,7 +634,7 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
             {/* Form Actions */}
             <div className="flex items-center justify-between pt-8 border-t border-border">
               <div className="text-sm text-muted-foreground">
-                <span className="text-destructive">*</span> Required fields
+                <span className="text-destructive">*</span> Campos obrigatórios
               </div>
               <div className="flex gap-3">
                 <Button 
@@ -645,7 +645,7 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                   className="min-w-24"
                 >
                   <X className="w-4 h-4 mr-2" />
-                  Cancel
+                  Cancelar
                 </Button>
                 <Button 
                   type="submit" 
@@ -655,8 +655,8 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                 >
                   <Save className="w-4 h-4 mr-2" />
                   {isLoading 
-                    ? (product ? 'Updating...' : 'Saving...') 
-                    : (product ? 'Update Product' : 'Save Product')
+                    ? (product ? 'A actualizar...' : 'A guardar...') 
+                    : (product ? 'Actualizar Produto' : 'Guardar Produto')
                   }
                 </Button>
               </div>
