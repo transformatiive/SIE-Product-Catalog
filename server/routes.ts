@@ -15,7 +15,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const searchResult = productSearchSchema.safeParse(req.query);
       if (!searchResult.success) {
         return res.status(400).json({ 
-          message: "Invalid search parameters", 
+          message: "Parâmetros de pesquisa inválidos", 
           errors: fromZodError(searchResult.error).toString()
         });
       }
@@ -24,7 +24,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(products);
     } catch (error) {
       console.error("Error getting products:", error);
-      res.status(500).json({ message: "Failed to get products" });
+      res.status(500).json({ message: "Falha ao obter produtos" });
     }
   });
 
@@ -35,13 +35,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const product = await storage.getProduct(id);
       
       if (!product) {
-        return res.status(404).json({ message: "Product not found" });
+        return res.status(404).json({ message: "Produto não encontrado" });
       }
       
       res.json(product);
     } catch (error) {
       console.error("Error getting product:", error);
-      res.status(500).json({ message: "Failed to get product" });
+      res.status(500).json({ message: "Falha ao obter produto" });
     }
   });
 
@@ -52,13 +52,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const product = await storage.getProductByCode(productCode);
       
       if (!product) {
-        return res.status(404).json({ message: "Product not found" });
+        return res.status(404).json({ message: "Produto não encontrado" });
       }
       
       res.json(product);
     } catch (error) {
       console.error("Error getting product by code:", error);
-      res.status(500).json({ message: "Failed to get product" });
+      res.status(500).json({ message: "Falha ao obter produto" });
     }
   });
 
@@ -68,7 +68,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validation = insertProductSchema.safeParse(req.body);
       if (!validation.success) {
         return res.status(400).json({ 
-          message: "Invalid product data", 
+          message: "Dados do produto inválidos", 
           errors: fromZodError(validation.error).toString()
         });
       }
@@ -76,14 +76,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if product code already exists
       const existingProduct = await storage.getProductByCode(validation.data.productCode);
       if (existingProduct) {
-        return res.status(409).json({ message: "Product code already exists" });
+        return res.status(409).json({ message: "Código do produto já existe" });
       }
 
       const product = await storage.createProduct(validation.data);
       res.status(201).json(product);
     } catch (error) {
       console.error("Error creating product:", error);
-      res.status(500).json({ message: "Failed to create product" });
+      res.status(500).json({ message: "Falha ao criar produto" });
     }
   });
 
@@ -95,7 +95,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!validation.success) {
         return res.status(400).json({ 
-          message: "Invalid product data", 
+          message: "Dados do produto inválidos", 
           errors: fromZodError(validation.error).toString()
         });
       }
@@ -103,26 +103,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if product exists
       const existingProduct = await storage.getProduct(id);
       if (!existingProduct) {
-        return res.status(404).json({ message: "Product not found" });
+        return res.status(404).json({ message: "Produto não encontrado" });
       }
 
       // If updating product code, check for uniqueness
       if (validation.data.productCode && validation.data.productCode !== existingProduct.productCode) {
         const productWithCode = await storage.getProductByCode(validation.data.productCode);
         if (productWithCode && productWithCode.id !== id) {
-          return res.status(409).json({ message: "Product code already exists" });
+          return res.status(409).json({ message: "Código do produto já existe" });
         }
       }
 
       const updatedProduct = await storage.updateProduct(id, validation.data);
       if (!updatedProduct) {
-        return res.status(404).json({ message: "Product not found" });
+        return res.status(404).json({ message: "Produto não encontrado" });
       }
       
       res.json(updatedProduct);
     } catch (error) {
       console.error("Error updating product:", error);
-      res.status(500).json({ message: "Failed to update product" });
+      res.status(500).json({ message: "Falha ao atualizar produto" });
     }
   });
 
@@ -134,18 +134,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if product exists
       const existingProduct = await storage.getProduct(id);
       if (!existingProduct) {
-        return res.status(404).json({ message: "Product not found" });
+        return res.status(404).json({ message: "Produto não encontrado" });
       }
 
       const deleted = await storage.deleteProduct(id);
       if (!deleted) {
-        return res.status(500).json({ message: "Failed to delete product" });
+        return res.status(500).json({ message: "Falha ao eliminar produto" });
       }
       
       res.status(204).send();
     } catch (error) {
       console.error("Error deleting product:", error);
-      res.status(500).json({ message: "Failed to delete product" });
+      res.status(500).json({ message: "Falha ao eliminar produto" });
     }
   });
 
@@ -157,7 +157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get the product
       const product = await storage.getProduct(id);
       if (!product) {
-        return res.status(404).json({ message: "Product not found" });
+        return res.status(404).json({ message: "Produto não encontrado" });
       }
 
       // Import the PDF template dynamically to avoid import issues
@@ -181,8 +181,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating PDF:", error);
       res.status(500).json({ 
-        message: "Failed to generate PDF", 
-        error: error instanceof Error ? error.message : "Unknown error" 
+        message: "Falha ao gerar PDF", 
+        error: error instanceof Error ? error.message : "Erro desconhecido" 
       });
     }
   });
@@ -196,13 +196,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(id);
       
       if (!user) {
-        return res.status(404).json({ message: "User not found" });
+        return res.status(404).json({ message: "Utilizador não encontrado" });
       }
       
       res.json(user);
     } catch (error) {
       console.error("Error getting user:", error);
-      res.status(500).json({ message: "Failed to get user" });
+      res.status(500).json({ message: "Falha ao obter utilizador" });
     }
   });
 
