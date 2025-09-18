@@ -15,7 +15,7 @@ import { Product, InsertProduct, ProductSearch } from '@shared/schema';
 type ViewMode = 'list' | 'search' | 'detail' | 'form' | 'create';
 
 export default function Dashboard() {
-  const [currentView, setCurrentView] = useState<ViewMode>('search');
+  const [currentView, setCurrentView] = useState<ViewMode>('list');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [searchFilters, setSearchFilters] = useState<ProductSearch>({});
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -24,7 +24,24 @@ export default function Dashboard() {
   // Fetch products with search filters
   const { data: products = [], isLoading: isLoadingProducts } = useQuery<Product[]>({
     queryKey: ['/api/products', searchFilters],
-    enabled: currentView === 'list',
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (searchFilters.query) params.append('query', searchFilters.query);
+      if (searchFilters.productCode) params.append('productCode', searchFilters.productCode);
+      if (searchFilters.model) params.append('model', searchFilters.model);
+      if (searchFilters.family) params.append('family', searchFilters.family);
+      if (searchFilters.type) params.append('type', searchFilters.type);
+      if (searchFilters.purchaseDate) params.append('purchaseDate', searchFilters.purchaseDate);
+      if (searchFilters.createdAfter) params.append('createdAfter', searchFilters.createdAfter);
+      if (searchFilters.createdBefore) params.append('createdBefore', searchFilters.createdBefore);
+      
+      const url = `/api/products${params.toString() ? `?${params.toString()}` : ''}`;
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    },
   });
 
   // Product count for sidebar
@@ -191,8 +208,8 @@ export default function Dashboard() {
   };
 
   const style = {
-    "--sidebar-width": "16rem",
-    "--sidebar-width-icon": "3rem",
+    "--sidebar-width": "20rem",
+    "--sidebar-width-icon": "4rem",
   };
 
   const renderCurrentView = () => {

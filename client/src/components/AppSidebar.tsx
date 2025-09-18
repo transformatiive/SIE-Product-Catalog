@@ -112,9 +112,9 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
                       }
                     `}
                   >
-                    <div className="flex items-center gap-4 w-full">
+                    <div className="flex items-center gap-3 w-full overflow-hidden">
                       <div className={`
-                        w-8 h-8 rounded-md flex items-center justify-center transition-all duration-200
+                        w-8 h-8 rounded-md flex items-center justify-center transition-all duration-200 flex-shrink-0
                         ${currentView === item.url 
                           ? 'bg-primary/20 text-primary' 
                           : 'bg-muted/50 text-muted-foreground group-hover:bg-muted group-hover:text-foreground'
@@ -123,9 +123,9 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
                         <item.icon className="w-4 h-4" />
                       </div>
                       <div className="flex flex-col flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-2">
                           <span className={`
-                            text-sm font-medium transition-colors
+                            text-sm font-medium transition-colors truncate
                             ${currentView === item.url ? 'text-primary' : 'text-foreground'}
                           `}>
                             {item.title}
@@ -133,13 +133,13 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
                           {item.badge && (
                             <Badge 
                               variant={currentView === item.url ? "default" : "secondary"} 
-                              className="h-5 text-xs px-2 ml-2"
+                              className="h-5 text-xs px-2 flex-shrink-0"
                             >
                               {item.badge}
                             </Badge>
                           )}
                         </div>
-                        <span className="text-xs text-muted-foreground text-left">
+                        <span className="text-xs text-muted-foreground text-left truncate">
                           {item.description}
                         </span>
                       </div>
