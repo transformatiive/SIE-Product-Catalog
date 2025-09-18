@@ -1,6 +1,47 @@
 import { createElement as h } from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 import { Product } from '@shared/schema';
+import path from 'path';
+import fs from 'fs';
+
+// Helper function to convert web paths to filesystem paths for PDF generation
+function resolveImagePath(webPath: string | null): string | null {
+  if (!webPath || webPath.trim() === '') {
+    return null;
+  }
+
+  try {
+    // Remove leading slash if present and ensure it starts with uploads/
+    const cleanPath = webPath.startsWith('/') ? webPath.slice(1) : webPath;
+    
+    // Security: ensure the path only contains uploads/ directory
+    if (!cleanPath.startsWith('uploads/')) {
+      console.warn(`Invalid image path: ${webPath}. Path must start with uploads/`);
+      return null;
+    }
+
+    // Build the full filesystem path
+    const fullPath = path.join(process.cwd(), 'public', cleanPath);
+    
+    // Security: ensure the resolved path is within the public/uploads directory
+    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+    if (!fullPath.startsWith(uploadsDir)) {
+      console.warn(`Path traversal attempt detected: ${webPath}`);
+      return null;
+    }
+
+    // Check if file exists
+    if (fs.existsSync(fullPath)) {
+      return fullPath;
+    } else {
+      console.warn(`Image file not found: ${fullPath}`);
+      return null;
+    }
+  } catch (error) {
+    console.error(`Error resolving image path ${webPath}:`, error);
+    return null;
+  }
+}
 
 // SIE Brand Colors and Styles
 const styles = StyleSheet.create({
@@ -439,10 +480,10 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
         h(View, { style: styles.mainContentRow },
           // PRODUCT IMAGE
           h(View, { style: styles.productImageSection },
-            product.productImage 
+            resolveImagePath(product.productImage)
               ? h(Image, { 
                   style: styles.productImage, 
-                  src: product.productImage 
+                  src: resolveImagePath(product.productImage)! 
                 })
               : h(Text, { style: styles.productImagePlaceholder }, 
                   'IMAGEM DO PRODUTO\n(Imagem será exibida aqui)')
@@ -575,10 +616,10 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
               'Medidas apresentadas em milímetros com tolerância de ±3%'),
             
             h(View, { style: styles.technicalDrawingContainer },
-              product.technicalDrawing
+              resolveImagePath(product.technicalDrawing)
                 ? h(Image, { 
                     style: styles.technicalDrawing, 
-                    src: product.technicalDrawing 
+                    src: resolveImagePath(product.technicalDrawing)! 
                   })
                 : h(Text, { style: styles.drawingPlaceholder }, 
                     'DESENHO TÉCNICO 2D\n(Blueprint será exibido aqui)')
@@ -608,10 +649,10 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
 
               // 3D PRODUCT IMAGE
               h(View, { style: styles.productImageSection },
-                product.productImage 
+                resolveImagePath(product.productImage)
                   ? h(Image, { 
                       style: styles.productImage, 
-                      src: product.productImage 
+                      src: resolveImagePath(product.productImage)! 
                     })
                   : h(Text, { style: styles.productImagePlaceholder }, 
                       'Imagem 3D do Produto')
