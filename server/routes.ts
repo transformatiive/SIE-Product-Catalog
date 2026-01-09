@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import path from "path";
 import multer from "multer";
 import fs from "fs-extra";
+import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { storage, db } from "./storage";
 import { 
@@ -82,7 +83,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Email ou password incorretos" });
       }
 
-      if (user.password !== password) {
+      const passwordMatch = await bcrypt.compare(password, user.password);
+      if (!passwordMatch) {
         return res.status(401).json({ message: "Email ou password incorretos" });
       }
 
@@ -176,7 +178,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Email já registado" });
       }
 
-      const user = await storage.createUser(result.data);
+      const hashedPassword = await bcrypt.hash(result.data.password, 10);
+      const user = await storage.createUser({
+        ...result.data,
+        password: hashedPassword,
+      });
       res.status(201).json({ 
         id: user.id, 
         name: user.name, 
@@ -193,7 +199,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/users/:id", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
-      const user = await storage.updateUser(id, req.body);
+      const updateData = { ...req.body };
+      
+      if (updateData.password) {
+        updateData.password = await bcrypt.hash(updateData.password, 10);
+      }
+      
+      const user = await storage.updateUser(id, updateData);
       
       if (!user) {
         return res.status(404).json({ message: "Utilizador não encontrado" });
