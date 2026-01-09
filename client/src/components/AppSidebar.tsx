@@ -1,5 +1,5 @@
 import { Search, List, Plus, BarChart3, Settings, Cog } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import {
   Sidebar,
   SidebarContent,
@@ -23,6 +23,8 @@ interface AppSidebarProps {
 }
 
 export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebarProps) {
+  const [location, setLocation] = useLocation();
+  const isOnAdminPage = location === "/admin";
   const navigationItems = [
     {
       title: "Pesquisa",
@@ -57,7 +59,12 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
   ];
 
   const handleNavigation = (view: string) => {
-    onNavigate(view as ViewMode);
+    if (isOnAdminPage) {
+      setLocation("/");
+      setTimeout(() => onNavigate(view as ViewMode), 50);
+    } else {
+      onNavigate(view as ViewMode);
+    }
   };
 
   return (
