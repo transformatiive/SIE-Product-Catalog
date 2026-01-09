@@ -76,7 +76,7 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
             alt="SIE - Sociedade Internacional de Embalagens" 
             className="h-7 w-auto"
           />
-          <span className="text-[10px] text-center text-muted-foreground leading-tight font-medium">
+          <span className="text-xs text-center text-sidebar-foreground/80 leading-tight font-medium">
             Gestão Fichas Técnicas de Produtos
           </span>
         </div>
@@ -95,18 +95,18 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
                     className={`
                       h-10 px-3 rounded-md transition-all duration-150
                       ${currentView === item.url 
-                        ? 'bg-primary/10 text-primary font-medium' 
-                        : 'hover:bg-muted text-foreground'
+                        ? 'bg-primary text-primary-foreground font-medium' 
+                        : 'hover:bg-sidebar-accent text-sidebar-foreground'
                       }
                     `}
                   >
                     <div className="flex items-center gap-3 w-full">
-                      <item.icon className={`w-4 h-4 flex-shrink-0 ${currentView === item.url ? 'text-primary' : 'text-muted-foreground'}`} />
+                      <item.icon className={`w-4 h-4 flex-shrink-0 ${currentView === item.url ? 'text-primary-foreground' : 'text-sidebar-foreground/70'}`} />
                       <span className="text-sm truncate">{item.title}</span>
                       {item.badge !== undefined && (
                         <Badge 
-                          variant={currentView === item.url ? "default" : "secondary"} 
-                          className="h-5 text-xs px-1.5 ml-auto"
+                          variant={currentView === item.url ? "secondary" : "outline"} 
+                          className={`h-5 text-xs px-1.5 ml-auto ${currentView === item.url ? '' : 'border-sidebar-foreground/30 text-sidebar-foreground'}`}
                         >
                           {item.badge}
                         </Badge>
@@ -129,11 +129,11 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
                   {item.disabled ? (
                     <SidebarMenuButton 
                       disabled
-                      className="h-10 px-3 rounded-md opacity-50 cursor-not-allowed"
+                      className="h-10 px-3 rounded-md opacity-40 cursor-not-allowed"
                     >
                       <div className="flex items-center gap-3 w-full">
-                        <item.icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                        <span className="text-sm text-muted-foreground truncate">{item.title}</span>
+                        <item.icon className="w-4 h-4 text-sidebar-foreground/50 flex-shrink-0" />
+                        <span className="text-sm text-sidebar-foreground/50 truncate">{item.title}</span>
                       </div>
                     </SidebarMenuButton>
                   ) : (
@@ -143,14 +143,14 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
                       className={`
                         h-10 px-3 rounded-md transition-all duration-150
                         ${currentView === 'admin' 
-                          ? 'bg-primary/10 text-primary font-medium' 
-                          : 'hover:bg-muted text-foreground'
+                          ? 'bg-primary text-primary-foreground font-medium' 
+                          : 'hover:bg-sidebar-accent text-sidebar-foreground'
                         }
                       `}
                     >
                       <Link href={item.url!}>
                         <div className="flex items-center gap-3 w-full">
-                          <item.icon className={`w-4 h-4 flex-shrink-0 ${currentView === 'admin' ? 'text-primary' : 'text-muted-foreground'}`} />
+                          <item.icon className={`w-4 h-4 flex-shrink-0 ${currentView === 'admin' ? 'text-primary-foreground' : 'text-sidebar-foreground/70'}`} />
                           <span className="text-sm truncate">{item.title}</span>
                         </div>
                       </Link>
@@ -170,12 +170,12 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
               <SidebarMenuItem>
                 <SidebarMenuButton 
                   disabled
-                  className="h-10 px-3 rounded-md opacity-50 cursor-not-allowed"
+                  className="h-10 px-3 rounded-md opacity-40 cursor-not-allowed"
                 >
                   <div className="flex items-center gap-3 w-full">
-                    <BarChart3 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                    <span className="text-sm text-muted-foreground truncate">Relatórios</span>
-                    <Badge variant="outline" className="h-4 text-[10px] px-1 ml-auto">
+                    <BarChart3 className="w-4 h-4 text-sidebar-foreground/50 flex-shrink-0" />
+                    <span className="text-sm text-sidebar-foreground/50 truncate">Relatórios</span>
+                    <Badge variant="outline" className="h-4 text-[10px] px-1 ml-auto border-sidebar-foreground/30 text-sidebar-foreground/60">
                       Beta
                     </Badge>
                   </div>
