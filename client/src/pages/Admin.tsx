@@ -405,12 +405,12 @@ export default function Admin() {
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="families" className="w-full">
-                  <TabsList className="flex flex-wrap h-auto gap-1 mb-6">
+                  <TabsList className="grid grid-cols-3 h-auto gap-1 p-1 bg-muted/50 mb-6">
                     {tabConfigs.map((tab) => (
                       <TabsTrigger
                         key={tab.name}
                         value={tab.name}
-                        className="text-xs sm:text-sm"
+                        className="text-xs sm:text-sm py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
                       >
                         {tab.label}
                       </TabsTrigger>
