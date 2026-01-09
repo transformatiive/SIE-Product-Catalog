@@ -1,4 +1,4 @@
-import { Search, List, Plus, BarChart3, Settings, Cog } from "lucide-react";
+import { Search, List, Plus, BarChart3, Settings, Users, LogOut } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
   Sidebar,
@@ -10,8 +10,10 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   SidebarSeparator,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
 import sieLogo from "@assets/sie-logo.svg";
 
 type ViewMode = 'list' | 'search' | 'detail' | 'form' | 'create';
@@ -24,6 +26,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebarProps) {
   const [location, setLocation] = useLocation();
+  const { user, logout, isLoggingOut } = useAuth();
   const isOnAdminPage = location === "/admin";
   const navigationItems = [
     {
@@ -46,15 +49,18 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
 
   const systemItems = [
     {
-      title: "Admin",
+      title: "Tabelas de Suporte",
       icon: Settings,
       url: "/admin",
       disabled: false,
+      key: "admin",
     },
     {
-      title: "Config",
-      icon: Cog,
-      disabled: true,
+      title: "Utilizadores",
+      icon: Users,
+      url: "/admin?tab=users",
+      disabled: false,
+      key: "users",
     },
   ];
 
@@ -124,40 +130,34 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
-              {systemItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  {item.disabled ? (
-                    <SidebarMenuButton 
-                      disabled
-                      className="h-10 px-3 rounded-md opacity-40 cursor-not-allowed"
-                    >
-                      <div className="flex items-center gap-3 w-full">
-                        <item.icon className="w-4 h-4 text-sidebar-foreground/50 flex-shrink-0" />
-                        <span className="text-sm text-sidebar-foreground/50 truncate">{item.title}</span>
-                      </div>
-                    </SidebarMenuButton>
-                  ) : (
+              {systemItems.map((item) => {
+                const isActive = item.key === 'admin' 
+                  ? location === '/admin' && !location.includes('tab=users')
+                  : location.includes('tab=users');
+                  
+                return (
+                  <SidebarMenuItem key={item.key}>
                     <SidebarMenuButton 
                       asChild
-                      isActive={currentView === 'admin'}
+                      isActive={isActive}
                       className={`
                         h-10 px-3 rounded-md transition-all duration-150
-                        ${currentView === 'admin' 
+                        ${isActive 
                           ? 'bg-primary text-primary-foreground font-medium' 
                           : 'hover:bg-sidebar-accent text-sidebar-foreground'
                         }
                       `}
                     >
-                      <Link href={item.url!}>
+                      <Link href={item.url}>
                         <div className="flex items-center gap-3 w-full">
-                          <item.icon className={`w-4 h-4 flex-shrink-0 ${currentView === 'admin' ? 'text-primary-foreground' : 'text-sidebar-foreground/70'}`} />
+                          <item.icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-primary-foreground' : 'text-sidebar-foreground/70'}`} />
                           <span className="text-sm truncate">{item.title}</span>
                         </div>
                       </Link>
                     </SidebarMenuButton>
-                  )}
-                </SidebarMenuItem>
-              ))}
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -185,6 +185,27 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter className="p-2 border-t border-sidebar-border">
+        <div className="flex flex-col gap-2">
+          {user && (
+            <div className="px-3 py-2">
+              <p className="text-xs text-sidebar-foreground/60 truncate">Sessão iniciada como</p>
+              <p className="text-sm text-sidebar-foreground font-medium truncate">{user.name}</p>
+            </div>
+          )}
+          <SidebarMenuButton 
+            onClick={() => logout()}
+            disabled={isLoggingOut}
+            className="h-10 px-3 rounded-md hover:bg-destructive/20 text-sidebar-foreground transition-all duration-150"
+          >
+            <div className="flex items-center gap-3 w-full">
+              <LogOut className="w-4 h-4 text-sidebar-foreground/70 flex-shrink-0" />
+              <span className="text-sm truncate">{isLoggingOut ? "A sair..." : "Terminar Sessão"}</span>
+            </div>
+          </SidebarMenuButton>
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useSearch } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -36,7 +37,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Pencil, Trash2, Settings } from "lucide-react";
+import { Plus, Pencil, Trash2, Settings, Users } from "lucide-react";
+import { UsersManagement } from "@/components/UsersManagement";
 import type { DropdownOption } from "@shared/schema";
 
 type TableName = 
@@ -370,6 +372,11 @@ function AdminTable({ tableName }: { tableName: TableName }) {
 }
 
 export default function Admin() {
+  const searchString = useSearch();
+  const searchParams = new URLSearchParams(searchString);
+  const activeTab = searchParams.get("tab");
+  const isUsersTab = activeTab === "users";
+
   const { data: products = [] } = useQuery<{ id: string }[]>({
     queryKey: ["/api/products"],
   });
@@ -388,42 +395,52 @@ export default function Admin() {
             <SidebarTrigger />
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center">
-                <Settings className="w-4 h-4 text-primary" />
+                {isUsersTab ? (
+                  <Users className="w-4 h-4 text-primary" />
+                ) : (
+                  <Settings className="w-4 h-4 text-primary" />
+                )}
               </div>
               <div>
-                <h1 className="text-lg font-semibold">Administração</h1>
+                <h1 className="text-lg font-semibold">
+                  {isUsersTab ? "Utilizadores" : "Administração"}
+                </h1>
                 <p className="text-sm text-muted-foreground">
-                  Gestão de tabelas de suporte
+                  {isUsersTab ? "Gestão de utilizadores do sistema" : "Gestão de tabelas de suporte"}
                 </p>
               </div>
             </div>
           </header>
           <main className="flex-1 overflow-auto p-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Tabelas de Suporte</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="families" className="w-full">
-                  <TabsList className="grid grid-cols-3 h-auto gap-1 p-1 bg-muted/50 mb-6">
+            {isUsersTab ? (
+              <UsersManagement />
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Tabelas de Suporte</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Tabs defaultValue="families" className="w-full">
+                    <TabsList className="grid grid-cols-3 h-auto gap-1 p-1 bg-muted/50 mb-6">
+                      {tabConfigs.map((tab) => (
+                        <TabsTrigger
+                          key={tab.name}
+                          value={tab.name}
+                          className="text-xs sm:text-sm py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+                        >
+                          {tab.label}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
                     {tabConfigs.map((tab) => (
-                      <TabsTrigger
-                        key={tab.name}
-                        value={tab.name}
-                        className="text-xs sm:text-sm py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
-                      >
-                        {tab.label}
-                      </TabsTrigger>
+                      <TabsContent key={tab.name} value={tab.name}>
+                        <AdminTable tableName={tab.name} />
+                      </TabsContent>
                     ))}
-                  </TabsList>
-                  {tabConfigs.map((tab) => (
-                    <TabsContent key={tab.name} value={tab.name}>
-                      <AdminTable tableName={tab.name} />
-                    </TabsContent>
-                  ))}
-                </Tabs>
-              </CardContent>
-            </Card>
+                  </Tabs>
+                </CardContent>
+              </Card>
+            )}
           </main>
         </div>
       </div>
