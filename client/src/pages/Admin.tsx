@@ -393,7 +393,7 @@ export default function Admin() {
               <div>
                 <h1 className="text-lg font-semibold">Administração</h1>
                 <p className="text-sm text-muted-foreground">
-                  Gestão de opções de dropdown
+                  Gestão de tabelas de suporte
                 </p>
               </div>
             </div>
@@ -401,7 +401,7 @@ export default function Admin() {
           <main className="flex-1 overflow-auto p-6">
             <Card>
               <CardHeader>
-                <CardTitle>Opções de Dropdown</CardTitle>
+                <CardTitle>Tabelas de Suporte</CardTitle>
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="families" className="w-full">
