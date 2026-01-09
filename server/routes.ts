@@ -3,11 +3,46 @@ import { createServer, type Server } from "http";
 import path from "path";
 import multer from "multer";
 import fs from "fs-extra";
-import { storage } from "./storage";
-import { insertProductSchema, updateProductSchema, productSearchSchema } from "@shared/schema";
+import { eq } from "drizzle-orm";
+import { storage, db } from "./storage";
+import { 
+  insertProductSchema, 
+  updateProductSchema, 
+  productSearchSchema,
+  families,
+  insertFamilySchema,
+  productTypes,
+  insertProductTypeSchema,
+  capacities,
+  insertCapacitySchema,
+  rawMaterials,
+  insertRawMaterialSchema,
+  colors,
+  insertColorSchema,
+  closingSystems,
+  insertClosingSystemSchema,
+  capSizes,
+  insertCapSizeSchema,
+  certificationTypes,
+  insertCertificationTypeSchema,
+  packagingTypes,
+  insertPackagingTypeSchema
+} from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { renderToBuffer } from '@react-pdf/renderer';
 import React from 'react';
+
+const tableMap = {
+  families: { table: families, insertSchema: insertFamilySchema },
+  productTypes: { table: productTypes, insertSchema: insertProductTypeSchema },
+  capacities: { table: capacities, insertSchema: insertCapacitySchema },
+  rawMaterials: { table: rawMaterials, insertSchema: insertRawMaterialSchema },
+  colors: { table: colors, insertSchema: insertColorSchema },
+  closingSystems: { table: closingSystems, insertSchema: insertClosingSystemSchema },
+  capSizes: { table: capSizes, insertSchema: insertCapSizeSchema },
+  certificationTypes: { table: certificationTypes, insertSchema: insertCertificationTypeSchema },
+  packagingTypes: { table: packagingTypes, insertSchema: insertPackagingTypeSchema },
+};
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Product routes
@@ -515,6 +550,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
+  // ================================
+  // ADMIN ROUTES FOR SUPPORT TABLES
+  // ================================
+
+  // GET /api/admin/:tableName - Get all options for a table
+  app.get("/api/admin/:tableName", async (req, res) => {
+    try {
+      const { tableName } = req.params;
+      const tableConfig = tableMap[tableName as keyof typeof tableMap];
+      
+      if (!tableConfig) {
+        return res.status(404).json({ message: "Tabela não encontrada" });
+      }
+      
+      const showAll = req.query.all === 'true';
+      const options = showAll 
+        ? await db.select().from(tableConfig.table)
+        : await db.select().from(tableConfig.table).where(eq(tableConfig.table.isActive, true));
+      
+      res.json(options);
+    } catch (error) {
+      console.error("Error getting admin options:", error);
+      res.status(500).json({ message: "Falha ao obter opções" });
+    }
+  });
+
+  // POST /api/admin/:tableName - Create a new option
+  app.post("/api/admin/:tableName", async (req, res) => {
+    try {
+      const { tableName } = req.params;
+      const tableConfig = tableMap[tableName as keyof typeof tableMap];
+      
+      if (!tableConfig) {
+        return res.status(404).json({ message: "Tabela não encontrada" });
+      }
+      
+      const validation = tableConfig.insertSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ 
+          message: "Dados inválidos", 
+          errors: fromZodError(validation.error).toString()
+        });
+      }
+      
+      const result = await db.insert(tableConfig.table).values(validation.data).returning();
+      res.status(201).json(result[0]);
+    } catch (error) {
+      console.error("Error creating admin option:", error);
+      res.status(500).json({ message: "Falha ao criar opção" });
+    }
+  });
+
+  // PUT /api/admin/:tableName/:id - Update an option
+  app.put("/api/admin/:tableName/:id", async (req, res) => {
+    try {
+      const { tableName, id } = req.params;
+      const tableConfig = tableMap[tableName as keyof typeof tableMap];
+      
+      if (!tableConfig) {
+        return res.status(404).json({ message: "Tabela não encontrada" });
+      }
+      
+      const validation = tableConfig.insertSchema.partial().safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ 
+          message: "Dados inválidos", 
+          errors: fromZodError(validation.error).toString()
+        });
+      }
+      
+      const result = await db
+        .update(tableConfig.table)
+        .set(validation.data)
+        .where(eq(tableConfig.table.id, id))
+        .returning();
+      
+      if (result.length === 0) {
+        return res.status(404).json({ message: "Opção não encontrada" });
+      }
+      
+      res.json(result[0]);
+    } catch (error) {
+      console.error("Error updating admin option:", error);
+      res.status(500).json({ message: "Falha ao atualizar opção" });
+    }
+  });
+
+  // DELETE /api/admin/:tableName/:id - Soft delete (set isActive=false)
+  app.delete("/api/admin/:tableName/:id", async (req, res) => {
+    try {
+      const { tableName, id } = req.params;
+      const tableConfig = tableMap[tableName as keyof typeof tableMap];
+      
+      if (!tableConfig) {
+        return res.status(404).json({ message: "Tabela não encontrada" });
+      }
+      
+      const result = await db
+        .update(tableConfig.table)
+        .set({ isActive: false })
+        .where(eq(tableConfig.table.id, id))
+        .returning();
+      
+      if (result.length === 0) {
+        return res.status(404).json({ message: "Opção não encontrada" });
+      }
+      
+      res.json({ message: "Opção desativada com sucesso" });
+    } catch (error) {
+      console.error("Error deleting admin option:", error);
+      res.status(500).json({ message: "Falha ao eliminar opção" });
+    }
   });
 
   const httpServer = createServer(app);

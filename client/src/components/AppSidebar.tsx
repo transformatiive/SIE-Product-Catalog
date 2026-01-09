@@ -1,4 +1,5 @@
-import { Search, List, Plus, Package, BarChart3, Settings, ChevronRight } from "lucide-react";
+import { Search, List, Plus, Package, BarChart3, Settings, ChevronRight, Cog } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import {
   Sidebar,
   SidebarContent,
@@ -59,9 +60,16 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
 
   const systemItems = [
     {
+      title: "Administração",
+      description: "Gestão de opções",
+      icon: Settings,
+      url: "/admin",
+      disabled: false,
+    },
+    {
       title: "Definições",
       description: "Configuração",
-      icon: Settings,
+      icon: Cog,
       disabled: true,
       status: "maintenance",
     },
@@ -216,29 +224,71 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
             <SidebarMenu className="space-y-2">
               {systemItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    disabled={item.disabled}
-                    className="group h-12 px-4 rounded-lg border border-transparent opacity-60 cursor-not-allowed"
-                  >
-                    <div className="flex items-center gap-4 w-full">
-                      <div className="w-8 h-8 rounded-md bg-muted/30 flex items-center justify-center">
-                        <item.icon className="w-4 h-4 text-muted-foreground" />
-                      </div>
-                      <div className="flex flex-col flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-muted-foreground">
-                            {item.title}
-                          </span>
-                          <Badge variant="outline" className="h-5 text-xs px-2 ml-2 border-muted-foreground/30 text-muted-foreground">
-                            Em breve
-                          </Badge>
+                  {item.disabled ? (
+                    <SidebarMenuButton 
+                      disabled
+                      className="group h-12 px-4 rounded-lg border border-transparent opacity-60 cursor-not-allowed"
+                    >
+                      <div className="flex items-center gap-4 w-full">
+                        <div className="w-8 h-8 rounded-md bg-muted/30 flex items-center justify-center">
+                          <item.icon className="w-4 h-4 text-muted-foreground" />
                         </div>
-                        <span className="text-xs text-muted-foreground/60 text-left">
-                          {item.description}
-                        </span>
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              {item.title}
+                            </span>
+                            <Badge variant="outline" className="h-5 text-xs px-2 ml-2 border-muted-foreground/30 text-muted-foreground">
+                              Em breve
+                            </Badge>
+                          </div>
+                          <span className="text-xs text-muted-foreground/60 text-left">
+                            {item.description}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  </SidebarMenuButton>
+                    </SidebarMenuButton>
+                  ) : (
+                    <SidebarMenuButton 
+                      asChild
+                      isActive={currentView === 'admin'}
+                      className={`
+                        group h-12 px-4 rounded-lg transition-all duration-200 relative overflow-hidden
+                        ${currentView === 'admin' 
+                          ? 'bg-gradient-to-r from-primary/15 via-primary/10 to-primary/5 border border-primary/20 text-primary shadow-sm' 
+                          : 'hover-elevate border border-transparent hover:border-sidebar-border/30 hover:shadow-sm'
+                        }
+                      `}
+                    >
+                      <Link href={item.url!}>
+                        <div className="flex items-center gap-3 w-full overflow-hidden">
+                          <div className={`
+                            w-8 h-8 rounded-md flex items-center justify-center transition-all duration-200 flex-shrink-0
+                            ${currentView === 'admin' 
+                              ? 'bg-primary/20 text-primary' 
+                              : 'bg-muted/50 text-muted-foreground group-hover:bg-muted group-hover:text-foreground'
+                            }
+                          `}>
+                            <item.icon className="w-4 h-4" />
+                          </div>
+                          <div className="flex flex-col flex-1 min-w-0">
+                            <span className={`
+                              text-sm font-medium transition-colors truncate
+                              ${currentView === 'admin' ? 'text-primary' : 'text-foreground'}
+                            `}>
+                              {item.title}
+                            </span>
+                            <span className="text-xs text-muted-foreground text-left truncate">
+                              {item.description}
+                            </span>
+                          </div>
+                          {currentView === 'admin' && (
+                            <ChevronRight className="w-3 h-3 text-primary/60" />
+                          )}
+                        </div>
+                      </Link>
+                    </SidebarMenuButton>
+                  )}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
