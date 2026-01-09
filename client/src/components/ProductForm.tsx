@@ -137,7 +137,6 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
     };
   });
 
-  // State for image uploads
   const [productImage, setProductImage] = useState<string | null>(product?.productImage || null);
   const [technicalDrawing, setTechnicalDrawing] = useState<string | null>(product?.technicalDrawing || null);
 
@@ -149,6 +148,8 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
       type: product?.type || '',
       product: product?.product || '',
       productCode: product?.productCode || '',
+      designation: product?.designation || '',
+      barcode: product?.barcode || '',
       nominalCapacity: product?.nominalCapacity || '',
       totalCapacity: product?.totalCapacity || '',
       rawMaterial: product?.rawMaterial || '',
@@ -157,12 +158,37 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
       weightWithAccessories: product?.weightWithAccessories || '',
       dimensions: product?.dimensions || '',
       closingSystem: product?.closingSystem || '',
+      capType: product?.capType || '',
+      capDimensions: product?.capDimensions || '',
       sealingType: product?.sealingType || '',
+      vedantePead: product?.vedantePead ?? false,
+      vedanteEpdm: product?.vedanteEpdm ?? false,
+      vedanteOutros: product?.vedanteOutros || '',
       handlingSystem: product?.handlingSystem || '',
+      pegasLaterais: product?.pegasLaterais ?? false,
+      pegaSuperior: product?.pegaSuperior ?? false,
+      cavidades: product?.cavidades ?? false,
+      manuseamentoOutros: product?.manuseamentoOutros || '',
       certifications: product?.certifications || '',
       markings: product?.markings || '',
+      datador: product?.datador ?? false,
+      simboloSie: product?.simboloSie ?? false,
+      simboloMp: product?.simboloMp ?? false,
+      gravacaoCliente: product?.gravacaoCliente ?? false,
+      visor: product?.visor ?? false,
+      bica: product?.bica ?? false,
+      coexPoliamida: product?.coexPoliamida ?? false,
+      adaptacao: product?.adaptacao ?? false,
+      autoculanteCliente: product?.autoculanteCliente || '',
+      especificacoesEmbFlexiveis: product?.especificacoesEmbFlexiveis || '',
       foodContact: product?.foodContact ?? false,
+      stackable: product?.stackable ?? false,
+      stackingCapacity: product?.stackingCapacity || '',
       packaging: product?.packaging || '',
+      palletDimensions: product?.palletDimensions || '',
+      productOnPalletDimensions: product?.productOnPalletDimensions || '',
+      arrangementScheme: product?.arrangementScheme || '',
+      totalUnits: product?.totalUnits || '',
       specialFeatures: product?.specialFeatures || '',
       productImage: product?.productImage || '',
       technicalDrawing: product?.technicalDrawing || '',
@@ -236,7 +262,6 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
   };
 
   const onSubmit = (data: InsertProduct) => {
-    // Serialize dimensions
     const dimensionsObject = dimensions.reduce((acc, dim) => {
       if (dim.name && dim.value) {
         acc[dim.name] = dim.value;
@@ -244,22 +269,18 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
       return acc;
     }, {} as Record<string, string>);
     
-    // Serialize certifications
     const certificationsArray = certifications
       .map(cert => cert.value)
       .filter(value => value.trim() !== '');
 
-    // Serialize markings
     const markingsArray = markings
       .map(marking => marking.value)
       .filter(value => value.trim() !== '');
 
-    // Serialize special features
     const specialFeaturesArray = specialFeatures
       .map(feature => feature.value)
       .filter(value => value.trim() !== '');
 
-    // Serialize packaging data
     const packagingObject = {
       unitsPerPallet: packagingData.unitsPerPallet ? parseInt(packagingData.unitsPerPallet) : undefined,
       unitsPerTruck: packagingData.unitsPerTruck ? parseInt(packagingData.unitsPerTruck) : undefined,
@@ -267,7 +288,6 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
       stackHeight: packagingData.stackHeight ? parseInt(packagingData.stackHeight) : undefined,
     };
     
-    // Remove undefined values from packaging object
     const cleanPackagingObject = Object.fromEntries(
       Object.entries(packagingObject).filter(([_, value]) => value !== undefined)
     );
@@ -281,6 +301,33 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
       packaging: Object.keys(cleanPackagingObject).length > 0 ? JSON.stringify(cleanPackagingObject) : '',
       productImage: productImage || '',
       technicalDrawing: technicalDrawing || '',
+      designation: data.designation || '',
+      barcode: data.barcode || '',
+      capType: data.capType || '',
+      capDimensions: data.capDimensions || '',
+      vedantePead: data.vedantePead ?? false,
+      vedanteEpdm: data.vedanteEpdm ?? false,
+      vedanteOutros: data.vedanteOutros || '',
+      pegasLaterais: data.pegasLaterais ?? false,
+      pegaSuperior: data.pegaSuperior ?? false,
+      cavidades: data.cavidades ?? false,
+      manuseamentoOutros: data.manuseamentoOutros || '',
+      datador: data.datador ?? false,
+      simboloSie: data.simboloSie ?? false,
+      simboloMp: data.simboloMp ?? false,
+      gravacaoCliente: data.gravacaoCliente ?? false,
+      visor: data.visor ?? false,
+      bica: data.bica ?? false,
+      coexPoliamida: data.coexPoliamida ?? false,
+      adaptacao: data.adaptacao ?? false,
+      autoculanteCliente: data.autoculanteCliente || '',
+      especificacoesEmbFlexiveis: data.especificacoesEmbFlexiveis || '',
+      stackable: data.stackable ?? false,
+      stackingCapacity: data.stackingCapacity || '',
+      palletDimensions: data.palletDimensions || '',
+      productOnPalletDimensions: data.productOnPalletDimensions || '',
+      arrangementScheme: data.arrangementScheme || '',
+      totalUnits: data.totalUnits || '',
     };
 
     console.log('Form submitted with data:', finalData);
@@ -356,6 +403,30 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                         className="h-9"
                       />
                       <p className="text-xs text-muted-foreground">Nome completo ou descrição do produto</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="designation" className="text-sm font-medium text-foreground">Designação</Label>
+                      <Input
+                        id="designation"
+                        {...form.register('designation')}
+                        placeholder="ex.: Bidão 15L PEAD Boca Larga"
+                        data-testid="input-designation"
+                        className="h-9"
+                      />
+                      <p className="text-xs text-muted-foreground">Designação completa do produto</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="barcode" className="text-sm font-medium text-foreground">Código de Barras</Label>
+                      <Input
+                        id="barcode"
+                        {...form.register('barcode')}
+                        placeholder="ex.: 5601234567890"
+                        data-testid="input-barcode"
+                        className="h-9 font-mono"
+                      />
+                      <p className="text-xs text-muted-foreground">Código de barras do produto</p>
                     </div>
 
                     <div className="space-y-2">
@@ -532,11 +603,11 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                   </div>
                 </div>
 
-                {/* Closure & Sealing Section */}
+                {/* Sistema de Fecho (Closure System) Section */}
                 <div className="space-y-4">
                   <div className="border-b pb-3">
-                    <h3 className="text-lg font-semibold text-foreground">Sistemas de Fecho e Selagem</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Mecanismos de fecho e especificações de selagem</p>
+                    <h3 className="text-lg font-semibold text-foreground">Sistema de Fecho</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Mecanismos de fecho e especificações de tampa</p>
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="space-y-2">
@@ -552,6 +623,30 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                     </div>
 
                     <div className="space-y-2">
+                      <Label htmlFor="capType" className="text-sm font-medium text-foreground">Tipo de Tampa</Label>
+                      <Input
+                        id="capType"
+                        {...form.register('capType')}
+                        placeholder="ex.: Rosca, Pressão, Snap-on"
+                        data-testid="input-cap-type"
+                        className="h-9"
+                      />
+                      <p className="text-xs text-muted-foreground">Tipo de tampa utilizada</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="capDimensions" className="text-sm font-medium text-foreground">Dimensões da Tampa (mm)</Label>
+                      <Input
+                        id="capDimensions"
+                        {...form.register('capDimensions')}
+                        placeholder="ex.: Ø60mm x 25mm"
+                        data-testid="input-cap-dimensions"
+                        className="h-9"
+                      />
+                      <p className="text-xs text-muted-foreground">Dimensões da tampa em milímetros</p>
+                    </div>
+
+                    <div className="space-y-2">
                       <Label htmlFor="sealingType" className="text-sm font-medium text-foreground">Tipo de Selagem</Label>
                       <Input
                         id="sealingType"
@@ -562,7 +657,56 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                       />
                       <p className="text-xs text-muted-foreground">Material e método de selagem</p>
                     </div>
+                  </div>
+                </div>
 
+                {/* Vedante (Sealing) Section */}
+                <div className="space-y-4">
+                  <div className="border-b pb-3">
+                    <h3 className="text-lg font-semibold text-foreground">Vedante</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Tipos de vedante disponíveis</p>
+                  </div>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="flex items-center gap-3 p-3 border border-border rounded-md">
+                      <Switch
+                        id="vedantePead"
+                        checked={form.watch('vedantePead') ?? false}
+                        onCheckedChange={(checked) => form.setValue('vedantePead', checked)}
+                        data-testid="switch-vedante-pead"
+                      />
+                      <Label htmlFor="vedantePead" className="text-sm font-medium text-foreground cursor-pointer">PEAD</Label>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 border border-border rounded-md">
+                      <Switch
+                        id="vedanteEpdm"
+                        checked={form.watch('vedanteEpdm') ?? false}
+                        onCheckedChange={(checked) => form.setValue('vedanteEpdm', checked)}
+                        data-testid="switch-vedante-epdm"
+                      />
+                      <Label htmlFor="vedanteEpdm" className="text-sm font-medium text-foreground cursor-pointer">EPDM</Label>
+                    </div>
+
+                    <div className="space-y-2 col-span-2">
+                      <Label htmlFor="vedanteOutros" className="text-sm font-medium text-foreground">Outros</Label>
+                      <Input
+                        id="vedanteOutros"
+                        {...form.register('vedanteOutros')}
+                        placeholder="ex.: Silicone, NBR"
+                        data-testid="input-vedante-outros"
+                        className="h-9"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sistema de Manuseamento (Handling) Section */}
+                <div className="space-y-4">
+                  <div className="border-b pb-3">
+                    <h3 className="text-lg font-semibold text-foreground">Sistema de Manuseamento</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Características ergonómicas de manuseamento</p>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="handlingSystem" className="text-sm font-medium text-foreground">Sistema de Manuseamento</Label>
                       <Input
@@ -572,7 +716,49 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                         data-testid="input-handling-system"
                         className="h-9"
                       />
-                      <p className="text-xs text-muted-foreground">Características ergonómicas de manuseamento</p>
+                      <p className="text-xs text-muted-foreground">Descrição do sistema de manuseamento</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="flex items-center gap-3 p-3 border border-border rounded-md">
+                      <Switch
+                        id="pegasLaterais"
+                        checked={form.watch('pegasLaterais') ?? false}
+                        onCheckedChange={(checked) => form.setValue('pegasLaterais', checked)}
+                        data-testid="switch-pegas-laterais"
+                      />
+                      <Label htmlFor="pegasLaterais" className="text-sm font-medium text-foreground cursor-pointer">Pegas Laterais</Label>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 border border-border rounded-md">
+                      <Switch
+                        id="pegaSuperior"
+                        checked={form.watch('pegaSuperior') ?? false}
+                        onCheckedChange={(checked) => form.setValue('pegaSuperior', checked)}
+                        data-testid="switch-pega-superior"
+                      />
+                      <Label htmlFor="pegaSuperior" className="text-sm font-medium text-foreground cursor-pointer">Pega Superior</Label>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 border border-border rounded-md">
+                      <Switch
+                        id="cavidades"
+                        checked={form.watch('cavidades') ?? false}
+                        onCheckedChange={(checked) => form.setValue('cavidades', checked)}
+                        data-testid="switch-cavidades"
+                      />
+                      <Label htmlFor="cavidades" className="text-sm font-medium text-foreground cursor-pointer">Cavidades</Label>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="manuseamentoOutros" className="text-sm font-medium text-foreground">Outros</Label>
+                      <Input
+                        id="manuseamentoOutros"
+                        {...form.register('manuseamentoOutros')}
+                        placeholder="ex.: Alças ergonómicas"
+                        data-testid="input-manuseamento-outros"
+                        className="h-9"
+                      />
                     </div>
                   </div>
                 </div>
@@ -713,10 +899,59 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                   </div>
                 </div>
 
-                {/* Product Markings Section */}
+                {/* Marcações (Markings) Section */}
                 <div className="space-y-4">
                   <div className="border-b pb-3">
-                    <h3 className="text-lg font-semibold text-foreground">Marcações do Produto</h3>
+                    <h3 className="text-lg font-semibold text-foreground">Marcações</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Marcações e etiquetas no produto</p>
+                  </div>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="flex items-center gap-3 p-3 border border-border rounded-md">
+                      <Switch
+                        id="datador"
+                        checked={form.watch('datador') ?? false}
+                        onCheckedChange={(checked) => form.setValue('datador', checked)}
+                        data-testid="switch-datador"
+                      />
+                      <Label htmlFor="datador" className="text-sm font-medium text-foreground cursor-pointer">Datador</Label>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 border border-border rounded-md">
+                      <Switch
+                        id="simboloSie"
+                        checked={form.watch('simboloSie') ?? false}
+                        onCheckedChange={(checked) => form.setValue('simboloSie', checked)}
+                        data-testid="switch-simbolo-sie"
+                      />
+                      <Label htmlFor="simboloSie" className="text-sm font-medium text-foreground cursor-pointer">Símbolo SIE</Label>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 border border-border rounded-md">
+                      <Switch
+                        id="simboloMp"
+                        checked={form.watch('simboloMp') ?? false}
+                        onCheckedChange={(checked) => form.setValue('simboloMp', checked)}
+                        data-testid="switch-simbolo-mp"
+                      />
+                      <Label htmlFor="simboloMp" className="text-sm font-medium text-foreground cursor-pointer">Símbolo MP</Label>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 border border-border rounded-md">
+                      <Switch
+                        id="gravacaoCliente"
+                        checked={form.watch('gravacaoCliente') ?? false}
+                        onCheckedChange={(checked) => form.setValue('gravacaoCliente', checked)}
+                        data-testid="switch-gravacao-cliente"
+                      />
+                      <Label htmlFor="gravacaoCliente" className="text-sm font-medium text-foreground cursor-pointer">Gravação Cliente</Label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Product Markings JSON Section */}
+                <div className="space-y-4">
+                  <div className="border-b pb-3">
+                    <h3 className="text-lg font-semibold text-foreground">Marcações Adicionais</h3>
                     <p className="text-sm text-muted-foreground mt-1">Marcações e etiquetas obrigatórias no produto</p>
                   </div>
                   <div className="space-y-2">
@@ -730,6 +965,80 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                       className="font-mono text-sm"
                     />
                     <p className="text-xs text-muted-foreground">Inserir marcações como um array JSON. Cada marcação deve estar entre aspas e separadas por vírgulas.</p>
+                  </div>
+                </div>
+
+                {/* Outras Características (Other Features) Section */}
+                <div className="space-y-4">
+                  <div className="border-b pb-3">
+                    <h3 className="text-lg font-semibold text-foreground">Outras Características</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Características adicionais do produto</p>
+                  </div>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="flex items-center gap-3 p-3 border border-border rounded-md">
+                      <Switch
+                        id="visor"
+                        checked={form.watch('visor') ?? false}
+                        onCheckedChange={(checked) => form.setValue('visor', checked)}
+                        data-testid="switch-visor"
+                      />
+                      <Label htmlFor="visor" className="text-sm font-medium text-foreground cursor-pointer">Visor</Label>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 border border-border rounded-md">
+                      <Switch
+                        id="bica"
+                        checked={form.watch('bica') ?? false}
+                        onCheckedChange={(checked) => form.setValue('bica', checked)}
+                        data-testid="switch-bica"
+                      />
+                      <Label htmlFor="bica" className="text-sm font-medium text-foreground cursor-pointer">Bica</Label>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 border border-border rounded-md">
+                      <Switch
+                        id="coexPoliamida"
+                        checked={form.watch('coexPoliamida') ?? false}
+                        onCheckedChange={(checked) => form.setValue('coexPoliamida', checked)}
+                        data-testid="switch-coex-poliamida"
+                      />
+                      <Label htmlFor="coexPoliamida" className="text-sm font-medium text-foreground cursor-pointer">COEX - Poliamida</Label>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 border border-border rounded-md">
+                      <Switch
+                        id="adaptacao"
+                        checked={form.watch('adaptacao') ?? false}
+                        onCheckedChange={(checked) => form.setValue('adaptacao', checked)}
+                        data-testid="switch-adaptacao"
+                      />
+                      <Label htmlFor="adaptacao" className="text-sm font-medium text-foreground cursor-pointer">Adaptação</Label>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="autoculanteCliente" className="text-sm font-medium text-foreground">Autoculante Cliente</Label>
+                      <Input
+                        id="autoculanteCliente"
+                        {...form.register('autoculanteCliente')}
+                        placeholder="Especificações do autoculante do cliente"
+                        data-testid="input-autoculante-cliente"
+                        className="h-9"
+                      />
+                      <p className="text-xs text-muted-foreground">Detalhes do autoculante específico do cliente</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="especificacoesEmbFlexiveis" className="text-sm font-medium text-foreground">Especificações Emb. Flexíveis</Label>
+                      <Input
+                        id="especificacoesEmbFlexiveis"
+                        {...form.register('especificacoesEmbFlexiveis')}
+                        placeholder="Especificações de embalagens flexíveis"
+                        data-testid="input-especificacoes-emb-flexiveis"
+                        className="h-9"
+                      />
+                      <p className="text-xs text-muted-foreground">Especificações para embalagens flexíveis</p>
+                    </div>
                   </div>
                 </div>
 
@@ -755,6 +1064,97 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
               </TabsContent>
 
               <TabsContent value="packaging" className="space-y-6 mt-6">
+                {/* Empilhamento (Stacking) Section */}
+                <div className="space-y-4">
+                  <div className="border-b pb-3">
+                    <h3 className="text-lg font-semibold text-foreground">Empilhamento</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Capacidade de empilhamento do produto</p>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="flex items-center gap-4 p-3 border border-border rounded-md">
+                      <Switch
+                        id="stackable"
+                        checked={form.watch('stackable') ?? false}
+                        onCheckedChange={(checked) => form.setValue('stackable', checked)}
+                        data-testid="switch-stackable"
+                      />
+                      <div className="space-y-1">
+                        <Label htmlFor="stackable" className="text-sm font-medium text-foreground cursor-pointer">Empilhável</Label>
+                        <p className="text-xs text-muted-foreground">Produto pode ser empilhado</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="stackingCapacity" className="text-sm font-medium text-foreground">Capacidade de Empilhamento</Label>
+                      <Input
+                        id="stackingCapacity"
+                        {...form.register('stackingCapacity')}
+                        placeholder="ex.: 8 unidades"
+                        data-testid="input-stacking-capacity"
+                        className="h-9"
+                      />
+                      <p className="text-xs text-muted-foreground">Número máximo de unidades empilháveis</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Packaging Details Section */}
+                <div className="space-y-4">
+                  <div className="border-b pb-3">
+                    <h3 className="text-lg font-semibold text-foreground">Detalhes de Embalagem</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Especificações de embalagem e paletização</p>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="palletDimensions" className="text-sm font-medium text-foreground">Dimensões da Palete (mm)</Label>
+                      <Input
+                        id="palletDimensions"
+                        {...form.register('palletDimensions')}
+                        placeholder="ex.: 1200 x 800 x 144"
+                        data-testid="input-pallet-dimensions"
+                        className="h-9"
+                      />
+                      <p className="text-xs text-muted-foreground">Dimensões da palete em milímetros (C x L x A)</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="productOnPalletDimensions" className="text-sm font-medium text-foreground">Dimensões da Mercadoria na Palete (mm)</Label>
+                      <Input
+                        id="productOnPalletDimensions"
+                        {...form.register('productOnPalletDimensions')}
+                        placeholder="ex.: 1200 x 800 x 1500"
+                        data-testid="input-product-on-pallet-dimensions"
+                        className="h-9"
+                      />
+                      <p className="text-xs text-muted-foreground">Dimensões totais da mercadoria na palete</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="arrangementScheme" className="text-sm font-medium text-foreground">Esquema de Arrumação</Label>
+                      <Input
+                        id="arrangementScheme"
+                        {...form.register('arrangementScheme')}
+                        placeholder="ex.: 5x3x4 camadas"
+                        data-testid="input-arrangement-scheme"
+                        className="h-9"
+                      />
+                      <p className="text-xs text-muted-foreground">Esquema de arrumação na palete</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="totalUnits" className="text-sm font-medium text-foreground">Total de Unidades</Label>
+                      <Input
+                        id="totalUnits"
+                        {...form.register('totalUnits')}
+                        placeholder="ex.: 60 unidades"
+                        data-testid="input-total-units"
+                        className="h-9"
+                      />
+                      <p className="text-xs text-muted-foreground">Total de unidades por palete</p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Packaging Information Section */}
                 <div className="space-y-4">
                   <div className="border-b pb-3">
