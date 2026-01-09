@@ -208,8 +208,8 @@ export default function Dashboard() {
   };
 
   const style = {
-    "--sidebar-width": "20rem",
-    "--sidebar-width-icon": "4rem",
+    "--sidebar-width": "14rem",
+    "--sidebar-width-icon": "3.5rem",
   };
 
   const renderCurrentView = () => {
@@ -287,14 +287,8 @@ export default function Dashboard() {
                   className="hover-elevate" 
                   data-testid="button-sidebar-toggle" 
                 />
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 bg-primary rounded-md flex items-center justify-center">
-                    <span className="text-sm font-bold text-primary-foreground">PD</span>
-                  </div>
-                  <div>
-                    <h1 className="text-lg font-semibold text-foreground">Base de Dados de Produtos</h1>
-                    <p className="text-sm text-muted-foreground">Gerir o seu catálogo de produtos</p>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-lg font-semibold text-foreground">Base de Dados de Produtos</h1>
                 </div>
               </div>
 

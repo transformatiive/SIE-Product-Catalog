@@ -14,42 +14,42 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  /* Core color palette from design guidelines */
-  --background: 220 14% 96%; /* Light gray surface */
+  /* Core color palette - SIE Branding */
+  --background: 0 0% 98%; /* Light neutral surface */
 
-  --foreground: 220 9% 15%; /* Main text color */
+  --foreground: 220 15% 15%; /* Dark charcoal text */
 
-  --border: 220 13% 91%;
+  --border: 220 10% 90%;
 
   --card: 0 0% 100%; /* Pure white for cards */
 
-  --card-foreground: 220 9% 15%;
+  --card-foreground: 220 15% 15%;
 
-  --card-border: 220 13% 93%;
+  --card-border: 220 10% 92%;
 
-  --sidebar: 220 14% 96%;
+  --sidebar: 0 0% 100%; /* White sidebar for clean look */
 
-  --sidebar-foreground: 220 9% 15%;
+  --sidebar-foreground: 220 15% 15%;
 
-  --sidebar-border: 220 13% 91%;
+  --sidebar-border: 220 10% 92%;
 
-  --sidebar-primary: 210 100% 45%; /* Professional blue primary */
+  --sidebar-primary: 358 79% 50%; /* SIE Red #E31E24 */
 
   --sidebar-primary-foreground: 0 0% 100%;
 
-  --sidebar-accent: 220 14% 90%;
+  --sidebar-accent: 0 0% 96%;
 
-  --sidebar-accent-foreground: 220 9% 15%;
+  --sidebar-accent-foreground: 220 15% 15%;
 
-  --sidebar-ring: 210 100% 45%;
+  --sidebar-ring: 358 79% 50%;
 
   --popover: 0 0% 100%;
 
-  --popover-foreground: 220 9% 15%;
+  --popover-foreground: 220 15% 15%;
 
-  --popover-border: 220 13% 91%;
+  --popover-border: 220 10% 90%;
 
-  --primary: 210 100% 45%; /* Professional blue primary */
+  --primary: 358 79% 50%; /* SIE Red #E31E24 */
 
   --primary-foreground: 0 0% 100%;
 
@@ -69,8 +69,8 @@
 
   --destructive-foreground: 0 0% 100%;
 
-  --input: 220 13% 91%;
-  --ring: 210 100% 45%;
+  --input: 220 10% 92%;
+  --ring: 358 79% 50%; /* SIE Red */
   
   /* Status colors from design guidelines */
   --success: 142 76% 36%; /* Success green */
@@ -140,63 +140,63 @@
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  /* Dark mode color palette from design guidelines */
-  --background: 220 13% 9%; /* Dark surface */
+  /* Dark mode color palette - SIE Branding */
+  --background: 220 15% 8%; /* Dark charcoal surface */
 
   --foreground: 0 0% 96%; /* Light text */
 
-  --border: 220 13% 18%;
+  --border: 220 12% 18%;
 
-  --card: 220 13% 11%; /* Slightly elevated dark surface */
+  --card: 220 15% 11%; /* Slightly elevated dark surface */
 
   --card-foreground: 0 0% 96%;
 
-  --card-border: 220 13% 18%;
+  --card-border: 220 12% 18%;
 
-  --sidebar: 220 13% 9%;
+  --sidebar: 220 15% 8%;
 
   --sidebar-foreground: 0 0% 96%;
 
-  --sidebar-border: 220 13% 18%;
+  --sidebar-border: 220 12% 18%;
 
-  --sidebar-primary: 210 100% 45%; /* Same professional blue */
+  --sidebar-primary: 358 79% 50%; /* SIE Red #E31E24 */
 
   --sidebar-primary-foreground: 0 0% 100%;
 
-  --sidebar-accent: 220 13% 15%;
+  --sidebar-accent: 220 12% 15%;
 
   --sidebar-accent-foreground: 0 0% 96%;
 
-  --sidebar-ring: 210 100% 45%;
+  --sidebar-ring: 358 79% 50%;
 
-  --popover: 220 13% 11%;
+  --popover: 220 15% 11%;
 
   --popover-foreground: 0 0% 96%;
 
-  --popover-border: 220 13% 18%;
+  --popover-border: 220 12% 18%;
 
-  --primary: 210 100% 45%; /* Same professional blue */
+  --primary: 358 79% 50%; /* SIE Red #E31E24 */
 
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 220 13% 18%;
+  --secondary: 220 12% 18%;
 
   --secondary-foreground: 0 0% 96%;
 
-  --muted: 220 13% 15%;
+  --muted: 220 12% 15%;
 
-  --muted-foreground: 220 9% 46%; /* Secondary text */
+  --muted-foreground: 220 8% 55%; /* Secondary text */
 
-  --accent: 220 13% 15%;
+  --accent: 220 12% 15%;
 
   --accent-foreground: 0 0% 96%;
 
-  --destructive: 0 84% 60%; /* Same error color */
+  --destructive: 0 84% 60%; /* Error color */
 
   --destructive-foreground: 0 0% 100%;
 
-  --input: 220 13% 18%;
-  --ring: 210 100% 45%;
+  --input: 220 12% 18%;
+  --ring: 358 79% 50%; /* SIE Red */
   
   /* Status colors consistent with light mode */
   --success: 142 76% 36%;
