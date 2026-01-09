@@ -89,20 +89,10 @@ export default function ProductList({
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-end">
-            <Button onClick={handleCreateNew} data-testid="button-create-new">
-              <Plus className="w-4 h-4 mr-1" />
-              Novo Produto
-            </Button>
-          </div>
-        </CardHeader>
-
-        <CardContent>
-          {/* Search */}
-          <div className="flex gap-2 mb-6">
+        <CardContent className="pt-4">
+          {/* Search and Create Button */}
+          <div className="flex gap-2 mb-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -113,6 +103,10 @@ export default function ProductList({
                 data-testid="input-search-products"
               />
             </div>
+            <Button onClick={handleCreateNew} data-testid="button-create-new">
+              <Plus className="w-4 h-4 mr-1" />
+              Novo Produto
+            </Button>
           </div>
 
           {/* Results Summary */}
