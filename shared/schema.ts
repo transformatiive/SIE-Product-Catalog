@@ -113,20 +113,31 @@ export type UpdateProduct = z.infer<typeof updateProductSchema>;
 export type Product = typeof products.$inferSelect;
 export type ProductSearch = z.infer<typeof productSearchSchema>;
 
-// Users table (keeping existing structure)
+// Users table for authentication
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
   password: text("password").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+export type LoginData = z.infer<typeof loginSchema>;
 
 // ================================
 // SUPPORT TABLES FOR DROPDOWNS
