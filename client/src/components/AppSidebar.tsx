@@ -68,7 +68,7 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
   };
 
   return (
-    <Sidebar className="border-r border-sidebar-border bg-sidebar">
+    <Sidebar className="border-r border-sidebar-border bg-sidebar z-[60]">
       <SidebarHeader className="p-3 border-b border-sidebar-border">
         <div className="flex flex-col items-center gap-2">
           <img 
