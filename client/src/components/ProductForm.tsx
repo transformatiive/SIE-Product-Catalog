@@ -375,11 +375,11 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
         <CardContent className="p-6">
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 h-11">
-                <TabsTrigger value="basic" className="font-medium">Informação Básica</TabsTrigger>
-                <TabsTrigger value="technical" className="font-medium">Detalhes Técnicos</TabsTrigger>
-                <TabsTrigger value="specs" className="font-medium">Especificações</TabsTrigger>
-                <TabsTrigger value="packaging" className="font-medium">Embalagem e Notas</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-4 h-11 bg-muted/50 p-1">
+                <TabsTrigger value="basic" className="font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">Informação Básica</TabsTrigger>
+                <TabsTrigger value="technical" className="font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">Detalhes Técnicos</TabsTrigger>
+                <TabsTrigger value="specs" className="font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">Especificações</TabsTrigger>
+                <TabsTrigger value="packaging" className="font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">Embalagem e Notas</TabsTrigger>
               </TabsList>
 
               <TabsContent value="basic" className="space-y-6 mt-6">
