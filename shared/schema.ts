@@ -127,3 +127,159 @@ export const insertUserSchema = createInsertSchema(users).pick({
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+
+// ================================
+// SUPPORT TABLES FOR DROPDOWNS
+// ================================
+
+// Families (0_Familia)
+export const families = pgTable("families", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: text("code").notNull().unique(),
+  description: text("description").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertFamilySchema = createInsertSchema(families).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertFamily = z.infer<typeof insertFamilySchema>;
+export type Family = typeof families.$inferSelect;
+
+// Product Types (1_Produto)
+export const productTypes = pgTable("product_types", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: text("code").notNull().unique(),
+  description: text("description").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertProductTypeSchema = createInsertSchema(productTypes).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertProductType = z.infer<typeof insertProductTypeSchema>;
+export type ProductType = typeof productTypes.$inferSelect;
+
+// Capacities (2_Capacidade)
+export const capacities = pgTable("capacities", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: text("code").notNull().unique(),
+  description: text("description").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertCapacitySchema = createInsertSchema(capacities).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertCapacity = z.infer<typeof insertCapacitySchema>;
+export type Capacity = typeof capacities.$inferSelect;
+
+// Raw Materials (4_Materia Prima)
+export const rawMaterials = pgTable("raw_materials", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: text("code").notNull().unique(),
+  description: text("description").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertRawMaterialSchema = createInsertSchema(rawMaterials).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertRawMaterial = z.infer<typeof insertRawMaterialSchema>;
+export type RawMaterial = typeof rawMaterials.$inferSelect;
+
+// Colors (5_Corante)
+export const colors = pgTable("colors", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: text("code").notNull().unique(),
+  description: text("description").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertColorSchema = createInsertSchema(colors).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertColor = z.infer<typeof insertColorSchema>;
+export type Color = typeof colors.$inferSelect;
+
+// Closing Systems (6_Sistema de Fecho)
+export const closingSystems = pgTable("closing_systems", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: text("code").notNull().unique(),
+  description: text("description").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertClosingSystemSchema = createInsertSchema(closingSystems).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertClosingSystem = z.infer<typeof insertClosingSystemSchema>;
+export type ClosingSystem = typeof closingSystems.$inferSelect;
+
+// Cap Sizes (7_Medida da Tampa)
+export const capSizes = pgTable("cap_sizes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: text("code").notNull().unique(),
+  description: text("description").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertCapSizeSchema = createInsertSchema(capSizes).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertCapSize = z.infer<typeof insertCapSizeSchema>;
+export type CapSize = typeof capSizes.$inferSelect;
+
+// Certification Types (8_Certificação)
+export const certificationTypes = pgTable("certification_types", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: text("code").notNull().unique(),
+  description: text("description").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertCertificationTypeSchema = createInsertSchema(certificationTypes).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertCertificationType = z.infer<typeof insertCertificationTypeSchema>;
+export type CertificationType = typeof certificationTypes.$inferSelect;
+
+// Packaging Types (9_Embalamento)
+export const packagingTypes = pgTable("packaging_types", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: text("code").notNull().unique(),
+  description: text("description").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertPackagingTypeSchema = createInsertSchema(packagingTypes).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertPackagingType = z.infer<typeof insertPackagingTypeSchema>;
+export type PackagingType = typeof packagingTypes.$inferSelect;
+
+// Generic dropdown option type for API responses
+export type DropdownOption = {
+  id: string;
+  code: string;
+  description: string;
+  isActive: boolean;
+};
