@@ -92,8 +92,7 @@ export default function ProductList({
       {/* Header */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Base de Dados de Produtos</CardTitle>
+          <div className="flex items-center justify-end">
             <Button onClick={handleCreateNew} data-testid="button-create-new">
               <Plus className="w-4 h-4 mr-1" />
               Novo Produto
