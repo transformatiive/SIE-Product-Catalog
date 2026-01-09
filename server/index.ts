@@ -1,10 +1,34 @@
 import express, { type Request, Response, NextFunction } from "express";
+import session from "express-session";
+import pgSession from "connect-pg-simple";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Session configuration with 60-day expiry
+const PgStore = pgSession(session);
+const SIXTY_DAYS_MS = 60 * 24 * 60 * 60 * 1000; // 60 days in milliseconds
+const isProduction = process.env.NODE_ENV === 'production';
+
+app.use(session({
+  store: new PgStore({
+    conString: process.env.DATABASE_URL,
+    tableName: 'user_sessions',
+    createTableIfMissing: true,
+  }),
+  secret: process.env.SESSION_SECRET!,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: SIXTY_DAYS_MS,
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: 'lax',
+  },
+}));
 
 // Serve uploaded files statically
 app.use('/uploads', express.static('public/uploads'));

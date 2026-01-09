@@ -23,8 +23,11 @@ export const db = drizzle(sql_client);
 export interface IStorage {
   // User methods
   getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  getUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
+  deleteUser(id: string): Promise<boolean>;
   
   // Product methods
   getProducts(search?: ProductSearch): Promise<Product[]>;
@@ -47,13 +50,23 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
+  async getUserByEmail(email: string): Promise<User | undefined> {
     try {
-      const result = await db.select().from(users).where(eq(users.username, username)).limit(1);
+      const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
       return result[0];
     } catch (error) {
-      console.error('Error getting user by username:', error);
+      console.error('Error getting user by email:', error);
       return undefined;
+    }
+  }
+
+  async getUsers(): Promise<User[]> {
+    try {
+      const result = await db.select().from(users).orderBy(asc(users.name));
+      return result;
+    } catch (error) {
+      console.error('Error getting users:', error);
+      return [];
     }
   }
 
@@ -64,6 +77,29 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Error creating user:', error);
       throw error;
+    }
+  }
+
+  async updateUser(id: string, userData: Partial<InsertUser>): Promise<User | undefined> {
+    try {
+      const result = await db.update(users)
+        .set({ ...userData, updatedAt: new Date() })
+        .where(eq(users.id, id))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error updating user:', error);
+      return undefined;
+    }
+  }
+
+  async deleteUser(id: string): Promise<boolean> {
+    try {
+      const result = await db.delete(users).where(eq(users.id, id)).returning();
+      return result.length > 0;
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      return false;
     }
   }
 

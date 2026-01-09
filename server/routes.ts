@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import multer from "multer";
@@ -9,6 +9,8 @@ import {
   insertProductSchema, 
   updateProductSchema, 
   productSearchSchema,
+  loginSchema,
+  insertUserSchema,
   families,
   insertFamilySchema,
   productTypes,
@@ -32,6 +34,19 @@ import { fromZodError } from "zod-validation-error";
 import { renderToBuffer } from '@react-pdf/renderer';
 import React from 'react';
 
+declare module 'express-session' {
+  interface SessionData {
+    userId?: string;
+  }
+}
+
+function requireAuth(req: Request, res: Response, next: NextFunction) {
+  if (!req.session.userId) {
+    return res.status(401).json({ message: "Não autenticado" });
+  }
+  next();
+}
+
 const tableMap = {
   families: { table: families, insertSchema: insertFamilySchema },
   productTypes: { table: productTypes, insertSchema: insertProductTypeSchema },
@@ -45,7 +60,181 @@ const tableMap = {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Product routes
+  // ================================
+  // AUTHENTICATION ROUTES
+  // ================================
+
+  // POST /api/auth/login - User login
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const result = loginSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Dados de login inválidos", 
+          errors: fromZodError(result.error).toString()
+        });
+      }
+
+      const { email, password } = result.data;
+      const user = await storage.getUserByEmail(email);
+
+      if (!user) {
+        return res.status(401).json({ message: "Email ou password incorretos" });
+      }
+
+      if (user.password !== password) {
+        return res.status(401).json({ message: "Email ou password incorretos" });
+      }
+
+      if (!user.isActive) {
+        return res.status(403).json({ message: "Conta desativada. Contacte o administrador." });
+      }
+
+      req.session.userId = user.id;
+      res.json({ 
+        id: user.id, 
+        name: user.name, 
+        email: user.email,
+        isActive: user.isActive 
+      });
+    } catch (error) {
+      console.error("Error logging in:", error);
+      res.status(500).json({ message: "Falha no login" });
+    }
+  });
+
+  // POST /api/auth/logout - User logout
+  app.post("/api/auth/logout", (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Falha ao terminar sessão" });
+      }
+      res.clearCookie('connect.sid');
+      res.json({ message: "Sessão terminada com sucesso" });
+    });
+  });
+
+  // GET /api/auth/me - Get current user
+  app.get("/api/auth/me", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ message: "Não autenticado" });
+      }
+
+      const user = await storage.getUser(req.session.userId);
+      if (!user) {
+        return res.status(401).json({ message: "Utilizador não encontrado" });
+      }
+
+      res.json({ 
+        id: user.id, 
+        name: user.name, 
+        email: user.email,
+        isActive: user.isActive 
+      });
+    } catch (error) {
+      console.error("Error getting current user:", error);
+      res.status(500).json({ message: "Falha ao obter utilizador" });
+    }
+  });
+
+  // ================================
+  // USER MANAGEMENT ROUTES
+  // ================================
+
+  // GET /api/users - Get all users (protected)
+  app.get("/api/users", requireAuth, async (req, res) => {
+    try {
+      const users = await storage.getUsers();
+      res.json(users.map(u => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        isActive: u.isActive,
+        createdAt: u.createdAt,
+        updatedAt: u.updatedAt
+      })));
+    } catch (error) {
+      console.error("Error getting users:", error);
+      res.status(500).json({ message: "Falha ao obter utilizadores" });
+    }
+  });
+
+  // POST /api/users - Create user (protected)
+  app.post("/api/users", requireAuth, async (req, res) => {
+    try {
+      const result = insertUserSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Dados inválidos", 
+          errors: fromZodError(result.error).toString()
+        });
+      }
+
+      const existingUser = await storage.getUserByEmail(result.data.email);
+      if (existingUser) {
+        return res.status(400).json({ message: "Email já registado" });
+      }
+
+      const user = await storage.createUser(result.data);
+      res.status(201).json({ 
+        id: user.id, 
+        name: user.name, 
+        email: user.email,
+        isActive: user.isActive 
+      });
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ message: "Falha ao criar utilizador" });
+    }
+  });
+
+  // PATCH /api/users/:id - Update user (protected)
+  app.patch("/api/users/:id", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const user = await storage.updateUser(id, req.body);
+      
+      if (!user) {
+        return res.status(404).json({ message: "Utilizador não encontrado" });
+      }
+
+      res.json({ 
+        id: user.id, 
+        name: user.name, 
+        email: user.email,
+        isActive: user.isActive 
+      });
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Falha ao atualizar utilizador" });
+    }
+  });
+
+  // DELETE /api/users/:id - Delete user (protected)
+  app.delete("/api/users/:id", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      if (id === req.session.userId) {
+        return res.status(400).json({ message: "Não pode eliminar a sua própria conta" });
+      }
+
+      const deleted = await storage.deleteUser(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Utilizador não encontrado" });
+      }
+
+      res.json({ message: "Utilizador eliminado com sucesso" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Falha ao eliminar utilizador" });
+    }
+  });
+
+  // ================================
+  // PRODUCT ROUTES
+  // ================================
   
   // GET /api/products - Get all products with optional search/filters
   app.get("/api/products", async (req, res) => {
