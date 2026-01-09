@@ -375,8 +375,8 @@ export default function Admin() {
   });
 
   const sidebarStyle = {
-    "--sidebar-width": "20rem",
-    "--sidebar-width-icon": "4rem",
+    "--sidebar-width": "10rem",
+    "--sidebar-width-icon": "3rem",
   };
 
   return (

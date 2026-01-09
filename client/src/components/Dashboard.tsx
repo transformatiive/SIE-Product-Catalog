@@ -208,8 +208,8 @@ export default function Dashboard() {
   };
 
   const style = {
-    "--sidebar-width": "14rem",
-    "--sidebar-width-icon": "3.5rem",
+    "--sidebar-width": "10rem",
+    "--sidebar-width-icon": "3rem",
   };
 
   const renderCurrentView = () => {
