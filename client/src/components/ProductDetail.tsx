@@ -109,12 +109,12 @@ export default function ProductDetail({ product, onEdit, onGeneratePDF, onBack, 
 
       {/* Content */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="technical">Technical</TabsTrigger>
-          <TabsTrigger value="specifications">Specs</TabsTrigger>
-          <TabsTrigger value="packaging">Packaging</TabsTrigger>
-          <TabsTrigger value="metadata">Metadata</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-5 p-1.5 bg-muted/30 rounded-lg shadow-sm border border-border/50">
+          <TabsTrigger value="overview" className="rounded-md transition-all duration-200 data-[state=active]:shadow-md data-[state=inactive]:hover:bg-muted/50">Overview</TabsTrigger>
+          <TabsTrigger value="technical" className="rounded-md transition-all duration-200 data-[state=active]:shadow-md data-[state=inactive]:hover:bg-muted/50">Technical</TabsTrigger>
+          <TabsTrigger value="specifications" className="rounded-md transition-all duration-200 data-[state=active]:shadow-md data-[state=inactive]:hover:bg-muted/50">Specs</TabsTrigger>
+          <TabsTrigger value="packaging" className="rounded-md transition-all duration-200 data-[state=active]:shadow-md data-[state=inactive]:hover:bg-muted/50">Packaging</TabsTrigger>
+          <TabsTrigger value="metadata" className="rounded-md transition-all duration-200 data-[state=active]:shadow-md data-[state=inactive]:hover:bg-muted/50">Metadata</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">

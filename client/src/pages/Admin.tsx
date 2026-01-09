@@ -421,12 +421,12 @@ export default function Admin() {
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue="families" className="w-full">
-                    <TabsList className="grid grid-cols-3 h-auto gap-1 p-1 bg-muted/50 mb-6">
+                    <TabsList className="grid grid-cols-3 h-auto gap-1 p-1.5 bg-muted/30 mb-6 rounded-lg shadow-sm border border-border/50">
                       {tabConfigs.map((tab) => (
                         <TabsTrigger
                           key={tab.name}
                           value={tab.name}
-                          className="text-xs sm:text-sm py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+                          className="text-xs sm:text-sm py-2.5 rounded-md transition-all duration-200 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=inactive]:hover:bg-muted/50"
                         >
                           {tab.label}
                         </TabsTrigger>
