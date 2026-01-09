@@ -65,7 +65,8 @@ export function SearchableSelect({
   const [newCode, setNewCode] = useState("");
   const [newDescription, setNewDescription] = useState("");
 
-  const selectedOption = options.find((option) => option.id === value);
+  // Match by description value (human-readable) instead of UUID
+  const selectedOption = options.find((option) => option.description === value);
 
   const createMutation = useMutation({
     mutationFn: async (data: { code: string; description: string }) => {
@@ -76,8 +77,9 @@ export function SearchableSelect({
       setDialogOpen(false);
       setNewCode("");
       setNewDescription("");
-      if (newOption?.id) {
-        onChange(newOption.id);
+      if (newOption?.description) {
+        // Store description (human-readable value) instead of UUID
+        onChange(newOption.description);
       }
       onOptionAdded?.();
     },
@@ -142,14 +144,15 @@ export function SearchableSelect({
                     key={option.id}
                     value={`${option.code} ${option.description}`}
                     onSelect={() => {
-                      onChange(option.id === value ? "" : option.id);
+                      // Store description (human-readable value) instead of UUID
+                      onChange(option.description === value ? "" : option.description);
                       setOpen(false);
                     }}
                   >
                     <Check
                       className={cn(
                         "mr-2 h-4 w-4",
-                        value === option.id ? "opacity-100" : "opacity-0"
+                        value === option.description ? "opacity-100" : "opacity-0"
                       )}
                     />
                     {option.code} - {option.description}

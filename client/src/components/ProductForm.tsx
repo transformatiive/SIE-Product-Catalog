@@ -1,17 +1,19 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Save, X, Plus, Trash2 } from "lucide-react";
 import { InsertProduct, insertProductSchema, Product } from "@shared/schema";
 import ImageUpload from "./ImageUpload";
+import { SearchableSelect } from "./SearchableSelect";
+import { queryClient } from "@/lib/queryClient";
 
 interface ProductFormProps {
   product?: Product;
@@ -49,6 +51,22 @@ interface PackagingData {
 }
 
 export default function ProductForm({ product, onSave, onCancel, isLoading = false }: ProductFormProps) {
+  const { data: familyOptions = [], isLoading: familiesLoading } = useQuery<{id: string, code: string, description: string}[]>({
+    queryKey: ['/api/admin/families'],
+  });
+
+  const { data: productTypeOptions = [], isLoading: productTypesLoading } = useQuery<{id: string, code: string, description: string}[]>({
+    queryKey: ['/api/admin/productTypes'],
+  });
+
+  const { data: rawMaterialOptions = [], isLoading: rawMaterialsLoading } = useQuery<{id: string, code: string, description: string}[]>({
+    queryKey: ['/api/admin/rawMaterials'],
+  });
+
+  const { data: closingSystemOptions = [], isLoading: closingSystemsLoading } = useQuery<{id: string, code: string, description: string}[]>({
+    queryKey: ['/api/admin/closingSystems'],
+  });
+
   const [dimensions, setDimensions] = useState<DimensionField[]>(() => {
     if (product?.dimensions) {
       try {
@@ -430,13 +448,16 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="rawMaterial" className="text-sm font-medium text-foreground">Material de Base *</Label>
-                      <Input
-                        id="rawMaterial"
-                        {...form.register('rawMaterial')}
-                        placeholder="ex.: PEAD"
-                        data-testid="input-raw-material"
-                        className="h-9"
+                      <SearchableSelect
+                        value={form.watch('rawMaterial') || ''}
+                        onChange={(val) => form.setValue('rawMaterial', val)}
+                        options={rawMaterialOptions}
+                        label="Material de Base *"
+                        placeholder="Seleccionar material..."
+                        apiEndpoint="/api/admin/rawMaterials"
+                        isLoading={rawMaterialsLoading}
+                        onOptionAdded={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/rawMaterials'] })}
+                        required
                       />
                       <p className="text-xs text-muted-foreground">Composição principal do material</p>
                     </div>
@@ -451,38 +472,32 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="family" className="text-sm font-medium text-foreground">Família *</Label>
-                      <Select
-                        value={form.watch('family')}
-                        onValueChange={(value) => form.setValue('family', value)}
-                      >
-                        <SelectTrigger data-testid="select-family" className="h-9">
-                          <SelectValue placeholder="Seleccionar família do produto" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Embalagem">Embalagem</SelectItem>
-                          <SelectItem value="Container">Container</SelectItem>
-                          <SelectItem value="Bottle">Garrafa</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <SearchableSelect
+                        value={form.watch('family') || ''}
+                        onChange={(val) => form.setValue('family', val)}
+                        options={familyOptions}
+                        label="Família *"
+                        placeholder="Seleccionar família..."
+                        apiEndpoint="/api/admin/families"
+                        isLoading={familiesLoading}
+                        onOptionAdded={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/families'] })}
+                        required
+                      />
                       <p className="text-xs text-muted-foreground">Família ou categoria do produto</p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="type" className="text-sm font-medium text-foreground">Tipo *</Label>
-                      <Select
-                        value={form.watch('type')}
-                        onValueChange={(value) => form.setValue('type', value)}
-                      >
-                        <SelectTrigger data-testid="select-type" className="h-9">
-                          <SelectValue placeholder="Seleccionar tipo de produto" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Boca Estreita">Boca Estreita</SelectItem>
-                          <SelectItem value="Boca Larga">Boca Larga</SelectItem>
-                          <SelectItem value="Standard">Standard</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <SearchableSelect
+                        value={form.watch('type') || ''}
+                        onChange={(val) => form.setValue('type', val)}
+                        options={productTypeOptions}
+                        label="Tipo de Produto *"
+                        placeholder="Seleccionar tipo..."
+                        apiEndpoint="/api/admin/productTypes"
+                        isLoading={productTypesLoading}
+                        onOptionAdded={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/productTypes'] })}
+                        required
+                      />
                       <p className="text-xs text-muted-foreground">Tipo específico ou variante do produto</p>
                     </div>
                   </div>
@@ -611,13 +626,15 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="closingSystem" className="text-sm font-medium text-foreground">Sistema de Fecho</Label>
-                      <Input
-                        id="closingSystem"
-                        {...form.register('closingSystem')}
-                        placeholder="ex.: Tampa de Rosca"
-                        data-testid="input-closing-system"
-                        className="h-9"
+                      <SearchableSelect
+                        value={form.watch('closingSystem') || ''}
+                        onChange={(val) => form.setValue('closingSystem', val)}
+                        options={closingSystemOptions}
+                        label="Sistema de Fecho"
+                        placeholder="Seleccionar sistema..."
+                        apiEndpoint="/api/admin/closingSystems"
+                        isLoading={closingSystemsLoading}
+                        onOptionAdded={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/closingSystems'] })}
                       />
                       <p className="text-xs text-muted-foreground">Tipo de mecanismo de fecho</p>
                     </div>
