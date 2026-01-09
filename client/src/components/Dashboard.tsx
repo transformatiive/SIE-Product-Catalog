@@ -208,7 +208,7 @@ export default function Dashboard() {
   };
 
   const style = {
-    "--sidebar-width": "10rem",
+    "--sidebar-width": "13rem",
     "--sidebar-width-icon": "3rem",
   };
 
@@ -288,7 +288,7 @@ export default function Dashboard() {
                   data-testid="button-sidebar-toggle" 
                 />
                 <div className="flex items-center gap-2">
-                  <h1 className="text-lg font-semibold text-foreground">Base de Dados de Produtos</h1>
+                  <h1 className="text-lg font-semibold text-foreground">Gestão Fichas Técnicas de Produtos</h1>
                 </div>
               </div>
 

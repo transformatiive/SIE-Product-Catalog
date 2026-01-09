@@ -69,13 +69,16 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
 
   return (
     <Sidebar className="border-r border-sidebar-border bg-sidebar">
-      <SidebarHeader className="p-4 border-b border-sidebar-border">
-        <div className="flex items-center justify-center">
+      <SidebarHeader className="p-3 border-b border-sidebar-border">
+        <div className="flex flex-col items-center gap-2">
           <img 
             src={sieLogo} 
             alt="SIE - Sociedade Internacional de Embalagens" 
-            className="h-8 w-auto"
+            className="h-7 w-auto"
           />
+          <span className="text-[10px] text-center text-muted-foreground leading-tight font-medium">
+            Gestão Fichas Técnicas de Produtos
+          </span>
         </div>
       </SidebarHeader>
 

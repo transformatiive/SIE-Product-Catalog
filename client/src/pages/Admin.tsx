@@ -375,7 +375,7 @@ export default function Admin() {
   });
 
   const sidebarStyle = {
-    "--sidebar-width": "10rem",
+    "--sidebar-width": "13rem",
     "--sidebar-width-icon": "3rem",
   };
 
