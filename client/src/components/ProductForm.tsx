@@ -302,6 +302,7 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
 
   // Auto-generate barcode, productCode (reference), and designation
   // Runs for both new and existing products based on form values
+  // Now shows partial generation with placeholders for missing values
   useEffect(() => {
     // Skip until selections are initialized
     if (!initializedFromProduct) return;
@@ -320,47 +321,48 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
     const packaging = packagingTypeOptions.find(pt => pt.description === selectedPackaging) || packagingTypeOptions[0];
     const specification = specificationOptions.find(s => s.description === selectedSpecification) || specificationOptions[0];
 
-    // Generate Código de Barras (barcode)
+    // Generate Código de Barras (barcode) - show partial with XX for missing values
     // Format: PRODUTO(2) + CAPACIDADE(2) + MODELO(3) + CORANTE(2) + MEDIDA_TAMPA(2) + CERTIFICAÇÃO(1) + EMBALAMENTO(1) + ESPECIFICAÇÕES(5)
-    // Excel format requires exact fixed widths with padding
-    if (productType && capacity && model && color && capSize && certification && packaging && specification) {
+    const barcodeHasAnyValue = productType || capacity || model || color || capSize || certification || packaging || specification;
+    if (barcodeHasAnyValue) {
       const barcode = [
-        (productType.code || '').padStart(2, '0'),      // 2 digits
-        (capacity.code || '').padStart(2, '0'),         // 2 digits
-        (model.code || '').padStart(3, '0'),            // 3 digits
-        (color.code || '').padStart(2, '0'),            // 2 digits
-        (capSize.code || '').padStart(2, '0'),          // 2 digits
-        (certification.code || '').slice(-1),            // 1 digit (last char)
-        (packaging.code || '').slice(-1),                // 1 digit (last char)
-        (specification.code || '').padStart(5, '0'),    // 5 digits
+        productType ? (productType.code || '').padStart(2, '0') : 'XX',      // 2 digits
+        capacity ? (capacity.code || '').padStart(2, '0') : 'XX',           // 2 digits
+        model ? (model.code || '').padStart(3, '0') : 'XXX',                // 3 digits
+        color ? (color.code || '').padStart(2, '0') : 'XX',                 // 2 digits
+        capSize ? (capSize.code || '').padStart(2, '0') : 'XX',             // 2 digits
+        certification ? (certification.code || '').slice(-1) : 'X',          // 1 digit (last char)
+        packaging ? (packaging.code || '').slice(-1) : 'X',                  // 1 digit (last char)
+        specification ? (specification.code || '').padStart(5, '0') : 'XXXXX', // 5 digits
       ].join('');
       form.setValue('barcode', barcode, { shouldDirty: true });
     }
 
-    // Generate Referência (productCode)
+    // Generate Referência (productCode) - show partial with [campo] for missing
     // Format: MODELO_DISPLAY + "." + MATERIA_PRIMA_CODE + "." + CORANTE_CODE + "." + CERT_SHORT + PACK_SHORT + "." + SPEC_DISPLAY
-    if (model && rawMaterial && color && certification && packaging && specification) {
+    const refHasAnyValue = model || rawMaterial || color || certification || packaging || specification;
+    if (refHasAnyValue) {
       const reference = [
-        model.displayCode || model.code || '',
-        rawMaterial.code || '',
-        color.code || '',
-        (certification.shortCode || '') + (packaging.shortCode || ''),
-        specification.displayCode || specification.code || '',
-      ].filter(Boolean).join('.');
+        model?.displayCode || model?.code || '[modelo]',
+        rawMaterial?.code || '[matéria]',
+        color?.code || '[cor]',
+        (certification?.shortCode || '[cert]') + (packaging?.shortCode || '[emb]'),
+        specification?.displayCode || specification?.code || '[espec]',
+      ].join('.');
       form.setValue('productCode', reference, { shouldDirty: true });
     }
 
-    // Generate Designação
+    // Generate Designação - show available parts
     // Format: PRODUTO_NAME + CAPACIDADE_DESC + MODELO_DESC + CORANTE_NAME + SISTEMA_FECHO + MEDIDA_TAMPA_DESC + CERT_ABBREV + PACK_ABBREV + SPEC_DESC
     // Extract color name from description (e.g., "PRETO" from "PRETO - 90 R/G 1162")
-    const colorName = color?.description?.split(' - ')[0] || '';
+    const colorName = color?.description?.split(' - ')[0] || watchedColors || '';
     const designationParts = [
-      productType?.description || '',
-      capacity?.description || '',
-      model?.description || '',
+      productType?.description || watchedProductType || '',
+      capacity?.description || watchedCapacity || '',
+      model?.description || watchedModel || '',
       colorName,
-      closingSystem?.code || '',
-      capSize?.description || '',
+      closingSystem?.code || watchedClosingSystem || '',
+      capSize?.description || watchedCapDimensions || '',
       certification?.abbreviation || '',
       packaging?.abbreviation || '',
       specification?.description || '',
