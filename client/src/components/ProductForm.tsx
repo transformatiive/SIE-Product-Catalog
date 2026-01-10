@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, X, Plus, Trash2 } from "lucide-react";
+import { Save, X, Plus, Trash2, FileText } from "lucide-react";
 import { InsertProduct, insertProductSchema, Product } from "@shared/schema";
 import ImageUpload from "./ImageUpload";
 import { SearchableSelect } from "./SearchableSelect";
@@ -19,7 +19,9 @@ interface ProductFormProps {
   product?: Product;
   onSave?: (product: InsertProduct) => void;
   onCancel?: () => void;
+  onGeneratePDF?: (product: Product) => void;
   isLoading?: boolean;
+  isGeneratingPDF?: boolean;
 }
 
 interface DimensionField {
@@ -50,7 +52,7 @@ interface PackagingData {
   stackHeight: string;
 }
 
-export default function ProductForm({ product, onSave, onCancel, isLoading = false }: ProductFormProps) {
+export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, isLoading = false, isGeneratingPDF = false }: ProductFormProps) {
   const { data: familyOptions = [], isLoading: familiesLoading } = useQuery<{id: string, code: string, description: string}[]>({
     queryKey: ['/api/admin/families'],
   });
@@ -355,6 +357,13 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
   const handleCancel = () => {
     console.log('Form cancelled');
     onCancel?.();
+  };
+
+  const handleGeneratePDF = () => {
+    if (product) {
+      console.log('Generate PDF triggered', product.productCode);
+      onGeneratePDF?.(product);
+    }
   };
 
   return (
@@ -1247,6 +1256,19 @@ export default function ProductForm({ product, onSave, onCancel, isLoading = fal
                   <X className="w-4 h-4 mr-2" />
                   Cancelar
                 </Button>
+                {product && (
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={handleGeneratePDF}
+                    disabled={isGeneratingPDF}
+                    data-testid="button-generate-pdf"
+                    className="min-w-32"
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    {isGeneratingPDF ? 'A gerar...' : 'Gerar PDF'}
+                  </Button>
+                )}
                 <Button 
                   type="submit" 
                   data-testid="button-save"

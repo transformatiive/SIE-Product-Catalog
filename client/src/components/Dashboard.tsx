@@ -223,8 +223,6 @@ export default function Dashboard() {
             onEdit={handleEditProduct}
             onDelete={handleDeleteProduct}
             onCreateNew={handleCreateNew}
-            onGeneratePDF={handleGeneratePDF}
-            isGeneratingPDF={generatePDFMutation.isPending}
           />
         );
       
@@ -234,7 +232,9 @@ export default function Dashboard() {
             product={selectedProduct || undefined}
             onSave={handleSaveProduct}
             onCancel={handleBack}
+            onGeneratePDF={handleGeneratePDF}
             isLoading={updateProductMutation.isPending}
+            isGeneratingPDF={generatePDFMutation.isPending}
           />
         );
       

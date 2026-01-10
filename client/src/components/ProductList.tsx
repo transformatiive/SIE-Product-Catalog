@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, FileText, Plus, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Edit, Trash2, Plus, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { Product } from "@shared/schema";
 
 interface ProductListProps {
@@ -13,8 +13,6 @@ interface ProductListProps {
   onEdit?: (product: Product) => void;
   onDelete?: (product: Product) => void;
   onCreateNew?: () => void;
-  onGeneratePDF?: (product: Product) => void;
-  isGeneratingPDF?: boolean;
 }
 
 export default function ProductList({ 
@@ -22,9 +20,7 @@ export default function ProductList({
   loading = false,
   onEdit,
   onDelete,
-  onCreateNew,
-  onGeneratePDF,
-  isGeneratingPDF = false
+  onCreateNew
 }: ProductListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -56,11 +52,6 @@ export default function ProductList({
   const handleCreateNew = () => {
     console.log('Create new product triggered');
     onCreateNew?.();
-  };
-
-  const handleGeneratePDF = (product: Product) => {
-    console.log('Generate PDF triggered', product.productCode);
-    onGeneratePDF?.(product);
   };
 
   const formatDate = (date: Date | null) => {
@@ -138,9 +129,13 @@ export default function ProductList({
                       }`}
                     >
                       <TableCell className="font-mono font-medium">
-                        <span data-testid={`text-code-${product.id}`}>
+                        <button
+                          onClick={() => handleEdit(product)}
+                          className="text-primary hover:underline cursor-pointer"
+                          data-testid={`text-code-${product.id}`}
+                        >
                           {product.productCode}
-                        </span>
+                        </button>
                       </TableCell>
                       <TableCell className="font-medium">
                         <span data-testid={`text-name-${product.id}`}>
@@ -198,16 +193,6 @@ export default function ProductList({
                             data-testid={`button-edit-${product.id}`}
                           >
                             <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            className="h-8 w-8 hover-elevate"
-                            onClick={() => handleGeneratePDF(product)}
-                            disabled={isGeneratingPDF}
-                            data-testid={`button-pdf-${product.id}`}
-                          >
-                            <FileText className="w-4 h-4" />
                           </Button>
                           <Button 
                             variant="ghost" 
