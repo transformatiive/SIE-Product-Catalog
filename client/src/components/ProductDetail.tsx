@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Edit, FileText, ArrowLeft, Calendar, Package, Wrench, Award } from "lucide-react";
+import { Edit, FileText, ArrowLeft, Calendar, Package, Wrench, Award, Box, Tag } from "lucide-react";
 import { Product } from "@shared/schema";
 
 interface ProductDetailProps {
@@ -32,7 +32,7 @@ export default function ProductDetail({ product, onEdit, onGeneratePDF, onBack, 
 
   const formatDate = (date: Date | null) => {
     if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString('en-US', {
+    return new Date(date).toLocaleDateString('pt-PT', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -56,7 +56,7 @@ export default function ProductDetail({ product, onEdit, onGeneratePDF, onBack, 
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      {/* Header */}
+      {/* Cabeçalho */}
       <Card>
         <CardHeader>
           <div className="flex items-start justify-between">
@@ -69,11 +69,11 @@ export default function ProductDetail({ product, onEdit, onGeneratePDF, onBack, 
                   data-testid="button-back"
                 >
                   <ArrowLeft className="w-4 h-4 mr-1" />
-                  Back
+                  Voltar
                 </Button>
                 <Badge variant="secondary">{product.family}</Badge>
                 <Badge variant={product.isActive ? "default" : "secondary"}>
-                  {product.isActive ? 'Active' : 'Inactive'}
+                  {product.isActive ? 'Ativo' : 'Inativo'}
                 </Badge>
               </div>
               <div>
@@ -81,7 +81,7 @@ export default function ProductDetail({ product, onEdit, onGeneratePDF, onBack, 
                   {product.product}
                 </h1>
                 <p className="text-lg text-muted-foreground">
-                  Model {product.model} • {product.type}
+                  Modelo {product.model} • {product.type}
                 </p>
                 <p className="font-mono text-sm" data-testid="text-product-code">
                   {product.productCode}
@@ -92,7 +92,7 @@ export default function ProductDetail({ product, onEdit, onGeneratePDF, onBack, 
             <div className="flex gap-2">
               <Button onClick={handleEdit} data-testid="button-edit">
                 <Edit className="w-4 h-4 mr-1" />
-                Edit
+                Editar
               </Button>
               <Button 
                 onClick={handleGeneratePDF} 
@@ -100,57 +100,57 @@ export default function ProductDetail({ product, onEdit, onGeneratePDF, onBack, 
                 data-testid="button-generate-pdf"
               >
                 <FileText className="w-4 h-4 mr-1" />
-                {isGeneratingPDF ? 'Generating...' : 'Generate PDF'}
+                {isGeneratingPDF ? 'A gerar...' : 'Gerar PDF'}
               </Button>
             </div>
           </div>
         </CardHeader>
       </Card>
 
-      {/* Content */}
-      <Tabs defaultValue="overview" className="w-full">
+      {/* Conteúdo */}
+      <Tabs defaultValue="geral" className="w-full">
         <TabsList className="grid w-full grid-cols-5 p-1.5 bg-muted/30 rounded-lg shadow-sm border border-border/50">
-          <TabsTrigger value="overview" className="rounded-md transition-all duration-200 data-[state=active]:shadow-md data-[state=inactive]:hover:bg-muted/50">Overview</TabsTrigger>
-          <TabsTrigger value="technical" className="rounded-md transition-all duration-200 data-[state=active]:shadow-md data-[state=inactive]:hover:bg-muted/50">Technical</TabsTrigger>
-          <TabsTrigger value="specifications" className="rounded-md transition-all duration-200 data-[state=active]:shadow-md data-[state=inactive]:hover:bg-muted/50">Specs</TabsTrigger>
-          <TabsTrigger value="packaging" className="rounded-md transition-all duration-200 data-[state=active]:shadow-md data-[state=inactive]:hover:bg-muted/50">Packaging</TabsTrigger>
-          <TabsTrigger value="metadata" className="rounded-md transition-all duration-200 data-[state=active]:shadow-md data-[state=inactive]:hover:bg-muted/50">Metadata</TabsTrigger>
+          <TabsTrigger value="geral" className="rounded-md transition-all duration-200 data-[state=active]:shadow-md data-[state=inactive]:hover:bg-muted/50">Geral</TabsTrigger>
+          <TabsTrigger value="tecnico" className="rounded-md transition-all duration-200 data-[state=active]:shadow-md data-[state=inactive]:hover:bg-muted/50">Técnico</TabsTrigger>
+          <TabsTrigger value="especificacoes" className="rounded-md transition-all duration-200 data-[state=active]:shadow-md data-[state=inactive]:hover:bg-muted/50">Especificações</TabsTrigger>
+          <TabsTrigger value="embalagem" className="rounded-md transition-all duration-200 data-[state=active]:shadow-md data-[state=inactive]:hover:bg-muted/50">Embalagem</TabsTrigger>
+          <TabsTrigger value="metadata" className="rounded-md transition-all duration-200 data-[state=active]:shadow-md data-[state=inactive]:hover:bg-muted/50">Metadados</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
+        <TabsContent value="geral" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Basic Information */}
+            {/* Informação Básica */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Package className="w-5 h-5" />
-                  Basic Information
+                  Informação Básica
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-muted-foreground">Model</p>
+                    <p className="text-muted-foreground">Modelo</p>
                     <p className="font-medium" data-testid="text-detail-model">{product.model}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Type</p>
+                    <p className="text-muted-foreground">Tipo de Produto</p>
                     <p className="font-medium" data-testid="text-detail-type">{product.type}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Nominal Capacity</p>
+                    <p className="text-muted-foreground">Capacidade Nominal</p>
                     <p className="font-medium" data-testid="text-detail-capacity">{product.nominalCapacity}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Total Capacity</p>
+                    <p className="text-muted-foreground">Capacidade Total</p>
                     <p className="font-medium">{product.totalCapacity || 'N/A'}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Raw Material</p>
+                    <p className="text-muted-foreground">Matéria Prima</p>
                     <p className="font-medium" data-testid="text-detail-material">{product.rawMaterial}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Weight</p>
+                    <p className="text-muted-foreground">Peso</p>
                     <p className="font-medium" data-testid="text-detail-weight">{product.weight}</p>
                   </div>
                 </div>
@@ -158,7 +158,7 @@ export default function ProductDetail({ product, onEdit, onGeneratePDF, onBack, 
                 <Separator />
                 
                 <div>
-                  <p className="text-muted-foreground text-sm mb-2">Available Colors</p>
+                  <p className="text-muted-foreground text-sm mb-2">Cores Disponíveis</p>
                   <div className="flex flex-wrap gap-1">
                     {product.colors.split(',').map((color, index) => (
                       <Badge key={index} variant="outline" className="text-xs">
@@ -170,12 +170,12 @@ export default function ProductDetail({ product, onEdit, onGeneratePDF, onBack, 
               </CardContent>
             </Card>
 
-            {/* Dimensions */}
+            {/* Dimensões */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Wrench className="w-5 h-5" />
-                  Dimensions
+                  Dimensões
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -191,17 +191,20 @@ export default function ProductDetail({ product, onEdit, onGeneratePDF, onBack, 
                     ))}
                   </div>
                 ) : (
-                  <p className="text-muted-foreground">No dimensions specified</p>
+                  <p className="text-muted-foreground">Sem dimensões especificadas</p>
                 )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Special Features */}
+          {/* Características Especiais */}
           {specialFeatures.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Special Features</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Tag className="w-5 h-5" />
+                  Características Especiais
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
@@ -216,46 +219,49 @@ export default function ProductDetail({ product, onEdit, onGeneratePDF, onBack, 
           )}
         </TabsContent>
 
-        <TabsContent value="technical" className="space-y-6">
+        <TabsContent value="tecnico" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Technical Specifications</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Wrench className="w-5 h-5" />
+                  Especificações Técnicas
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 gap-3 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Closing System</span>
+                    <span className="text-muted-foreground">Sistema de Fecho</span>
                     <span className="font-medium">{product.closingSystem || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Sealing Type</span>
+                    <span className="text-muted-foreground">Tipo de Selagem</span>
                     <span className="font-medium">{product.sealingType || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Handling System</span>
+                    <span className="text-muted-foreground">Sistema de Manuseamento</span>
                     <span className="font-medium">{product.handlingSystem || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Weight w/ Accessories</span>
+                    <span className="text-muted-foreground">Peso c/ Acessórios</span>
                     <span className="font-medium">{product.weightWithAccessories || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Food Contact</span>
+                    <span className="text-muted-foreground">Contacto Alimentar</span>
                     <Badge variant={product.foodContact ? "default" : "secondary"}>
-                      {product.foodContact ? 'Approved' : 'Not Approved'}
+                      {product.foodContact ? 'Aprovado' : 'Não Aprovado'}
                     </Badge>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Certifications */}
+            {/* Certificações */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Award className="w-5 h-5" />
-                  Certifications
+                  Certificações
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -268,22 +274,25 @@ export default function ProductDetail({ product, onEdit, onGeneratePDF, onBack, 
                     ))}
                   </div>
                 ) : (
-                  <p className="text-muted-foreground">No certifications specified</p>
+                  <p className="text-muted-foreground">Sem certificações especificadas</p>
                 )}
               </CardContent>
             </Card>
           </div>
         </TabsContent>
 
-        <TabsContent value="specifications" className="space-y-6">
+        <TabsContent value="especificacoes" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Markings & Specifications</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Tag className="w-5 h-5" />
+                Marcações e Especificações
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {markings.length > 0 && (
                 <div>
-                  <h4 className="font-medium mb-3">Product Markings</h4>
+                  <h4 className="font-medium mb-3">Marcações do Produto</h4>
                   <div className="flex flex-wrap gap-2">
                     {markings.map((marking: string, index: number) => (
                       <Badge key={index} variant="outline">
@@ -296,20 +305,27 @@ export default function ProductDetail({ product, onEdit, onGeneratePDF, onBack, 
 
               {product.notes && (
                 <div>
-                  <h4 className="font-medium mb-3">Notes</h4>
+                  <h4 className="font-medium mb-3">Observações</h4>
                   <div className="p-4 bg-muted rounded-md">
                     <p className="text-sm" data-testid="text-notes">{product.notes}</p>
                   </div>
                 </div>
               )}
+
+              {markings.length === 0 && !product.notes && (
+                <p className="text-muted-foreground">Sem marcações ou observações</p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="packaging" className="space-y-6">
+        <TabsContent value="embalagem" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Packaging Information</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Box className="w-5 h-5" />
+                Informação de Embalagem
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {Object.keys(packaging).length > 0 ? (
@@ -324,7 +340,7 @@ export default function ProductDetail({ product, onEdit, onGeneratePDF, onBack, 
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground">No packaging information specified</p>
+                <p className="text-muted-foreground">Sem informação de embalagem especificada</p>
               )}
             </CardContent>
           </Card>
@@ -335,31 +351,31 @@ export default function ProductDetail({ product, onEdit, onGeneratePDF, onBack, 
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="w-5 h-5" />
-                Metadata
+                Metadados
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Created Date</span>
+                  <span className="text-muted-foreground">Data de Criação</span>
                   <span className="font-medium" data-testid="text-created-date">
                     {formatDate(product.createdAt)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Last Updated</span>
+                  <span className="text-muted-foreground">Última Atualização</span>
                   <span className="font-medium" data-testid="text-updated-date">
                     {formatDate(product.updatedAt)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Product ID</span>
+                  <span className="text-muted-foreground">ID do Produto</span>
                   <span className="font-mono text-xs">{product.id}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Status</span>
+                  <span className="text-muted-foreground">Estado</span>
                   <Badge variant={product.isActive ? "default" : "secondary"}>
-                    {product.isActive ? 'Active' : 'Inactive'}
+                    {product.isActive ? 'Ativo' : 'Inativo'}
                   </Badge>
                 </div>
               </div>
