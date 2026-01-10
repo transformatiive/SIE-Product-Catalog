@@ -304,6 +304,11 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
   const watchedCapDimensions = form.watch('capDimensions');
   const watchedRawMaterial = form.watch('rawMaterial');
   const watchedClosingSystem = form.watch('closingSystem');
+  
+  // Watch auto-generated fields for display
+  const watchedBarcode = form.watch('barcode');
+  const watchedProductCode = form.watch('productCode');
+  const watchedDesignation = form.watch('designation');
 
   // Auto-generate barcode, productCode (reference), and designation
   // Runs for both new and existing products based on form values
@@ -817,11 +822,12 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
                       <Label htmlFor="designation" className="text-sm font-medium text-foreground">Designação</Label>
                       <Input
                         id="designation"
-                        value={form.watch('designation') || ''}
+                        value={watchedDesignation || ''}
                         placeholder="Gerado automaticamente"
                         data-testid="input-designation"
                         className="h-9 bg-muted cursor-not-allowed"
                         disabled
+                        readOnly
                       />
                     </div>
 
@@ -829,10 +835,11 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
                       <Label htmlFor="productCode" className="text-sm font-medium text-foreground">Referência</Label>
                       <Input
                         id="productCode"
-                        value={form.watch('productCode') || ''}
+                        value={watchedProductCode || ''}
                         data-testid="input-product-code"
                         className="h-9 font-mono bg-muted cursor-not-allowed"
                         disabled
+                        readOnly
                       />
                     </div>
 
@@ -840,11 +847,12 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
                       <Label htmlFor="barcode" className="text-sm font-medium text-foreground">Código de Barras</Label>
                       <Input
                         id="barcode"
-                        value={form.watch('barcode') || ''}
+                        value={watchedBarcode || ''}
                         placeholder="Gerado automaticamente"
                         data-testid="input-barcode"
                         className="h-9 font-mono bg-muted cursor-not-allowed"
                         disabled
+                        readOnly
                       />
                     </div>
                   </div>
