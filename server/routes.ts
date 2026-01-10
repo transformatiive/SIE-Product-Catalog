@@ -29,7 +29,11 @@ import {
   certificationTypes,
   insertCertificationTypeSchema,
   packagingTypes,
-  insertPackagingTypeSchema
+  insertPackagingTypeSchema,
+  models,
+  insertModelSchema,
+  specifications,
+  insertSpecificationSchema
 } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { renderToBuffer } from '@react-pdf/renderer';
@@ -58,6 +62,8 @@ const tableMap = {
   capSizes: { table: capSizes, insertSchema: insertCapSizeSchema },
   certificationTypes: { table: certificationTypes, insertSchema: insertCertificationTypeSchema },
   packagingTypes: { table: packagingTypes, insertSchema: insertPackagingTypeSchema },
+  models: { table: models, insertSchema: insertModelSchema },
+  specifications: { table: specifications, insertSchema: insertSpecificationSchema },
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -797,7 +803,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      const result = await db.insert(tableConfig.table).values(validation.data).returning();
+      const result = await db.insert(tableConfig.table).values(validation.data as any).returning();
       res.status(201).json(result[0]);
     } catch (error) {
       console.error("Error creating admin option:", error);

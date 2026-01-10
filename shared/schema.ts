@@ -75,6 +75,11 @@ export const products = pgTable("products", {
   foodContact: boolean("food_contact").default(false),
   specialFeatures: text("special_features"), // JSON array as string
   
+  // Code generation selections (for auto-generating barcode, reference, designation)
+  selectedCertificationTypeId: varchar("selected_certification_type_id"), // FK to certification_types
+  selectedPackagingTypeId: varchar("selected_packaging_type_id"), // FK to packaging_types
+  selectedSpecificationId: varchar("selected_specification_id"), // FK to specifications
+  
   // Image fields
   productImage: text("product_image"), // File path to product image
   technicalDrawing: text("technical_drawing"), // File path to technical drawing/3D blueprint
@@ -122,6 +127,13 @@ export const users = pgTable("users", {
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Session storage table for connect-pg-simple
+export const userSessions = pgTable("user_sessions", {
+  sid: varchar("sid").primaryKey(),
+  sess: text("sess").notNull(),
+  expire: timestamp("expire").notNull(),
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
@@ -260,6 +272,8 @@ export const certificationTypes = pgTable("certification_types", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   code: text("code").notNull().unique(),
   description: text("description").notNull(),
+  abbreviation: text("abbreviation"), // e.g., "CERT"
+  shortCode: text("short_code"), // e.g., "C"
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -276,6 +290,8 @@ export const packagingTypes = pgTable("packaging_types", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   code: text("code").notNull().unique(),
   description: text("description").notNull(),
+  abbreviation: text("abbreviation"), // e.g., "PAL"
+  shortCode: text("short_code"), // e.g., "P"
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -287,10 +303,51 @@ export const insertPackagingTypeSchema = createInsertSchema(packagingTypes).omit
 export type InsertPackagingType = z.infer<typeof insertPackagingTypeSchema>;
 export type PackagingType = typeof packagingTypes.$inferSelect;
 
+// Models (3_Modelo)
+export const models = pgTable("models", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: text("code").notNull().unique(), // e.g., "437"
+  displayCode: text("display_code").notNull(), // e.g., "0541" - used in Reference
+  description: text("description").notNull(), // e.g., "SPOUT FLEXIVEL"
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertModelSchema = createInsertSchema(models).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertModel = z.infer<typeof insertModelSchema>;
+export type Model = typeof models.$inferSelect;
+
+// Specifications (10_Especificações)
+export const specifications = pgTable("specifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: text("code").notNull().unique(), // e.g., "00127" - used in barcode
+  displayCode: text("display_code").notNull(), // e.g., "A127" - used in Reference
+  description: text("description"), // e.g., "400G" or other specification details
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertSpecificationSchema = createInsertSchema(specifications).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertSpecification = z.infer<typeof insertSpecificationSchema>;
+export type Specification = typeof specifications.$inferSelect;
+
 // Generic dropdown option type for API responses
 export type DropdownOption = {
   id: string;
   code: string;
   description: string;
   isActive: boolean;
+};
+
+// Extended dropdown option type with abbreviations
+export type ExtendedDropdownOption = DropdownOption & {
+  abbreviation?: string;
+  shortCode?: string;
+  displayCode?: string;
 };

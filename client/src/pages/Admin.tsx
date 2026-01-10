@@ -45,12 +45,14 @@ type TableName =
   | "families"
   | "productTypes"
   | "capacities"
+  | "models"
   | "rawMaterials"
   | "colors"
   | "closingSystems"
   | "capSizes"
   | "certificationTypes"
-  | "packagingTypes";
+  | "packagingTypes"
+  | "specifications";
 
 interface TabConfig {
   name: TableName;
@@ -61,32 +63,54 @@ const tabConfigs: TabConfig[] = [
   { name: "families", label: "Famílias" },
   { name: "productTypes", label: "Tipos de Produto" },
   { name: "capacities", label: "Capacidades" },
+  { name: "models", label: "Modelos" },
   { name: "rawMaterials", label: "Matérias Primas" },
   { name: "colors", label: "Cores" },
   { name: "closingSystems", label: "Sistemas de Fecho" },
   { name: "capSizes", label: "Medidas de Tampa" },
   { name: "certificationTypes", label: "Tipos de Certificação" },
   { name: "packagingTypes", label: "Tipos de Embalagem" },
+  { name: "specifications", label: "Especificações" },
 ];
 
 interface OptionFormData {
   code: string;
   description: string;
   isActive: boolean;
+  displayCode?: string;
+  abbreviation?: string;
+  shortCode?: string;
 }
+
+// Tables that need extended fields
+const tablesWithDisplayCode = ["models", "specifications"];
+const tablesWithAbbreviations = ["certificationTypes", "packagingTypes"];
 
 function AdminTable({ tableName }: { tableName: TableName }) {
   const { toast } = useToast();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<DropdownOption | null>(null);
+  const [selectedOption, setSelectedOption] = useState<DropdownOption & { displayCode?: string; abbreviation?: string; shortCode?: string } | null>(null);
   const [formData, setFormData] = useState<OptionFormData>({
     code: "",
     description: "",
     isActive: true,
+    displayCode: "",
+    abbreviation: "",
+    shortCode: "",
   });
 
-  const { data: options = [], isLoading } = useQuery<DropdownOption[]>({
+  const needsDisplayCode = tablesWithDisplayCode.includes(tableName);
+  const needsAbbreviations = tablesWithAbbreviations.includes(tableName);
+
+  // Extended type to include optional fields for models/specifications and certification/packaging types
+  type ExtendedDropdownOption = DropdownOption & { 
+    displayCode?: string; 
+    abbreviation?: string; 
+    shortCode?: string;
+  };
+
+  const { data: options = [], isLoading } = useQuery<ExtendedDropdownOption[]>({
     queryKey: ["/api/admin", tableName, "?all=true"],
   });
 
@@ -158,23 +182,26 @@ function AdminTable({ tableName }: { tableName: TableName }) {
   });
 
   const resetForm = () => {
-    setFormData({ code: "", description: "", isActive: true });
+    setFormData({ code: "", description: "", isActive: true, displayCode: "", abbreviation: "", shortCode: "" });
     setSelectedOption(null);
     setIsEditOpen(false);
   };
 
   const handleCreate = () => {
     setSelectedOption(null);
-    setFormData({ code: "", description: "", isActive: true });
+    setFormData({ code: "", description: "", isActive: true, displayCode: "", abbreviation: "", shortCode: "" });
     setIsEditOpen(true);
   };
 
-  const handleEdit = (option: DropdownOption) => {
+  const handleEdit = (option: DropdownOption & { displayCode?: string; abbreviation?: string; shortCode?: string }) => {
     setSelectedOption(option);
     setFormData({
       code: option.code,
       description: option.description,
       isActive: option.isActive,
+      displayCode: option.displayCode || "",
+      abbreviation: option.abbreviation || "",
+      shortCode: option.shortCode || "",
     });
     setIsEditOpen(true);
   };
@@ -186,16 +213,27 @@ function AdminTable({ tableName }: { tableName: TableName }) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const submitData: any = {
+      code: formData.code,
+      description: formData.description,
+    };
+    
+    // Add extended fields based on table type
+    if (needsDisplayCode) {
+      submitData.displayCode = formData.displayCode;
+    }
+    if (needsAbbreviations) {
+      submitData.abbreviation = formData.abbreviation;
+      submitData.shortCode = formData.shortCode;
+    }
+    
     if (selectedOption) {
       updateMutation.mutate({
         id: selectedOption.id,
-        data: formData,
+        data: { ...submitData, isActive: formData.isActive },
       });
     } else {
-      createMutation.mutate({
-        code: formData.code,
-        description: formData.description,
-      });
+      createMutation.mutate(submitData);
     }
   };
 
@@ -228,6 +266,13 @@ function AdminTable({ tableName }: { tableName: TableName }) {
             <TableRow>
               <TableHead className="w-[150px]">Código</TableHead>
               <TableHead>Descrição</TableHead>
+              {needsDisplayCode && <TableHead className="w-[120px]">Código Exib.</TableHead>}
+              {needsAbbreviations && (
+                <>
+                  <TableHead className="w-[100px]">Abreviatura</TableHead>
+                  <TableHead className="w-[80px]">Cód. Curto</TableHead>
+                </>
+              )}
               <TableHead className="w-[100px]">Estado</TableHead>
               <TableHead className="w-[120px] text-right">Acções</TableHead>
             </TableRow>
@@ -235,7 +280,7 @@ function AdminTable({ tableName }: { tableName: TableName }) {
           <TableBody>
             {options.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={needsDisplayCode ? 5 : needsAbbreviations ? 6 : 4} className="text-center text-muted-foreground py-8">
                   Nenhuma opção encontrada
                 </TableCell>
               </TableRow>
@@ -244,6 +289,13 @@ function AdminTable({ tableName }: { tableName: TableName }) {
                 <TableRow key={option.id}>
                   <TableCell className="font-medium">{option.code}</TableCell>
                   <TableCell>{option.description}</TableCell>
+                  {needsDisplayCode && <TableCell className="font-mono">{option.displayCode || '-'}</TableCell>}
+                  {needsAbbreviations && (
+                    <>
+                      <TableCell>{option.abbreviation || '-'}</TableCell>
+                      <TableCell className="font-mono">{option.shortCode || '-'}</TableCell>
+                    </>
+                  )}
                   <TableCell>
                     <Badge variant={option.isActive ? "default" : "secondary"}>
                       {option.isActive ? "Activo" : "Inactivo"}
@@ -315,6 +367,50 @@ function AdminTable({ tableName }: { tableName: TableName }) {
                   required
                 />
               </div>
+              {needsDisplayCode && (
+                <div className="space-y-2">
+                  <Label htmlFor="displayCode">Código de Exibição</Label>
+                  <Input
+                    id="displayCode"
+                    value={formData.displayCode || ''}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, displayCode: e.target.value }))
+                    }
+                    placeholder="Ex: 0541"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">Código usado na referência do produto</p>
+                </div>
+              )}
+              {needsAbbreviations && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="abbreviation">Abreviatura</Label>
+                    <Input
+                      id="abbreviation"
+                      value={formData.abbreviation || ''}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, abbreviation: e.target.value }))
+                      }
+                      placeholder="Ex: CERT ou PAL"
+                    />
+                    <p className="text-xs text-muted-foreground">Usado na designação do produto</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="shortCode">Código Curto</Label>
+                    <Input
+                      id="shortCode"
+                      value={formData.shortCode || ''}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, shortCode: e.target.value }))
+                      }
+                      placeholder="Ex: C ou P"
+                      maxLength={1}
+                    />
+                    <p className="text-xs text-muted-foreground">Código de 1 letra para referência</p>
+                  </div>
+                </>
+              )}
               {selectedOption && (
                 <div className="flex items-center gap-2">
                   <input

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from "@tanstack/react-query";
@@ -67,6 +67,34 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
 
   const { data: closingSystemOptions = [], isLoading: closingSystemsLoading } = useQuery<{id: string, code: string, description: string}[]>({
     queryKey: ['/api/admin/closingSystems'],
+  });
+
+  const { data: modelOptions = [] } = useQuery<{id: string, code: string, displayCode: string, description: string}[]>({
+    queryKey: ['/api/admin/models'],
+  });
+
+  const { data: specificationOptions = [] } = useQuery<{id: string, code: string, displayCode: string, description: string}[]>({
+    queryKey: ['/api/admin/specifications'],
+  });
+
+  const { data: capacityOptions = [] } = useQuery<{id: string, code: string, description: string}[]>({
+    queryKey: ['/api/admin/capacities'],
+  });
+
+  const { data: colorOptions = [] } = useQuery<{id: string, code: string, description: string}[]>({
+    queryKey: ['/api/admin/colors'],
+  });
+
+  const { data: capSizeOptions = [] } = useQuery<{id: string, code: string, description: string}[]>({
+    queryKey: ['/api/admin/capSizes'],
+  });
+
+  const { data: certificationTypeOptions = [] } = useQuery<{id: string, code: string, description: string, abbreviation?: string, shortCode?: string}[]>({
+    queryKey: ['/api/admin/certificationTypes'],
+  });
+
+  const { data: packagingTypeOptions = [] } = useQuery<{id: string, code: string, description: string, abbreviation?: string, shortCode?: string}[]>({
+    queryKey: ['/api/admin/packagingTypes'],
   });
 
   const [dimensions, setDimensions] = useState<DimensionField[]>(() => {
@@ -217,6 +245,135 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
     },
   });
 
+  // State for additional selections needed for auto-generation (stores description value)
+  // Initialize from product data if editing, otherwise use first available option after data loads
+  const [selectedCertification, setSelectedCertification] = useState<string>('');
+  const [selectedPackaging, setSelectedPackaging] = useState<string>('');
+  const [selectedSpecification, setSelectedSpecification] = useState<string>('');
+  const [initializedFromProduct, setInitializedFromProduct] = useState(false);
+
+  // Initialize selections from saved product data or default to first option
+  useEffect(() => {
+    if (initializedFromProduct) return;
+    
+    // Only proceed if all options are loaded
+    if (certificationTypeOptions.length === 0 || packagingTypeOptions.length === 0 || specificationOptions.length === 0) {
+      return;
+    }
+
+    // For existing products, try to find saved selection by ID, otherwise default to first option
+    if (product?.selectedCertificationTypeId) {
+      const saved = certificationTypeOptions.find(ct => ct.id === product.selectedCertificationTypeId);
+      setSelectedCertification(saved?.description || certificationTypeOptions[0].description);
+    } else {
+      setSelectedCertification(certificationTypeOptions[0].description);
+    }
+
+    if (product?.selectedPackagingTypeId) {
+      const saved = packagingTypeOptions.find(pt => pt.id === product.selectedPackagingTypeId);
+      setSelectedPackaging(saved?.description || packagingTypeOptions[0].description);
+    } else {
+      setSelectedPackaging(packagingTypeOptions[0].description);
+    }
+
+    if (product?.selectedSpecificationId) {
+      const saved = specificationOptions.find(s => s.id === product.selectedSpecificationId);
+      setSelectedSpecification(saved?.description || specificationOptions[0].description);
+    } else {
+      setSelectedSpecification(specificationOptions[0].description);
+    }
+
+    setInitializedFromProduct(true);
+  }, [certificationTypeOptions, packagingTypeOptions, specificationOptions, initializedFromProduct, product]);
+
+  // Watch form values for auto-generation
+  const watchedProductType = form.watch('type');
+  const watchedCapacity = form.watch('nominalCapacity');
+  const watchedModel = form.watch('model');
+  const watchedColors = form.watch('colors');
+  const watchedCapDimensions = form.watch('capDimensions');
+  const watchedRawMaterial = form.watch('rawMaterial');
+  const watchedClosingSystem = form.watch('closingSystem');
+
+  // Auto-generate barcode, productCode (reference), and designation
+  // Runs for both new and existing products based on form values
+  useEffect(() => {
+    // Skip until selections are initialized
+    if (!initializedFromProduct) return;
+    
+    // Find matching options from support tables
+    const productType = productTypeOptions.find(pt => pt.code === watchedProductType || pt.description === watchedProductType);
+    const capacity = capacityOptions.find(c => c.code === watchedCapacity || c.description === watchedCapacity);
+    const model = modelOptions.find(m => m.code === watchedModel || m.displayCode === watchedModel || m.description === watchedModel);
+    const color = colorOptions.find(c => c.code === watchedColors || c.description === watchedColors);
+    const capSize = capSizeOptions.find(cs => cs.code === watchedCapDimensions || cs.description === watchedCapDimensions);
+    const rawMaterial = rawMaterialOptions.find(rm => rm.code === watchedRawMaterial || rm.description === watchedRawMaterial);
+    const closingSystem = closingSystemOptions.find(cs => cs.code === watchedClosingSystem || cs.description === watchedClosingSystem);
+    
+    // Find selected certification, packaging, and specification by description (SearchableSelect stores descriptions)
+    const certification = certificationTypeOptions.find(ct => ct.description === selectedCertification) || certificationTypeOptions[0];
+    const packaging = packagingTypeOptions.find(pt => pt.description === selectedPackaging) || packagingTypeOptions[0];
+    const specification = specificationOptions.find(s => s.description === selectedSpecification) || specificationOptions[0];
+
+    // Generate Código de Barras (barcode)
+    // Format: PRODUTO(2) + CAPACIDADE(2) + MODELO(3) + CORANTE(2) + MEDIDA_TAMPA(2) + CERTIFICAÇÃO(1) + EMBALAMENTO(1) + ESPECIFICAÇÕES(5)
+    // Excel format requires exact fixed widths with padding
+    if (productType && capacity && model && color && capSize && certification && packaging && specification) {
+      const barcode = [
+        (productType.code || '').padStart(2, '0'),      // 2 digits
+        (capacity.code || '').padStart(2, '0'),         // 2 digits
+        (model.code || '').padStart(3, '0'),            // 3 digits
+        (color.code || '').padStart(2, '0'),            // 2 digits
+        (capSize.code || '').padStart(2, '0'),          // 2 digits
+        (certification.code || '').slice(-1),            // 1 digit (last char)
+        (packaging.code || '').slice(-1),                // 1 digit (last char)
+        (specification.code || '').padStart(5, '0'),    // 5 digits
+      ].join('');
+      form.setValue('barcode', barcode, { shouldDirty: true });
+    }
+
+    // Generate Referência (productCode)
+    // Format: MODELO_DISPLAY + "." + MATERIA_PRIMA_CODE + "." + CORANTE_CODE + "." + CERT_SHORT + PACK_SHORT + "." + SPEC_DISPLAY
+    if (model && rawMaterial && color && certification && packaging && specification) {
+      const reference = [
+        model.displayCode || model.code || '',
+        rawMaterial.code || '',
+        color.code || '',
+        (certification.shortCode || '') + (packaging.shortCode || ''),
+        specification.displayCode || specification.code || '',
+      ].filter(Boolean).join('.');
+      form.setValue('productCode', reference, { shouldDirty: true });
+    }
+
+    // Generate Designação
+    // Format: PRODUTO_NAME + CAPACIDADE_DESC + MODELO_DESC + CORANTE_NAME + SISTEMA_FECHO + MEDIDA_TAMPA_DESC + CERT_ABBREV + PACK_ABBREV + SPEC_DESC
+    // Extract color name from description (e.g., "PRETO" from "PRETO - 90 R/G 1162")
+    const colorName = color?.description?.split(' - ')[0] || '';
+    const designationParts = [
+      productType?.description || '',
+      capacity?.description || '',
+      model?.description || '',
+      colorName,
+      closingSystem?.code || '',
+      capSize?.description || '',
+      certification?.abbreviation || '',
+      packaging?.abbreviation || '',
+      specification?.description || '',
+    ].filter(Boolean);
+    
+    if (designationParts.length > 0) {
+      form.setValue('designation', designationParts.join(' '), { shouldDirty: true });
+    }
+  }, [
+    watchedProductType, watchedCapacity, watchedModel, watchedColors, 
+    watchedCapDimensions, watchedRawMaterial, watchedClosingSystem,
+    selectedCertification, selectedPackaging, selectedSpecification,
+    productTypeOptions, capacityOptions, modelOptions, colorOptions, 
+    capSizeOptions, rawMaterialOptions, closingSystemOptions,
+    certificationTypeOptions, packagingTypeOptions, specificationOptions,
+    form
+  ]);
+
   const addDimension = () => {
     const newId = `dim-${Date.now()}`;
     setDimensions(prev => [...prev, { id: newId, name: '', value: '' }]);
@@ -312,6 +469,11 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
       Object.entries(packagingObject).filter(([_, value]) => value !== undefined)
     );
 
+    // Get the IDs of selected certification/packaging/specification for storage
+    const selectedCertType = certificationTypeOptions.find(ct => ct.description === selectedCertification);
+    const selectedPackType = packagingTypeOptions.find(pt => pt.description === selectedPackaging);
+    const selectedSpec = specificationOptions.find(s => s.description === selectedSpecification);
+
     const finalData = {
       ...data,
       dimensions: JSON.stringify(dimensionsObject),
@@ -323,6 +485,9 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
       technicalDrawing: technicalDrawing || '',
       designation: data.designation || '',
       barcode: data.barcode || '',
+      selectedCertificationTypeId: selectedCertType?.id || null,
+      selectedPackagingTypeId: selectedPackType?.id || null,
+      selectedSpecificationId: selectedSpec?.id || null,
       capType: data.capType || '',
       capDimensions: data.capDimensions || '',
       vedantePead: data.vedantePead ?? false,
@@ -411,14 +576,15 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="productCode" className="text-sm font-medium text-foreground">Código do Produto *</Label>
+                      <Label htmlFor="productCode" className="text-sm font-medium text-foreground">Referência (Gerado automaticamente)</Label>
                       <Input
                         id="productCode"
-                        {...form.register('productCode')}
+                        value={form.watch('productCode') || ''}
                         data-testid="input-product-code"
-                        className="h-9 font-mono"
+                        className="h-9 font-mono bg-muted cursor-not-allowed"
+                        disabled
                       />
-                      <p className="text-xs text-muted-foreground">Código único de identificação do produto</p>
+                      <p className="text-xs text-muted-foreground">Código de referência gerado automaticamente</p>
                     </div>
 
                     <div className="space-y-2">
@@ -433,27 +599,29 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="designation" className="text-sm font-medium text-foreground">Designação</Label>
+                      <Label htmlFor="designation" className="text-sm font-medium text-foreground">Designação (Gerado automaticamente)</Label>
                       <Input
                         id="designation"
-                        {...form.register('designation')}
-                        placeholder="ex.: Bidão 15L PEAD Boca Larga"
+                        value={form.watch('designation') || ''}
+                        placeholder="Gerado automaticamente"
                         data-testid="input-designation"
-                        className="h-9"
+                        className="h-9 bg-muted cursor-not-allowed"
+                        disabled
                       />
-                      <p className="text-xs text-muted-foreground">Designação completa do produto</p>
+                      <p className="text-xs text-muted-foreground">Designação gerada automaticamente</p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="barcode" className="text-sm font-medium text-foreground">Código de Barras</Label>
+                      <Label htmlFor="barcode" className="text-sm font-medium text-foreground">Código de Barras (Gerado automaticamente)</Label>
                       <Input
                         id="barcode"
-                        {...form.register('barcode')}
-                        placeholder="ex.: 5601234567890"
+                        value={form.watch('barcode') || ''}
+                        placeholder="Gerado automaticamente"
                         data-testid="input-barcode"
-                        className="h-9 font-mono"
+                        className="h-9 font-mono bg-muted cursor-not-allowed"
+                        disabled
                       />
-                      <p className="text-xs text-muted-foreground">Código de barras do produto</p>
+                      <p className="text-xs text-muted-foreground">Código de barras gerado automaticamente</p>
                     </div>
 
                     <div className="space-y-2">
@@ -508,6 +676,60 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
                         required
                       />
                       <p className="text-xs text-muted-foreground">Tipo específico ou variante do produto</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Code Generation Parameters Section */}
+                <div className="space-y-4">
+                  <div className="border-b pb-3">
+                    <h3 className="text-lg font-semibold text-foreground">Parâmetros de Geração de Códigos</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Campos utilizados para geração automática de Código de Barras, Referência e Designação</p>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                      <SearchableSelect
+                        value={selectedCertification}
+                        onChange={(val) => setSelectedCertification(val)}
+                        options={certificationTypeOptions.map(ct => ({ id: ct.id, code: ct.code, description: ct.description }))}
+                        label="Tipo de Certificação *"
+                        placeholder="Seleccionar certificação..."
+                        apiEndpoint="/api/admin/certificationTypes"
+                        isLoading={false}
+                        onOptionAdded={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/certificationTypes'] })}
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">Usado na geração do código de barras e referência</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <SearchableSelect
+                        value={selectedPackaging}
+                        onChange={(val) => setSelectedPackaging(val)}
+                        options={packagingTypeOptions.map(pt => ({ id: pt.id, code: pt.code, description: pt.description }))}
+                        label="Tipo de Embalagem *"
+                        placeholder="Seleccionar embalagem..."
+                        apiEndpoint="/api/admin/packagingTypes"
+                        isLoading={false}
+                        onOptionAdded={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/packagingTypes'] })}
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">Usado na geração do código de barras e referência</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <SearchableSelect
+                        value={selectedSpecification}
+                        onChange={(val) => setSelectedSpecification(val)}
+                        options={specificationOptions.map(s => ({ id: s.id, code: s.code, description: s.description }))}
+                        label="Especificação *"
+                        placeholder="Seleccionar especificação..."
+                        apiEndpoint="/api/admin/specifications"
+                        isLoading={false}
+                        onOptionAdded={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/specifications'] })}
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">Usado na geração do código de barras e referência</p>
                     </div>
                   </div>
                 </div>
