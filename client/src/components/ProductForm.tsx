@@ -258,38 +258,43 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
   const [initializedFromProduct, setInitializedFromProduct] = useState(false);
 
   // Initialize selections from saved product data or default to first option
+  // Works with partially loaded or empty support tables
   useEffect(() => {
     if (initializedFromProduct) return;
     
-    // Only proceed if all options are loaded
-    if (certificationTypeOptions.length === 0 || packagingTypeOptions.length === 0 || specificationOptions.length === 0) {
-      return;
+    // Initialize certification if options available
+    if (certificationTypeOptions.length > 0) {
+      if (product?.selectedCertificationTypeId) {
+        const saved = certificationTypeOptions.find(ct => ct.id === product.selectedCertificationTypeId);
+        setSelectedCertification(saved?.description || certificationTypeOptions[0].description);
+      } else if (!selectedCertification) {
+        setSelectedCertification(certificationTypeOptions[0].description);
+      }
     }
 
-    // For existing products, try to find saved selection by ID, otherwise default to first option
-    if (product?.selectedCertificationTypeId) {
-      const saved = certificationTypeOptions.find(ct => ct.id === product.selectedCertificationTypeId);
-      setSelectedCertification(saved?.description || certificationTypeOptions[0].description);
-    } else {
-      setSelectedCertification(certificationTypeOptions[0].description);
+    // Initialize packaging if options available
+    if (packagingTypeOptions.length > 0) {
+      if (product?.selectedPackagingTypeId) {
+        const saved = packagingTypeOptions.find(pt => pt.id === product.selectedPackagingTypeId);
+        setSelectedPackaging(saved?.description || packagingTypeOptions[0].description);
+      } else if (!selectedPackaging) {
+        setSelectedPackaging(packagingTypeOptions[0].description);
+      }
     }
 
-    if (product?.selectedPackagingTypeId) {
-      const saved = packagingTypeOptions.find(pt => pt.id === product.selectedPackagingTypeId);
-      setSelectedPackaging(saved?.description || packagingTypeOptions[0].description);
-    } else {
-      setSelectedPackaging(packagingTypeOptions[0].description);
+    // Initialize specification if options available
+    if (specificationOptions.length > 0) {
+      if (product?.selectedSpecificationId) {
+        const saved = specificationOptions.find(s => s.id === product.selectedSpecificationId);
+        setSelectedSpecification(saved?.description || specificationOptions[0].description);
+      } else if (!selectedSpecification) {
+        setSelectedSpecification(specificationOptions[0].description);
+      }
     }
 
-    if (product?.selectedSpecificationId) {
-      const saved = specificationOptions.find(s => s.id === product.selectedSpecificationId);
-      setSelectedSpecification(saved?.description || specificationOptions[0].description);
-    } else {
-      setSelectedSpecification(specificationOptions[0].description);
-    }
-
+    // Mark as initialized once we've attempted initialization (even if some options are empty)
     setInitializedFromProduct(true);
-  }, [certificationTypeOptions, packagingTypeOptions, specificationOptions, initializedFromProduct, product]);
+  }, [certificationTypeOptions, packagingTypeOptions, specificationOptions, initializedFromProduct, product, selectedCertification, selectedPackaging, selectedSpecification]);
 
   // Watch form values for auto-generation
   const watchedProductType = form.watch('type');
@@ -305,7 +310,19 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
   // Now shows partial generation with placeholders for missing values
   useEffect(() => {
     // Skip until selections are initialized
-    if (!initializedFromProduct) return;
+    if (!initializedFromProduct) {
+      console.log('Auto-generation skipped: not initialized yet');
+      return;
+    }
+    
+    console.log('Auto-generation running with:', {
+      selectedCertification,
+      selectedPackaging,
+      selectedSpecification,
+      watchedProductType,
+      watchedModel,
+      watchedColors
+    });
     
     // Find matching options from support tables
     const productType = productTypeOptions.find(pt => pt.code === watchedProductType || pt.description === watchedProductType);
@@ -320,42 +337,47 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
     const certification = certificationTypeOptions.find(ct => ct.description === selectedCertification) || certificationTypeOptions[0];
     const packaging = packagingTypeOptions.find(pt => pt.description === selectedPackaging) || packagingTypeOptions[0];
     const specification = specificationOptions.find(s => s.description === selectedSpecification) || specificationOptions[0];
+    
+    console.log('Resolved options:', { certification, packaging, specification });
 
     // Generate Código de Barras (barcode) - show partial with XX for missing values
     // Format: PRODUTO(2) + CAPACIDADE(2) + MODELO(3) + CORANTE(2) + MEDIDA_TAMPA(2) + CERTIFICAÇÃO(1) + EMBALAMENTO(1) + ESPECIFICAÇÕES(5)
-    const barcodeHasAnyValue = productType || capacity || model || color || capSize || certification || packaging || specification;
-    if (barcodeHasAnyValue) {
-      const barcode = [
-        productType ? (productType.code || '').padStart(2, '0') : 'XX',      // 2 digits
-        capacity ? (capacity.code || '').padStart(2, '0') : 'XX',           // 2 digits
-        model ? (model.code || '').padStart(3, '0') : 'XXX',                // 3 digits
-        color ? (color.code || '').padStart(2, '0') : 'XX',                 // 2 digits
-        capSize ? (capSize.code || '').padStart(2, '0') : 'XX',             // 2 digits
-        certification ? (certification.code || '').slice(-1) : 'X',          // 1 digit (last char)
-        packaging ? (packaging.code || '').slice(-1) : 'X',                  // 1 digit (last char)
-        specification ? (specification.code || '').padStart(5, '0') : 'XXXXX', // 5 digits
-      ].join('');
-      form.setValue('barcode', barcode, { shouldDirty: true });
-    }
+    // Always generate barcode with placeholders for missing values
+    const barcode = [
+      productType ? (productType.code || '').padStart(2, '0') : 'XX',      // 2 digits
+      capacity ? (capacity.code || '').padStart(2, '0') : 'XX',           // 2 digits
+      model ? (model.code || '').padStart(3, '0') : 'XXX',                // 3 digits
+      color ? (color.code || '').padStart(2, '0') : 'XX',                 // 2 digits
+      capSize ? (capSize.code || '').padStart(2, '0') : 'XX',             // 2 digits
+      certification ? (certification.code || '').slice(-1) || 'X' : 'X',          // 1 digit (last char)
+      packaging ? (packaging.code || '').slice(-1) || 'X' : 'X',                  // 1 digit (last char)
+      specification ? (specification.code || '').padStart(5, '0') : 'XXXXX', // 5 digits
+    ].join('');
+    console.log('Generated barcode:', barcode);
+    form.setValue('barcode', barcode, { shouldValidate: true });
 
-    // Generate Referência (productCode) - show partial with [campo] for missing
+    // Generate Referência (productCode) - always generate with placeholders
     // Format: MODELO_DISPLAY + "." + MATERIA_PRIMA_CODE + "." + CORANTE_CODE + "." + CERT_SHORT + PACK_SHORT + "." + SPEC_DISPLAY
-    const refHasAnyValue = model || rawMaterial || color || certification || packaging || specification;
-    if (refHasAnyValue) {
-      const reference = [
-        model?.displayCode || model?.code || '[modelo]',
-        rawMaterial?.code || '[matéria]',
-        color?.code || '[cor]',
-        (certification?.shortCode || '[cert]') + (packaging?.shortCode || '[emb]'),
-        specification?.displayCode || specification?.code || '[espec]',
-      ].join('.');
-      form.setValue('productCode', reference, { shouldDirty: true });
-    }
+    // Use code as fallback if shortCode not available
+    const certShort = certification?.shortCode || certification?.code || '';
+    const packShort = packaging?.shortCode || packaging?.code || '';
+    const reference = [
+      model?.displayCode || model?.code || '[modelo]',
+      rawMaterial?.code || '[matéria]',
+      color?.code || '[cor]',
+      (certShort || '[C]') + (packShort || '[E]'),
+      specification?.displayCode || specification?.code || '[espec]',
+    ].join('.');
+    console.log('Generated reference:', reference);
+    form.setValue('productCode', reference, { shouldValidate: true });
 
-    // Generate Designação - show available parts
+    // Generate Designação - always generate with available parts
     // Format: PRODUTO_NAME + CAPACIDADE_DESC + MODELO_DESC + CORANTE_NAME + SISTEMA_FECHO + MEDIDA_TAMPA_DESC + CERT_ABBREV + PACK_ABBREV + SPEC_DESC
     // Extract color name from description (e.g., "PRETO" from "PRETO - 90 R/G 1162")
+    // Use abbreviation, description, or code as fallbacks
     const colorName = color?.description?.split(' - ')[0] || watchedColors || '';
+    const certAbbrev = certification?.abbreviation || certification?.description || '';
+    const packAbbrev = packaging?.abbreviation || packaging?.description || '';
     const designationParts = [
       productType?.description || watchedProductType || '',
       capacity?.description || watchedCapacity || '',
@@ -363,14 +385,14 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
       colorName,
       closingSystem?.code || watchedClosingSystem || '',
       capSize?.description || watchedCapDimensions || '',
-      certification?.abbreviation || '',
-      packaging?.abbreviation || '',
+      certAbbrev,
+      packAbbrev,
       specification?.description || '',
     ].filter(Boolean);
     
-    if (designationParts.length > 0) {
-      form.setValue('designation', designationParts.join(' '), { shouldDirty: true });
-    }
+    const designation = designationParts.join(' ');
+    console.log('Generated designation:', designation);
+    form.setValue('designation', designation, { shouldValidate: true });
   }, [
     watchedProductType, watchedCapacity, watchedModel, watchedColors, 
     watchedCapDimensions, watchedRawMaterial, watchedClosingSystem,
