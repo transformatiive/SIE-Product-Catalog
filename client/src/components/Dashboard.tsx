@@ -8,11 +8,10 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import ProductList from './ProductList';
 import ProductForm from './ProductForm';
-import ProductDetail from './ProductDetail';
 import SearchFilters from './SearchFilters';
 import { Product, InsertProduct, ProductSearch } from '@shared/schema';
 
-type ViewMode = 'list' | 'search' | 'detail' | 'form' | 'create';
+type ViewMode = 'list' | 'search' | 'form' | 'create';
 
 export default function Dashboard() {
   const [currentView, setCurrentView] = useState<ViewMode>('list');
@@ -112,11 +111,6 @@ export default function Dashboard() {
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
     document.documentElement.classList.toggle('dark');
-  };
-
-  const handleViewProduct = (product: Product) => {
-    setSelectedProduct(product);
-    setCurrentView('detail');
   };
 
   const handleEditProduct = (product: Product) => {
@@ -226,7 +220,6 @@ export default function Dashboard() {
           <ProductList
             products={products}
             loading={isLoadingProducts}
-            onView={handleViewProduct}
             onEdit={handleEditProduct}
             onDelete={handleDeleteProduct}
             onCreateNew={handleCreateNew}
@@ -234,17 +227,6 @@ export default function Dashboard() {
             isGeneratingPDF={generatePDFMutation.isPending}
           />
         );
-      
-      case 'detail':
-        return selectedProduct ? (
-          <ProductDetail
-            product={selectedProduct}
-            onEdit={handleEditProduct}
-            onGeneratePDF={handleGeneratePDF}
-            onBack={handleBack}
-            isGeneratingPDF={generatePDFMutation.isPending}
-          />
-        ) : null;
       
       case 'form':
         return (

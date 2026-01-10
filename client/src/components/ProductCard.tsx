@@ -1,12 +1,11 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Edit, Trash2, FileText } from "lucide-react";
+import { Edit, Trash2, FileText } from "lucide-react";
 import { Product } from "@shared/schema";
 
 interface ProductCardProps {
   product: Product;
-  onView?: (product: Product) => void;
   onEdit?: (product: Product) => void;
   onDelete?: (product: Product) => void;
   onGeneratePDF?: (product: Product) => void;
@@ -14,16 +13,10 @@ interface ProductCardProps {
 
 export default function ProductCard({ 
   product, 
-  onView, 
   onEdit, 
   onDelete, 
   onGeneratePDF 
 }: ProductCardProps) {
-  const handleView = () => {
-    console.log('View product triggered', product.productCode);
-    onView?.(product);
-  };
-
   const handleEdit = () => {
     console.log('Edit product triggered', product.productCode);
     onEdit?.(product);
@@ -110,20 +103,11 @@ export default function ProductCard({
         <Button 
           variant="outline" 
           size="sm" 
-          onClick={handleView}
-          data-testid={`button-view-${product.id}`}
-        >
-          <Eye className="w-4 h-4 mr-1" />
-          View
-        </Button>
-        <Button 
-          variant="outline" 
-          size="sm" 
           onClick={handleEdit}
           data-testid={`button-edit-${product.id}`}
         >
           <Edit className="w-4 h-4 mr-1" />
-          Edit
+          Editar
         </Button>
         <Button 
           variant="outline" 

@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import sieLogo from "@assets/sie-logo.svg";
 
-type ViewMode = 'list' | 'search' | 'detail' | 'form' | 'create';
+type ViewMode = 'list' | 'search' | 'form' | 'create';
 
 interface AppSidebarProps {
   currentView: string;

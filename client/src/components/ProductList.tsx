@@ -4,13 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Edit, Trash2, FileText, Plus, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Edit, Trash2, FileText, Plus, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { Product } from "@shared/schema";
 
 interface ProductListProps {
   products?: Product[];
   loading?: boolean;
-  onView?: (product: Product) => void;
   onEdit?: (product: Product) => void;
   onDelete?: (product: Product) => void;
   onCreateNew?: () => void;
@@ -21,7 +20,6 @@ interface ProductListProps {
 export default function ProductList({ 
   products = [], 
   loading = false,
-  onView,
   onEdit,
   onDelete,
   onCreateNew,
@@ -44,11 +42,6 @@ export default function ProductList({
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentProducts = filteredProducts.slice(startIndex, endIndex);
-
-  const handleView = (product: Product) => {
-    console.log('View product triggered', product.productCode);
-    onView?.(product);
-  };
 
   const handleEdit = (product: Product) => {
     console.log('Edit product triggered', product.productCode);
@@ -197,15 +190,6 @@ export default function ProductList({
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex gap-1 justify-end opacity-60 hover:opacity-100 transition-opacity">
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            className="h-8 w-8 hover-elevate"
-                            onClick={() => handleView(product)}
-                            data-testid={`button-view-${product.id}`}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
                           <Button 
                             variant="ghost" 
                             size="icon"
