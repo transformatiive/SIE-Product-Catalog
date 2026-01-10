@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Plus, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Edit, Trash2, Plus, Search, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Product } from "@shared/schema";
 
 interface ProductListProps {
@@ -15,6 +15,9 @@ interface ProductListProps {
   onCreateNew?: () => void;
 }
 
+type SortColumn = 'productCode' | 'product' | 'model' | 'family' | 'type' | 'nominalCapacity' | 'rawMaterial' | 'isActive' | 'createdAt';
+type SortDirection = 'asc' | 'desc' | null;
+
 export default function ProductList({ 
   products = [], 
   loading = false,
@@ -24,6 +27,8 @@ export default function ProductList({
 }: ProductListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortColumn, setSortColumn] = useState<SortColumn | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const itemsPerPage = 10;
 
   // Filter products based on search query
@@ -33,11 +38,76 @@ export default function ProductList({
     product.model.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Sort products
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    if (!sortColumn || !sortDirection) return 0;
+    
+    let aValue: any = a[sortColumn];
+    let bValue: any = b[sortColumn];
+    
+    // Handle null values
+    if (aValue === null || aValue === undefined) aValue = '';
+    if (bValue === null || bValue === undefined) bValue = '';
+    
+    // Handle dates
+    if (sortColumn === 'createdAt') {
+      aValue = aValue ? new Date(aValue).getTime() : 0;
+      bValue = bValue ? new Date(bValue).getTime() : 0;
+    }
+    
+    // Handle booleans
+    if (sortColumn === 'isActive') {
+      aValue = aValue ? 1 : 0;
+      bValue = bValue ? 1 : 0;
+    }
+    
+    // Handle strings
+    if (typeof aValue === 'string') {
+      aValue = aValue.toLowerCase();
+      bValue = bValue.toLowerCase();
+    }
+    
+    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
+
   // Pagination
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedProducts.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentProducts = filteredProducts.slice(startIndex, endIndex);
+  const currentProducts = sortedProducts.slice(startIndex, endIndex);
+
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      // Cycle through: asc -> desc -> null
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else if (sortDirection === 'desc') {
+        setSortDirection(null);
+        setSortColumn(null);
+      } else {
+        setSortDirection('asc');
+      }
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+    setCurrentPage(1); // Reset to first page when sorting
+  };
+
+  const getSortIcon = (column: SortColumn) => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="w-3 h-3 ml-1 opacity-40" />;
+    }
+    if (sortDirection === 'asc') {
+      return <ArrowUp className="w-3 h-3 ml-1 text-primary" />;
+    }
+    if (sortDirection === 'desc') {
+      return <ArrowDown className="w-3 h-3 ml-1 text-primary" />;
+    }
+    return <ArrowUpDown className="w-3 h-3 ml-1 opacity-40" />;
+  };
 
   const handleEdit = (product: Product) => {
     console.log('Edit product triggered', product.productCode);
@@ -96,8 +166,9 @@ export default function ProductList({
           {/* Results Summary */}
           <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
             <p>
-              A mostrar {currentProducts.length} de {filteredProducts.length} produtos
+              A mostrar {currentProducts.length} de {sortedProducts.length} produtos
               {searchQuery && ` para "${searchQuery}"`}
+              {sortColumn && sortDirection && ` (ordenado por ${sortColumn === 'productCode' ? 'código' : sortColumn === 'product' ? 'produto' : sortColumn === 'model' ? 'modelo' : sortColumn === 'family' ? 'família' : sortColumn === 'type' ? 'tipo' : sortColumn === 'nominalCapacity' ? 'capacidade' : sortColumn === 'rawMaterial' ? 'material' : sortColumn === 'isActive' ? 'estado' : 'data de criação'} ${sortDirection === 'asc' ? '↑' : '↓'})`}
             </p>
             <p>Total: {products.length} produtos</p>
           </div>
@@ -108,15 +179,78 @@ export default function ProductList({
               <Table>
                 <TableHeader className="bg-muted/50">
                   <TableRow className="border-b hover:bg-transparent">
-                    <TableHead className="font-semibold">Código</TableHead>
-                    <TableHead className="font-semibold">Produto</TableHead>
-                    <TableHead className="font-semibold">Modelo</TableHead>
-                    <TableHead className="font-semibold">Família</TableHead>
-                    <TableHead className="font-semibold">Tipo</TableHead>
-                    <TableHead className="font-semibold text-right">Capacidade</TableHead>
-                    <TableHead className="font-semibold">Material</TableHead>
-                    <TableHead className="font-semibold">Estado</TableHead>
-                    <TableHead className="font-semibold">Criado</TableHead>
+                    <TableHead className="font-semibold">
+                      <button 
+                        onClick={() => handleSort('productCode')} 
+                        className="flex items-center hover:text-primary transition-colors"
+                      >
+                        Código {getSortIcon('productCode')}
+                      </button>
+                    </TableHead>
+                    <TableHead className="font-semibold">
+                      <button 
+                        onClick={() => handleSort('product')} 
+                        className="flex items-center hover:text-primary transition-colors"
+                      >
+                        Produto {getSortIcon('product')}
+                      </button>
+                    </TableHead>
+                    <TableHead className="font-semibold">
+                      <button 
+                        onClick={() => handleSort('model')} 
+                        className="flex items-center hover:text-primary transition-colors"
+                      >
+                        Modelo {getSortIcon('model')}
+                      </button>
+                    </TableHead>
+                    <TableHead className="font-semibold">
+                      <button 
+                        onClick={() => handleSort('family')} 
+                        className="flex items-center hover:text-primary transition-colors"
+                      >
+                        Família {getSortIcon('family')}
+                      </button>
+                    </TableHead>
+                    <TableHead className="font-semibold">
+                      <button 
+                        onClick={() => handleSort('type')} 
+                        className="flex items-center hover:text-primary transition-colors"
+                      >
+                        Tipo {getSortIcon('type')}
+                      </button>
+                    </TableHead>
+                    <TableHead className="font-semibold text-right">
+                      <button 
+                        onClick={() => handleSort('nominalCapacity')} 
+                        className="flex items-center justify-end w-full hover:text-primary transition-colors"
+                      >
+                        Capacidade {getSortIcon('nominalCapacity')}
+                      </button>
+                    </TableHead>
+                    <TableHead className="font-semibold">
+                      <button 
+                        onClick={() => handleSort('rawMaterial')} 
+                        className="flex items-center hover:text-primary transition-colors"
+                      >
+                        Material {getSortIcon('rawMaterial')}
+                      </button>
+                    </TableHead>
+                    <TableHead className="font-semibold">
+                      <button 
+                        onClick={() => handleSort('isActive')} 
+                        className="flex items-center hover:text-primary transition-colors"
+                      >
+                        Estado {getSortIcon('isActive')}
+                      </button>
+                    </TableHead>
+                    <TableHead className="font-semibold">
+                      <button 
+                        onClick={() => handleSort('createdAt')} 
+                        className="flex items-center hover:text-primary transition-colors"
+                      >
+                        Criado {getSortIcon('createdAt')}
+                      </button>
+                    </TableHead>
                     <TableHead className="font-semibold text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
