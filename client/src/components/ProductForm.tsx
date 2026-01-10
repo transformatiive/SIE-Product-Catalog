@@ -9,8 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, X, Plus, Trash2, FileText } from "lucide-react";
-import { InsertProduct, insertProductSchema, Product } from "@shared/schema";
+import { Save, X, Plus, Trash2, FileText, History, Clock } from "lucide-react";
+import { InsertProduct, insertProductSchema, Product, ProductVersion } from "@shared/schema";
 import ImageUpload from "./ImageUpload";
 import { SearchableSelect } from "./SearchableSelect";
 import { queryClient } from "@/lib/queryClient";
@@ -95,6 +95,11 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
 
   const { data: packagingTypeOptions = [] } = useQuery<{id: string, code: string, description: string, abbreviation?: string, shortCode?: string}[]>({
     queryKey: ['/api/admin/packagingTypes'],
+  });
+
+  const { data: productVersions = [] } = useQuery<ProductVersion[]>({
+    queryKey: ['/api/products', product?.id, 'versions'],
+    enabled: !!product?.id,
   });
 
   const [dimensions, setDimensions] = useState<DimensionField[]>(() => {
@@ -549,11 +554,17 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
         <CardContent className="p-6">
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 h-11 bg-muted/50 p-1">
+              <TabsList className={`grid w-full ${product ? 'grid-cols-5' : 'grid-cols-4'} h-11 bg-muted/50 p-1`}>
                 <TabsTrigger value="basic" className="font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">Informação Básica</TabsTrigger>
                 <TabsTrigger value="technical" className="font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">Detalhes Técnicos</TabsTrigger>
                 <TabsTrigger value="specs" className="font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">Especificações</TabsTrigger>
                 <TabsTrigger value="packaging" className="font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">Embalagem e Notas</TabsTrigger>
+                {product && (
+                  <TabsTrigger value="versions" className="font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
+                    <History className="w-4 h-4 mr-1" />
+                    Versões
+                  </TabsTrigger>
+                )}
               </TabsList>
 
               <TabsContent value="basic" className="space-y-6 mt-6">
@@ -1460,6 +1471,75 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
                   </div>
                 </div>
               </TabsContent>
+
+              {product && (
+                <TabsContent value="versions" className="space-y-6 mt-6">
+                  <div className="space-y-4">
+                    <div className="border-b pb-3">
+                      <h3 className="text-lg font-semibold text-foreground">Histórico de Versões</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Versão atual: {product.currentVersionNumber || 1} - Cada alteração cria uma nova versão
+                      </p>
+                    </div>
+                    
+                    {productVersions.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <History className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                        <p>Nenhum histórico de versões disponível</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {productVersions.map((version: ProductVersion, index: number) => (
+                          <div 
+                            key={version.id} 
+                            className={`p-4 rounded-lg border ${index === 0 ? 'border-primary bg-primary/5' : 'border-border bg-muted/30'}`}
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${index === 0 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                                  v{version.versionNumber}
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium text-foreground">
+                                      Versão {version.versionNumber}
+                                    </span>
+                                    {index === 0 && (
+                                      <span className="text-xs px-2 py-0.5 rounded bg-primary text-primary-foreground">
+                                        Atual
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                                    <Clock className="w-3.5 h-3.5" />
+                                    <span>
+                                      {new Date(version.effectiveAt).toLocaleDateString('pt-PT', {
+                                        day: '2-digit',
+                                        month: 'long',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      })}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-right text-sm">
+                                <div className="text-muted-foreground">
+                                  {version.changeNotes || 'Sem notas'}
+                                </div>
+                                <div className="text-xs text-muted-foreground/70 mt-1">
+                                  Ref: {version.productCode}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+              )}
             </Tabs>
 
             {/* Form Actions */}
