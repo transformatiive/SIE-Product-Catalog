@@ -568,11 +568,11 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
               </TabsList>
 
               <TabsContent value="basic" className="space-y-6 mt-6">
-                {/* Product Identification Section */}
+                {/* 1. Product Classification Section - FIRST (matches Excel: Modelo, Familia, Tipo, Produto) */}
                 <div className="space-y-4">
                   <div className="border-b pb-3">
-                    <h3 className="text-lg font-semibold text-foreground">Identificação do Produto</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Informações básicas do produto e códigos de identificação</p>
+                    <h3 className="text-lg font-semibold text-foreground">Classificação do Produto</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Identificação e classificação do produto</p>
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="space-y-2">
@@ -586,79 +586,6 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
                       <p className="text-xs text-muted-foreground">Identificador do modelo do produto</p>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="productCode" className="text-sm font-medium text-foreground">Referência (Gerado automaticamente)</Label>
-                      <Input
-                        id="productCode"
-                        value={form.watch('productCode') || ''}
-                        data-testid="input-product-code"
-                        className="h-9 font-mono bg-muted cursor-not-allowed"
-                        disabled
-                      />
-                      <p className="text-xs text-muted-foreground">Código de referência gerado automaticamente</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="product" className="text-sm font-medium text-foreground">Nome do Produto *</Label>
-                      <Input
-                        id="product"
-                        {...form.register('product')}
-                        data-testid="input-product-name"
-                        className="h-9"
-                      />
-                      <p className="text-xs text-muted-foreground">Nome completo ou descrição do produto</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="designation" className="text-sm font-medium text-foreground">Designação (Gerado automaticamente)</Label>
-                      <Input
-                        id="designation"
-                        value={form.watch('designation') || ''}
-                        placeholder="Gerado automaticamente"
-                        data-testid="input-designation"
-                        className="h-9 bg-muted cursor-not-allowed"
-                        disabled
-                      />
-                      <p className="text-xs text-muted-foreground">Designação gerada automaticamente</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="barcode" className="text-sm font-medium text-foreground">Código de Barras (Gerado automaticamente)</Label>
-                      <Input
-                        id="barcode"
-                        value={form.watch('barcode') || ''}
-                        placeholder="Gerado automaticamente"
-                        data-testid="input-barcode"
-                        className="h-9 font-mono bg-muted cursor-not-allowed"
-                        disabled
-                      />
-                      <p className="text-xs text-muted-foreground">Código de barras gerado automaticamente</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <SearchableSelect
-                        value={form.watch('rawMaterial') || ''}
-                        onChange={(val) => form.setValue('rawMaterial', val)}
-                        options={rawMaterialOptions}
-                        label="Material de Base *"
-                        placeholder="Seleccionar material..."
-                        apiEndpoint="/api/admin/rawMaterials"
-                        isLoading={rawMaterialsLoading}
-                        onOptionAdded={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/rawMaterials'] })}
-                        required
-                      />
-                      <p className="text-xs text-muted-foreground">Composição principal do material</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Product Classification Section */}
-                <div className="space-y-4">
-                  <div className="border-b pb-3">
-                    <h3 className="text-lg font-semibold text-foreground">Classificação do Produto</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Classificação por categoria e tipo</p>
-                  </div>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <SearchableSelect
                         value={form.watch('family') || ''}
@@ -679,7 +606,7 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
                         value={form.watch('type') || ''}
                         onChange={(val) => form.setValue('type', val)}
                         options={productTypeOptions}
-                        label="Tipo de Produto *"
+                        label="Tipo *"
                         placeholder="Seleccionar tipo..."
                         apiEndpoint="/api/admin/productTypes"
                         isLoading={productTypesLoading}
@@ -688,68 +615,25 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
                       />
                       <p className="text-xs text-muted-foreground">Tipo específico ou variante do produto</p>
                     </div>
-                  </div>
-                </div>
-
-                {/* Code Generation Parameters Section */}
-                <div className="space-y-4">
-                  <div className="border-b pb-3">
-                    <h3 className="text-lg font-semibold text-foreground">Parâmetros de Geração de Códigos</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Campos utilizados para geração automática de Código de Barras, Referência e Designação</p>
-                  </div>
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="space-y-2">
-                      <SearchableSelect
-                        value={selectedCertification}
-                        onChange={(val) => setSelectedCertification(val)}
-                        options={certificationTypeOptions.map(ct => ({ id: ct.id, code: ct.code, description: ct.description }))}
-                        label="Tipo de Certificação *"
-                        placeholder="Seleccionar certificação..."
-                        apiEndpoint="/api/admin/certificationTypes"
-                        isLoading={false}
-                        onOptionAdded={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/certificationTypes'] })}
-                        required
-                      />
-                      <p className="text-xs text-muted-foreground">Usado na geração do código de barras e referência</p>
-                    </div>
 
                     <div className="space-y-2">
-                      <SearchableSelect
-                        value={selectedPackaging}
-                        onChange={(val) => setSelectedPackaging(val)}
-                        options={packagingTypeOptions.map(pt => ({ id: pt.id, code: pt.code, description: pt.description }))}
-                        label="Tipo de Embalagem *"
-                        placeholder="Seleccionar embalagem..."
-                        apiEndpoint="/api/admin/packagingTypes"
-                        isLoading={false}
-                        onOptionAdded={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/packagingTypes'] })}
-                        required
+                      <Label htmlFor="product" className="text-sm font-medium text-foreground">Produto *</Label>
+                      <Input
+                        id="product"
+                        {...form.register('product')}
+                        data-testid="input-product-name"
+                        className="h-9"
                       />
-                      <p className="text-xs text-muted-foreground">Usado na geração do código de barras e referência</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <SearchableSelect
-                        value={selectedSpecification}
-                        onChange={(val) => setSelectedSpecification(val)}
-                        options={specificationOptions.map(s => ({ id: s.id, code: s.code, description: s.description }))}
-                        label="Especificação *"
-                        placeholder="Seleccionar especificação..."
-                        apiEndpoint="/api/admin/specifications"
-                        isLoading={false}
-                        onOptionAdded={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/specifications'] })}
-                        required
-                      />
-                      <p className="text-xs text-muted-foreground">Usado na geração do código de barras e referência</p>
+                      <p className="text-xs text-muted-foreground">Nome completo ou descrição do produto</p>
                     </div>
                   </div>
                 </div>
 
-                {/* Capacity & Appearance Section */}
+                {/* 2. Capacity & Material Section (matches Excel: Capacidade, Matéria Prima, Cores) */}
                 <div className="space-y-4">
                   <div className="border-b pb-3">
-                    <h3 className="text-lg font-semibold text-foreground">Capacidade e Aparência</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Especificações de volume e cores disponíveis</p>
+                    <h3 className="text-lg font-semibold text-foreground">Capacidade e Material</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Especificações de volume, material e cores</p>
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="space-y-2">
@@ -765,6 +649,33 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
                     </div>
 
                     <div className="space-y-2">
+                      <SearchableSelect
+                        value={form.watch('rawMaterial') || ''}
+                        onChange={(val) => form.setValue('rawMaterial', val)}
+                        options={rawMaterialOptions}
+                        label="Matéria Prima *"
+                        placeholder="Seleccionar material..."
+                        apiEndpoint="/api/admin/rawMaterials"
+                        isLoading={rawMaterialsLoading}
+                        onOptionAdded={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/rawMaterials'] })}
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">Composição principal do material</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="colors" className="text-sm font-medium text-foreground">Cores *</Label>
+                      <Input
+                        id="colors"
+                        {...form.register('colors')}
+                        placeholder="ex.: Branco, Azul, Verde (separados por vírgula)"
+                        data-testid="input-colors"
+                        className="h-9"
+                      />
+                      <p className="text-xs text-muted-foreground">Listar todas as opções de cor disponíveis</p>
+                    </div>
+
+                    <div className="space-y-2">
                       <Label htmlFor="totalCapacity" className="text-sm font-medium text-foreground">Capacidade Total</Label>
                       <Input
                         id="totalCapacity"
@@ -775,52 +686,18 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
                       />
                       <p className="text-xs text-muted-foreground">Capacidade máxima quando cheio até ao bordo</p>
                     </div>
-
-                    <div className="space-y-2 lg:col-span-2">
-                      <Label htmlFor="colors" className="text-sm font-medium text-foreground">Cores Disponíveis *</Label>
-                      <Input
-                        id="colors"
-                        {...form.register('colors')}
-                        placeholder="ex.: Branco, Azul, Verde (separados por vírgula)"
-                        data-testid="input-colors"
-                        className="h-9"
-                      />
-                      <p className="text-xs text-muted-foreground">Listar todas as opções de cor disponíveis, separadas por vírgulas</p>
-                    </div>
                   </div>
                 </div>
 
-                {/* Product Image Section */}
-                <div className="space-y-4">
-                  <div className="border-b pb-3">
-                    <h3 className="text-lg font-semibold text-foreground">Imagem do Produto</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Imagem principal do produto para visualização e documentação</p>
-                  </div>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="lg:col-span-2">
-                      <ImageUpload
-                        label="Imagem do Produto"
-                        description="Carregue uma imagem do produto (JPEG, PNG, GIF, WebP - máx. 10MB)"
-                        value={productImage ?? undefined}
-                        onChange={setProductImage}
-                        disabled={isLoading}
-                        data-testid="upload-product-image"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="technical" className="space-y-6 mt-6">
-                {/* Weight & Physical Properties Section */}
+                {/* 3. Physical Properties Section (matches Excel: Peso, Dimensões) */}
                 <div className="space-y-4">
                   <div className="border-b pb-3">
                     <h3 className="text-lg font-semibold text-foreground">Peso e Propriedades Físicas</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Especificações de peso e propriedades do material</p>
+                    <p className="text-sm text-muted-foreground mt-1">Especificações de peso do produto</p>
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="weight" className="text-sm font-medium text-foreground">Peso *</Label>
+                      <Label htmlFor="weight" className="text-sm font-medium text-foreground">Peso (+/- 5%) *</Label>
                       <Input
                         id="weight"
                         {...form.register('weight')}
@@ -842,25 +719,170 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
                       />
                       <p className="text-xs text-muted-foreground">Peso total incluindo todos os acessórios</p>
                     </div>
+                  </div>
+                </div>
 
-                    <div className="space-y-2 lg:col-span-2">
-                      <div className="flex items-center gap-4">
-                        <Switch
-                          id="foodContact"
-                          checked={form.watch('foodContact') ?? false}
-                          onCheckedChange={(checked) => form.setValue('foodContact', checked)}
-                          data-testid="switch-food-contact"
-                        />
-                        <div className="space-y-1">
-                          <Label htmlFor="foodContact" className="text-sm font-medium text-foreground">Aprovado para Contacto Alimentar</Label>
-                          <p className="text-xs text-muted-foreground">Produto aprovado para contacto directo com alimentos</p>
-                        </div>
+                {/* 4. Product Dimensions Section (matches Excel: c/Ø, l, h) */}
+                <div className="space-y-4">
+                  <div className="border-b pb-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold text-foreground">Dimensões do Produto</h3>
+                        <p className="text-sm text-muted-foreground mt-1">Medições físicas (c/Ø, l, h em mm)</p>
                       </div>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={addDimension}
+                        data-testid="button-add-dimension"
+                        className="h-8"
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Adicionar Dimensão
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    {dimensions.map((dimension, index) => (
+                      <div key={dimension.id} className="grid grid-cols-2 lg:grid-cols-5 gap-3 items-end p-3 border border-border rounded-md">
+                        <div className="space-y-1">
+                          <Label className="text-xs font-medium text-muted-foreground">Nome da Dimensão</Label>
+                          <Input
+                            placeholder="ex.: c/Ø, l, h"
+                            value={dimension.name}
+                            onChange={(e) => updateDimension(dimension.id, 'name', e.target.value)}
+                            data-testid={`input-dimension-name-${index}`}
+                            className="h-8"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs font-medium text-muted-foreground">Valor (mm)</Label>
+                          <Input
+                            placeholder="ex.: 332"
+                            value={dimension.value}
+                            onChange={(e) => updateDimension(dimension.id, 'value', e.target.value)}
+                            data-testid={`input-dimension-value-${index}`}
+                            className="h-8"
+                          />
+                        </div>
+                        {dimensions.length > 1 && (
+                          <div className="lg:col-start-5">
+                            <Button 
+                              type="button" 
+                              variant="destructive" 
+                              size="sm"
+                              onClick={() => removeDimension(dimension.id)}
+                              data-testid={`button-remove-dimension-${index}`}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 5. Auto-generated Codes Section (derived fields at bottom) */}
+                <div className="space-y-4">
+                  <div className="border-b pb-3">
+                    <h3 className="text-lg font-semibold text-foreground">Códigos Gerados Automaticamente</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Campos calculados automaticamente com base nos dados inseridos</p>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="designation" className="text-sm font-medium text-foreground">Designação</Label>
+                      <Input
+                        id="designation"
+                        value={form.watch('designation') || ''}
+                        placeholder="Gerado automaticamente"
+                        data-testid="input-designation"
+                        className="h-9 bg-muted cursor-not-allowed"
+                        disabled
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="productCode" className="text-sm font-medium text-foreground">Referência</Label>
+                      <Input
+                        id="productCode"
+                        value={form.watch('productCode') || ''}
+                        data-testid="input-product-code"
+                        className="h-9 font-mono bg-muted cursor-not-allowed"
+                        disabled
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="barcode" className="text-sm font-medium text-foreground">Código de Barras</Label>
+                      <Input
+                        id="barcode"
+                        value={form.watch('barcode') || ''}
+                        placeholder="Gerado automaticamente"
+                        data-testid="input-barcode"
+                        className="h-9 font-mono bg-muted cursor-not-allowed"
+                        disabled
+                      />
                     </div>
                   </div>
                 </div>
 
-                {/* Sistema de Fecho (Closure System) Section */}
+                {/* 6. Code Generation Parameters Section */}
+                <div className="space-y-4">
+                  <div className="border-b pb-3">
+                    <h3 className="text-lg font-semibold text-foreground">Parâmetros de Geração de Códigos</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Seleccione os parâmetros para gerar Código de Barras, Referência e Designação</p>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                      <SearchableSelect
+                        value={selectedCertification}
+                        onChange={(val) => setSelectedCertification(val)}
+                        options={certificationTypeOptions.map(ct => ({ id: ct.id, code: ct.code, description: ct.description }))}
+                        label="Tipo de Certificação *"
+                        placeholder="Seleccionar certificação..."
+                        apiEndpoint="/api/admin/certificationTypes"
+                        isLoading={false}
+                        onOptionAdded={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/certificationTypes'] })}
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <SearchableSelect
+                        value={selectedPackaging}
+                        onChange={(val) => setSelectedPackaging(val)}
+                        options={packagingTypeOptions.map(pt => ({ id: pt.id, code: pt.code, description: pt.description }))}
+                        label="Tipo de Embalagem *"
+                        placeholder="Seleccionar embalagem..."
+                        apiEndpoint="/api/admin/packagingTypes"
+                        isLoading={false}
+                        onOptionAdded={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/packagingTypes'] })}
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <SearchableSelect
+                        value={selectedSpecification}
+                        onChange={(val) => setSelectedSpecification(val)}
+                        options={specificationOptions.map(s => ({ id: s.id, code: s.code, description: s.description }))}
+                        label="Especificação *"
+                        placeholder="Seleccionar especificação..."
+                        apiEndpoint="/api/admin/specifications"
+                        isLoading={false}
+                        onOptionAdded={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/specifications'] })}
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="technical" className="space-y-6 mt-6">
+                {/* Sistema de Fecho (Closure System) Section - matches Excel order */}
                 <div className="space-y-4">
                   <div className="border-b pb-3">
                     <h3 className="text-lg font-semibold text-foreground">Sistema de Fecho</h3>
@@ -1022,88 +1044,6 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
                   </div>
                 </div>
 
-                {/* Product Dimensions Section */}
-                <div className="space-y-4">
-                  <div className="border-b pb-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-foreground">Dimensões do Produto</h3>
-                        <p className="text-sm text-muted-foreground mt-1">Medições físicas e especificações</p>
-                      </div>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={addDimension}
-                        data-testid="button-add-dimension"
-                        className="h-8"
-                      >
-                        <Plus className="w-4 h-4 mr-1" />
-                        Adicionar Dimensão
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    {dimensions.map((dimension, index) => (
-                      <div key={dimension.id} className="grid grid-cols-2 lg:grid-cols-5 gap-3 items-end p-3 border border-border rounded-md">
-                        <div className="space-y-1">
-                          <Label className="text-xs font-medium text-muted-foreground">Nome da Dimensão</Label>
-                          <Input
-                            placeholder="ex.: altura"
-                            value={dimension.name}
-                            onChange={(e) => updateDimension(dimension.id, 'name', e.target.value)}
-                            data-testid={`input-dimension-name-${index}`}
-                            className="h-8"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs font-medium text-muted-foreground">Valor</Label>
-                          <Input
-                            placeholder="ex.: 332mm"
-                            value={dimension.value}
-                            onChange={(e) => updateDimension(dimension.id, 'value', e.target.value)}
-                            data-testid={`input-dimension-value-${index}`}
-                            className="h-8"
-                          />
-                        </div>
-                        {dimensions.length > 1 && (
-                          <div className="lg:col-start-5">
-                            <Button 
-                              type="button" 
-                              variant="destructive" 
-                              size="sm"
-                              onClick={() => removeDimension(dimension.id)}
-                              data-testid={`button-remove-dimension-${index}`}
-                              className="h-8 w-8 p-0"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Technical Drawing Section */}
-                <div className="space-y-4">
-                  <div className="border-b pb-3">
-                    <h3 className="text-lg font-semibold text-foreground">Desenho Técnico / Blueprint 3D</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Desenho técnico ou blueprint 3D para especificações detalhadas</p>
-                  </div>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="lg:col-span-2">
-                      <ImageUpload
-                        label="Desenho Técnico / Blueprint 3D"
-                        description="Carregue o desenho técnico ou blueprint 3D do produto (JPEG, PNG, GIF, WebP - máx. 10MB)"
-                        value={technicalDrawing ?? undefined}
-                        onChange={setTechnicalDrawing}
-                        disabled={isLoading}
-                        data-testid="upload-technical-drawing"
-                      />
-                    </div>
-                  </div>
-                </div>
               </TabsContent>
 
               <TabsContent value="specs" className="space-y-6 mt-6">
@@ -1468,6 +1408,32 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
                         </div>
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                {/* Product Images Section */}
+                <div className="space-y-4">
+                  <div className="border-b pb-3">
+                    <h3 className="text-lg font-semibold text-foreground">Imagens do Produto</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Imagem principal e desenho técnico</p>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <ImageUpload
+                      label="Imagem do Produto"
+                      description="Carregue uma imagem do produto (JPEG, PNG, GIF, WebP - máx. 10MB)"
+                      value={productImage ?? undefined}
+                      onChange={setProductImage}
+                      disabled={isLoading}
+                      data-testid="upload-product-image"
+                    />
+                    <ImageUpload
+                      label="Desenho Técnico / Blueprint 3D"
+                      description="Carregue o desenho técnico ou blueprint 3D do produto (JPEG, PNG, GIF, WebP - máx. 10MB)"
+                      value={technicalDrawing ?? undefined}
+                      onChange={setTechnicalDrawing}
+                      disabled={isLoading}
+                      data-testid="upload-technical-drawing"
+                    />
                   </div>
                 </div>
               </TabsContent>
