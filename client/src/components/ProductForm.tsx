@@ -789,10 +789,7 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
 
                 {/* 5. Auto-generated Codes Section (derived fields at bottom) */}
                 <div className="space-y-4">
-                  <div className="border-b pb-3">
-                    <h3 className="text-lg font-semibold text-foreground">Códigos Gerados Automaticamente</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Campos calculados automaticamente com base nos dados inseridos</p>
-                  </div>
+                  <p className="text-sm text-muted-foreground">Campos calculados automaticamente com base nos dados inseridos</p>
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="designation" className="text-sm font-medium text-foreground">Designação</Label>
