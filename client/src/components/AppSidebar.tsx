@@ -1,4 +1,4 @@
-import { Search, List, Plus, BarChart3, Settings, Users, LogOut } from "lucide-react";
+import { Search, List, Plus, Settings, Users, LogOut } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
   Sidebar,
@@ -162,28 +162,6 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarSeparator className="my-3" />
-
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  disabled
-                  className="h-10 px-3 rounded-md opacity-40 cursor-not-allowed"
-                >
-                  <div className="flex items-center gap-3 w-full">
-                    <BarChart3 className="w-4 h-4 text-sidebar-foreground/50 flex-shrink-0" />
-                    <span className="text-sm text-sidebar-foreground/50 truncate">Relatórios</span>
-                    <Badge variant="outline" className="h-4 text-[10px] px-1 ml-auto border-sidebar-foreground/30 text-sidebar-foreground/60">
-                      Beta
-                    </Badge>
-                  </div>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="p-2 border-t border-sidebar-border">

@@ -84,6 +84,10 @@ export const products = pgTable("products", {
   productImage: text("product_image"), // File path to product image
   technicalDrawing: text("technical_drawing"), // File path to technical drawing/3D blueprint
   
+  // Version tracking - current version info is denormalized for efficient queries
+  currentVersionNumber: integer("current_version_number").default(1).notNull(),
+  latestVersionId: varchar("latest_version_id"), // FK to product_versions
+  
   // Date tracking for versioning
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -91,6 +95,74 @@ export const products = pgTable("products", {
   // Metadata
   notes: text("notes"),
   isActive: boolean("is_active").default(true).notNull(),
+});
+
+// Product Versions table - stores immutable snapshots of product data
+export const productVersions = pgTable("product_versions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  productId: varchar("product_id").notNull(), // FK to products
+  
+  // Version metadata
+  versionNumber: integer("version_number").notNull(),
+  previousVersionId: varchar("previous_version_id"), // FK to previous version (self-referential)
+  effectiveAt: timestamp("effective_at").defaultNow().notNull(), // When this version became effective
+  createdBy: varchar("created_by"), // User who created this version (FK to users)
+  changeNotes: text("change_notes"), // Optional notes about what changed
+  
+  // Snapshot of all product data at this version
+  model: text("model").notNull(),
+  family: text("family").notNull(),
+  type: text("type").notNull(),
+  product: text("product").notNull(),
+  productCode: text("product_code").notNull(),
+  designation: text("designation"),
+  barcode: text("barcode"),
+  nominalCapacity: text("nominal_capacity").notNull(),
+  totalCapacity: text("total_capacity"),
+  rawMaterial: text("raw_material").notNull(),
+  colors: text("colors").notNull(),
+  weight: text("weight").notNull(),
+  weightWithAccessories: text("weight_with_accessories"),
+  dimensions: text("dimensions").notNull(),
+  closingSystem: text("closing_system"),
+  capType: text("cap_type"),
+  capDimensions: text("cap_dimensions"),
+  sealingType: text("sealing_type"),
+  vedantePead: boolean("vedante_pead").default(false),
+  vedanteEpdm: boolean("vedante_epdm").default(false),
+  vedanteOutros: text("vedante_outros"),
+  handlingSystem: text("handling_system"),
+  pegasLaterais: boolean("pegas_laterais").default(false),
+  pegaSuperior: boolean("pega_superior").default(false),
+  cavidades: boolean("cavidades").default(false),
+  manuseamentoOutros: text("manuseamento_outros"),
+  markings: text("markings"),
+  datador: boolean("datador").default(false),
+  simboloSie: boolean("simbolo_sie").default(false),
+  simboloMp: boolean("simbolo_mp").default(false),
+  gravacaoCliente: boolean("gravacao_cliente").default(false),
+  visor: boolean("visor").default(false),
+  bica: boolean("bica").default(false),
+  coexPoliamida: boolean("coex_poliamida").default(false),
+  adaptacao: boolean("adaptacao").default(false),
+  autoculanteCliente: text("autoculante_cliente"),
+  especificacoesEmbFlexiveis: text("especificacoes_emb_flexiveis"),
+  stackable: boolean("stackable").default(false),
+  stackingCapacity: text("stacking_capacity"),
+  packaging: text("packaging"),
+  palletDimensions: text("pallet_dimensions"),
+  productOnPalletDimensions: text("product_on_pallet_dimensions"),
+  arrangementScheme: text("arrangement_scheme"),
+  totalUnits: text("total_units"),
+  certifications: text("certifications"),
+  foodContact: boolean("food_contact").default(false),
+  specialFeatures: text("special_features"),
+  selectedCertificationTypeId: varchar("selected_certification_type_id"),
+  selectedPackagingTypeId: varchar("selected_packaging_type_id"),
+  selectedSpecificationId: varchar("selected_specification_id"),
+  productImage: text("product_image"),
+  technicalDrawing: text("technical_drawing"),
+  notes: text("notes"),
 });
 
 export const insertProductSchema = createInsertSchema(products).omit({
@@ -117,6 +189,14 @@ export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type UpdateProduct = z.infer<typeof updateProductSchema>;
 export type Product = typeof products.$inferSelect;
 export type ProductSearch = z.infer<typeof productSearchSchema>;
+
+// Product Version types
+export const insertProductVersionSchema = createInsertSchema(productVersions).omit({
+  id: true,
+  effectiveAt: true,
+});
+export type InsertProductVersion = z.infer<typeof insertProductVersionSchema>;
+export type ProductVersion = typeof productVersions.$inferSelect;
 
 // Users table for authentication
 export const users = pgTable("users", {

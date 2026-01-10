@@ -8,7 +8,10 @@ import {
   type InsertProduct, 
   type UpdateProduct, 
   type ProductSearch,
+  type ProductVersion,
+  type InsertProductVersion,
   products, 
+  productVersions,
   users 
 } from "@shared/schema";
 
@@ -33,9 +36,14 @@ export interface IStorage {
   getProducts(search?: ProductSearch): Promise<Product[]>;
   getProduct(id: string): Promise<Product | undefined>;
   getProductByCode(productCode: string): Promise<Product | undefined>;
-  createProduct(product: InsertProduct): Promise<Product>;
-  updateProduct(id: string, product: UpdateProduct): Promise<Product | undefined>;
+  createProduct(product: InsertProduct, userId?: string): Promise<Product>;
+  updateProduct(id: string, product: UpdateProduct, userId?: string): Promise<Product | undefined>;
   deleteProduct(id: string): Promise<boolean>;
+  
+  // Product Version methods
+  getProductVersions(productId: string): Promise<ProductVersion[]>;
+  getProductVersion(versionId: string): Promise<ProductVersion | undefined>;
+  createProductVersion(version: InsertProductVersion): Promise<ProductVersion>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -184,24 +192,70 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async createProduct(insertProduct: InsertProduct): Promise<Product> {
+  async createProduct(insertProduct: InsertProduct, userId?: string): Promise<Product> {
     try {
-      const result = await db.insert(products).values(insertProduct).returning();
-      return result[0];
+      const result = await db.insert(products).values({
+        ...insertProduct,
+        currentVersionNumber: 1,
+      }).returning();
+      const product = result[0];
+      
+      const versionData = this.extractVersionData(product);
+      const version = await this.createProductVersion({
+        productId: product.id,
+        versionNumber: 1,
+        previousVersionId: null,
+        createdBy: userId || null,
+        changeNotes: "Versão inicial",
+        ...versionData,
+      });
+      
+      await db.update(products)
+        .set({ latestVersionId: version.id })
+        .where(eq(products.id, product.id));
+      
+      return { ...product, latestVersionId: version.id };
     } catch (error) {
       console.error('Error creating product:', error);
       throw error;
     }
   }
 
-  async updateProduct(id: string, updateProduct: UpdateProduct): Promise<Product | undefined> {
+  async updateProduct(id: string, updateProductData: UpdateProduct, userId?: string): Promise<Product | undefined> {
     try {
+      const existingProduct = await this.getProduct(id);
+      if (!existingProduct) return undefined;
+      
+      const newVersionNumber = existingProduct.currentVersionNumber + 1;
+      
       const result = await db
         .update(products)
-        .set({ ...updateProduct, updatedAt: new Date() })
+        .set({ 
+          ...updateProductData, 
+          updatedAt: new Date(),
+          currentVersionNumber: newVersionNumber,
+        })
         .where(eq(products.id, id))
         .returning();
-      return result[0];
+      
+      const updatedProduct = result[0];
+      if (!updatedProduct) return undefined;
+      
+      const versionData = this.extractVersionData(updatedProduct);
+      const version = await this.createProductVersion({
+        productId: id,
+        versionNumber: newVersionNumber,
+        previousVersionId: existingProduct.latestVersionId || null,
+        createdBy: userId || null,
+        changeNotes: `Versão ${newVersionNumber}`,
+        ...versionData,
+      });
+      
+      await db.update(products)
+        .set({ latestVersionId: version.id })
+        .where(eq(products.id, id));
+      
+      return { ...updatedProduct, latestVersionId: version.id };
     } catch (error) {
       console.error('Error updating product:', error);
       throw error;
@@ -210,12 +264,107 @@ export class DatabaseStorage implements IStorage {
 
   async deleteProduct(id: string): Promise<boolean> {
     try {
+      await db.delete(productVersions).where(eq(productVersions.productId, id));
       const result = await db.delete(products).where(eq(products.id, id));
       return result.rowCount > 0;
     } catch (error) {
       console.error('Error deleting product:', error);
       return false;
     }
+  }
+
+  async getProductVersions(productId: string): Promise<ProductVersion[]> {
+    try {
+      const result = await db.select()
+        .from(productVersions)
+        .where(eq(productVersions.productId, productId))
+        .orderBy(desc(productVersions.versionNumber));
+      return result;
+    } catch (error) {
+      console.error('Error getting product versions:', error);
+      return [];
+    }
+  }
+
+  async getProductVersion(versionId: string): Promise<ProductVersion | undefined> {
+    try {
+      const result = await db.select()
+        .from(productVersions)
+        .where(eq(productVersions.id, versionId))
+        .limit(1);
+      return result[0];
+    } catch (error) {
+      console.error('Error getting product version:', error);
+      return undefined;
+    }
+  }
+
+  async createProductVersion(version: InsertProductVersion): Promise<ProductVersion> {
+    try {
+      const result = await db.insert(productVersions).values(version).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error creating product version:', error);
+      throw error;
+    }
+  }
+
+  private extractVersionData(product: Product) {
+    return {
+      model: product.model,
+      family: product.family,
+      type: product.type,
+      product: product.product,
+      productCode: product.productCode,
+      designation: product.designation,
+      barcode: product.barcode,
+      nominalCapacity: product.nominalCapacity,
+      totalCapacity: product.totalCapacity,
+      rawMaterial: product.rawMaterial,
+      colors: product.colors,
+      weight: product.weight,
+      weightWithAccessories: product.weightWithAccessories,
+      dimensions: product.dimensions,
+      closingSystem: product.closingSystem,
+      capType: product.capType,
+      capDimensions: product.capDimensions,
+      sealingType: product.sealingType,
+      vedantePead: product.vedantePead,
+      vedanteEpdm: product.vedanteEpdm,
+      vedanteOutros: product.vedanteOutros,
+      handlingSystem: product.handlingSystem,
+      pegasLaterais: product.pegasLaterais,
+      pegaSuperior: product.pegaSuperior,
+      cavidades: product.cavidades,
+      manuseamentoOutros: product.manuseamentoOutros,
+      markings: product.markings,
+      datador: product.datador,
+      simboloSie: product.simboloSie,
+      simboloMp: product.simboloMp,
+      gravacaoCliente: product.gravacaoCliente,
+      visor: product.visor,
+      bica: product.bica,
+      coexPoliamida: product.coexPoliamida,
+      adaptacao: product.adaptacao,
+      autoculanteCliente: product.autoculanteCliente,
+      especificacoesEmbFlexiveis: product.especificacoesEmbFlexiveis,
+      stackable: product.stackable,
+      stackingCapacity: product.stackingCapacity,
+      packaging: product.packaging,
+      palletDimensions: product.palletDimensions,
+      productOnPalletDimensions: product.productOnPalletDimensions,
+      arrangementScheme: product.arrangementScheme,
+      totalUnits: product.totalUnits,
+      certifications: product.certifications,
+      foodContact: product.foodContact,
+      specialFeatures: product.specialFeatures,
+      selectedCertificationTypeId: product.selectedCertificationTypeId,
+      selectedPackagingTypeId: product.selectedPackagingTypeId,
+      selectedSpecificationId: product.selectedSpecificationId,
+      productImage: product.productImage,
+      technicalDrawing: product.technicalDrawing,
+      notes: product.notes,
+    };
   }
 }
 

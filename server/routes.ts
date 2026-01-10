@@ -324,7 +324,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(409).json({ message: "Código do produto já existe" });
       }
 
-      const product = await storage.createProduct(validation.data);
+      const userId = req.session?.userId;
+      const product = await storage.createProduct(validation.data, userId);
       res.status(201).json(product);
     } catch (error) {
       console.error("Error creating product:", error);
@@ -359,7 +360,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const updatedProduct = await storage.updateProduct(id, validation.data);
+      const userId = req.session?.userId;
+      const updatedProduct = await storage.updateProduct(id, validation.data, userId);
       if (!updatedProduct) {
         return res.status(404).json({ message: "Produto não encontrado" });
       }
@@ -368,6 +370,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating product:", error);
       res.status(500).json({ message: "Falha ao atualizar produto" });
+    }
+  });
+
+  // GET /api/products/:id/versions - Get version history for a product
+  app.get("/api/products/:id/versions", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const product = await storage.getProduct(id);
+      if (!product) {
+        return res.status(404).json({ message: "Produto não encontrado" });
+      }
+      
+      const versions = await storage.getProductVersions(id);
+      res.json(versions);
+    } catch (error) {
+      console.error("Error getting product versions:", error);
+      res.status(500).json({ message: "Falha ao obter histórico de versões" });
+    }
+  });
+
+  // GET /api/products/:id/versions/:versionId - Get a specific version
+  app.get("/api/products/:id/versions/:versionId", async (req, res) => {
+    try {
+      const { id, versionId } = req.params;
+      
+      const product = await storage.getProduct(id);
+      if (!product) {
+        return res.status(404).json({ message: "Produto não encontrado" });
+      }
+      
+      const version = await storage.getProductVersion(versionId);
+      if (!version || version.productId !== id) {
+        return res.status(404).json({ message: "Versão não encontrada" });
+      }
+      
+      res.json(version);
+    } catch (error) {
+      console.error("Error getting product version:", error);
+      res.status(500).json({ message: "Falha ao obter versão" });
     }
   });
 
