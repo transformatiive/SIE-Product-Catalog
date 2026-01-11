@@ -73,8 +73,8 @@ export default function Login() {
               className="h-12 w-auto"
             />
             <div className="text-center space-y-1">
-              <h1 className="text-2xl font-bold tracking-tight">SIE - Base de Dados</h1>
-              <p className="text-sm text-muted-foreground">Gestão de Produtos</p>
+              <h1 className="text-2xl font-bold tracking-tight">Base de Dados</h1>
+              <p className="text-sm text-muted-foreground">Gestão Fichas Técnicas de Produtos</p>
             </div>
           </div>
         </CardHeader>
