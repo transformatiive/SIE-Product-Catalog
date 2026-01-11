@@ -144,8 +144,11 @@ export function SearchableSelect({
                     key={option.id}
                     value={`${option.code} ${option.description}`}
                     onSelect={() => {
+                      console.log('SearchableSelect onSelect:', option.description, 'current value:', value);
                       // Store description (human-readable value) instead of UUID
-                      onChange(option.description === value ? "" : option.description);
+                      const newValue = option.description === value ? "" : option.description;
+                      console.log('Setting new value:', newValue);
+                      onChange(newValue);
                       setOpen(false);
                     }}
                   >
