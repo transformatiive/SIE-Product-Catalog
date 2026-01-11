@@ -151,6 +151,7 @@ export default function Login() {
           </Form>
         </CardContent>
       </Card>
+      <p className="mt-6 text-xs text-muted-foreground/60">&copy; 2026 - Transformatiive, Lda</p>
     </div>
   );
 }
