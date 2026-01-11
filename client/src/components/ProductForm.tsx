@@ -359,7 +359,7 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
       specification ? (specification.code || '').padStart(5, '0') : 'XXXXX', // 5 digits
     ].join('');
     console.log('Generated barcode:', barcode);
-    form.setValue('barcode', barcode, { shouldValidate: true });
+    form.setValue('barcode', barcode, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
 
     // Generate Referência (productCode) - always generate with placeholders
     // Format: MODELO_DISPLAY + "." + MATERIA_PRIMA_CODE + "." + CORANTE_CODE + "." + CERT_SHORT + PACK_SHORT + "." + SPEC_DISPLAY
@@ -374,7 +374,7 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
       specification?.displayCode || specification?.code || '[espec]',
     ].join('.');
     console.log('Generated reference:', reference);
-    form.setValue('productCode', reference, { shouldValidate: true });
+    form.setValue('productCode', reference, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
 
     // Generate Designação - always generate with available parts
     // Format: PRODUTO_NAME + CAPACIDADE_DESC + MODELO_DESC + CORANTE_NAME + SISTEMA_FECHO + MEDIDA_TAMPA_DESC + CERT_ABBREV + PACK_ABBREV + SPEC_DESC
@@ -397,7 +397,7 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
     
     const designation = designationParts.join(' ');
     console.log('Generated designation:', designation);
-    form.setValue('designation', designation, { shouldValidate: true });
+    form.setValue('designation', designation, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
   }, [
     watchedProductType, watchedCapacity, watchedModel, watchedColors, 
     watchedCapDimensions, watchedRawMaterial, watchedClosingSystem,
