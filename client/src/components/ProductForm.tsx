@@ -868,7 +868,10 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
                     <div className="space-y-2">
                       <SearchableSelect
                         value={selectedCertification}
-                        onChange={(val) => setSelectedCertification(val)}
+                        onChange={(val) => {
+                          console.log('Certification changed to:', val);
+                          setSelectedCertification(val);
+                        }}
                         options={certificationTypeOptions.map(ct => ({ id: ct.id, code: ct.code, description: ct.description }))}
                         label="Tipo de Certificação *"
                         placeholder="Seleccionar certificação..."
@@ -882,7 +885,10 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
                     <div className="space-y-2">
                       <SearchableSelect
                         value={selectedPackaging}
-                        onChange={(val) => setSelectedPackaging(val)}
+                        onChange={(val) => {
+                          console.log('Packaging changed to:', val);
+                          setSelectedPackaging(val);
+                        }}
                         options={packagingTypeOptions.map(pt => ({ id: pt.id, code: pt.code, description: pt.description }))}
                         label="Tipo de Embalagem *"
                         placeholder="Seleccionar embalagem..."
