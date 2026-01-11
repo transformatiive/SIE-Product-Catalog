@@ -1,8 +1,29 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import pgSession from "connect-pg-simple";
+import bcrypt from "bcryptjs";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { storage } from "./storage";
+
+async function initializeAdminUser() {
+  try {
+    const adminEmail = "admin@sie.pt";
+    const existingAdmin = await storage.getUserByEmail(adminEmail);
+    
+    if (!existingAdmin) {
+      const hashedPassword = await bcrypt.hash("admin123", 10);
+      await storage.createUser({
+        name: "Administrador",
+        email: adminEmail,
+        password: hashedPassword,
+      });
+      log("Admin user created: admin@sie.pt");
+    }
+  } catch (error) {
+    console.error("Error initializing admin user:", error);
+  }
+}
 
 const app = express();
 app.use(express.json());
@@ -64,6 +85,7 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  await initializeAdminUser();
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
