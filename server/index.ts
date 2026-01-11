@@ -29,6 +29,9 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Trust proxy for production (Replit uses reverse proxy)
+app.set('trust proxy', 1);
+
 // Session configuration with 60-day expiry
 const PgStore = pgSession(session);
 const SIXTY_DAYS_MS = 60 * 24 * 60 * 60 * 1000; // 60 days in milliseconds
