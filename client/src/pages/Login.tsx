@@ -64,7 +64,8 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[hsl(220,15%,18%)]">
-      <Card className="w-full max-w-md mx-4 shadow-2xl border-0">
+      <div className="flex flex-col items-center">
+        <Card className="w-full max-w-md mx-4 shadow-2xl border-0">
         <CardHeader className="space-y-4 pb-6">
           <div className="flex flex-col items-center space-y-4">
             <img 
@@ -150,8 +151,9 @@ export default function Login() {
             </form>
           </Form>
         </CardContent>
-      </Card>
-      <p className="mt-6 text-xs text-muted-foreground/60 text-center">&copy; 2026 - Transformatiive, Lda</p>
+        </Card>
+        <p className="mt-6 text-xs text-muted-foreground/60 text-center">&copy; 2026 - Transformatiive, Lda</p>
+      </div>
     </div>
   );
 }
