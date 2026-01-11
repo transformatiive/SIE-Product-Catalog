@@ -294,7 +294,7 @@ export default function Dashboard() {
 
           <main className="flex-1 overflow-hidden bg-background">
             <div className="h-full overflow-y-auto">
-              <div className="container mx-auto px-6 py-8 max-w-7xl">
+              <div className="w-full px-4 py-6">
                 {renderCurrentView()}
               </div>
             </div>
