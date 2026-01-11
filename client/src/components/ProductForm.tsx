@@ -858,12 +858,8 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
                   </div>
                 </div>
 
-                {/* 6. Code Generation Parameters Section */}
+                {/* 6. Additional Classification Section */}
                 <div className="space-y-4">
-                  <div className="border-b pb-3">
-                    <h3 className="text-lg font-semibold text-foreground">Parâmetros de Geração de Códigos</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Seleccione os parâmetros para gerar Código de Barras, Referência e Designação</p>
-                  </div>
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="space-y-2">
                       <SearchableSelect
