@@ -4,7 +4,8 @@ import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { LogIn, Building2, Eye, EyeOff } from "lucide-react";
+import { LogIn, Eye, EyeOff } from "lucide-react";
+import sieLogo from "@assets/sie-logo.svg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -66,9 +67,11 @@ export default function Login() {
       <Card className="w-full max-w-md mx-4 shadow-2xl border-0">
         <CardHeader className="space-y-4 pb-6">
           <div className="flex flex-col items-center space-y-4">
-            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-primary/10">
-              <Building2 className="w-8 h-8 text-primary" />
-            </div>
+            <img 
+              src={sieLogo} 
+              alt="SIE - Sociedade Internacional de Embalagens" 
+              className="h-12 w-auto"
+            />
             <div className="text-center space-y-1">
               <h1 className="text-2xl font-bold tracking-tight">SIE - Base de Dados</h1>
               <p className="text-sm text-muted-foreground">Gestão de Produtos</p>
