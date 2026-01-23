@@ -156,7 +156,7 @@ export function ShareLinksManager({ productId, productCode }: ShareLinksManagerP
           </CardTitle>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" className="gap-1 bg-[#E31E24] hover:bg-[#c9191e]">
+              <Button type="button" size="sm" className="gap-1 bg-[#E31E24] hover:bg-[#c9191e]">
                 <Plus className="w-4 h-4" />
                 Novo Link
               </Button>
@@ -235,10 +235,11 @@ export function ShareLinksManager({ productId, productCode }: ShareLinksManagerP
               </div>
 
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancelar
                 </Button>
                 <Button 
+                  type="button"
                   onClick={() => createLinkMutation.mutate(newLinkData)}
                   disabled={createLinkMutation.isPending}
                   className="bg-[#E31E24] hover:bg-[#c9191e]"
@@ -315,6 +316,7 @@ export function ShareLinksManager({ productId, productCode }: ShareLinksManagerP
                   
                   <div className="flex items-center gap-1">
                     <Button
+                      type="button"
                       variant="ghost"
                       size="icon"
                       onClick={() => handleCopyLink(link.token, link.id)}
@@ -327,6 +329,7 @@ export function ShareLinksManager({ productId, productCode }: ShareLinksManagerP
                       )}
                     </Button>
                     <Button
+                      type="button"
                       variant="ghost"
                       size="icon"
                       onClick={() => handleOpenLink(link.token)}
@@ -335,6 +338,7 @@ export function ShareLinksManager({ productId, productCode }: ShareLinksManagerP
                       <ExternalLink className="w-4 h-4" />
                     </Button>
                     <Button
+                      type="button"
                       variant="ghost"
                       size="icon"
                       onClick={() => deleteLinkMutation.mutate(link.id)}
