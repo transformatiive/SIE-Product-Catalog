@@ -1397,16 +1397,14 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                     <p className="text-sm text-muted-foreground mt-1">Características únicas e capacidades do produto</p>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="specialFeatures" className="text-sm font-medium text-foreground">Características Especiais (Formato JSON Array)</Label>
                     <Textarea
                       id="specialFeatures"
                       {...form.register('specialFeatures')}
-                      placeholder='["Empilhável", "Reciclável", "Reutilizável", "Resistente a UV"]'
+                      placeholder="Empilhável, Reciclável, Reutilizável, Resistente a UV"
                       data-testid="textarea-special-features"
                       rows={3}
-                      className="font-mono text-sm"
                     />
-                    <p className="text-xs text-muted-foreground">Listar características especiais como um array JSON. Exemplos: empilhável, reciclável, resistente UV, etc.</p>
+                    <p className="text-xs text-muted-foreground">Listar características especiais separadas por vírgula</p>
                   </div>
                 </div>
               </TabsContent>
