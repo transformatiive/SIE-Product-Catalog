@@ -415,11 +415,17 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Text style={styles.productName}>{product.designation || product.product || 'Produto'}</Text>
+            {hasValue(product.designation) ? (
+              <Text style={styles.productName}>{product.designation}</Text>
+            ) : hasValue(product.product) ? (
+              <Text style={styles.productName}>{product.product}</Text>
+            ) : null}
             {hasValue(product.model) && (
               <Text style={styles.productDesignation}>{product.model}</Text>
             )}
-            <Text style={styles.productCode}>REF: {product.productCode}</Text>
+            {hasValue(product.productCode) && (
+              <Text style={styles.productCode}>REF: {product.productCode}</Text>
+            )}
             {hasValue(product.barcode) && (
               <Text style={styles.productBarcode}>EAN: {product.barcode}</Text>
             )}
@@ -492,7 +498,7 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
                   {booleanFeatures.map((feat, index) => (
                     <View key={index} style={styles.booleanItem}>
                       <Text style={feat.value ? styles.booleanCheck : styles.booleanX}>
-                        {feat.value ? '✓' : '✗'}
+                        {feat.value ? 'Sim' : 'Nao'}
                       </Text>
                       <Text style={styles.booleanLabel}>{feat.label}</Text>
                     </View>
@@ -576,8 +582,8 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
 
             {/* Recyclable Badge */}
             <View style={styles.recycleBadge}>
-              <Text style={styles.recycleText}>♻ 100% RECICLÁVEL</Text>
-              <Text style={{ fontSize: 7, color: COLORS.success, marginTop: 2 }}>REUTILIZÁVEL</Text>
+              <Text style={styles.recycleText}>100% RECICLAVEL</Text>
+              <Text style={{ fontSize: 7, color: COLORS.success, marginTop: 2 }}>REUTILIZAVEL</Text>
             </View>
           </View>
         </View>
