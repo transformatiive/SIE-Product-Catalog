@@ -335,6 +335,22 @@ export const insertCapacitySchema = createInsertSchema(capacities).omit({
 export type InsertCapacity = z.infer<typeof insertCapacitySchema>;
 export type Capacity = typeof capacities.$inferSelect;
 
+// Dimension Types (Tipos de Dimensão)
+export const dimensionTypes = pgTable("dimension_types", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: text("code").notNull().unique(),
+  description: text("description").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertDimensionTypeSchema = createInsertSchema(dimensionTypes).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertDimensionType = z.infer<typeof insertDimensionTypeSchema>;
+export type DimensionType = typeof dimensionTypes.$inferSelect;
+
 // Raw Materials (4_Materia Prima)
 export const rawMaterials = pgTable("raw_materials", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

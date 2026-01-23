@@ -35,7 +35,9 @@ import {
   models,
   insertModelSchema,
   specifications,
-  insertSpecificationSchema
+  insertSpecificationSchema,
+  dimensionTypes,
+  insertDimensionTypeSchema
 } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { renderToBuffer } from '@react-pdf/renderer';
@@ -66,6 +68,7 @@ const tableMap = {
   packagingTypes: { table: packagingTypes, insertSchema: insertPackagingTypeSchema },
   models: { table: models, insertSchema: insertModelSchema },
   specifications: { table: specifications, insertSchema: insertSpecificationSchema },
+  dimensionTypes: { table: dimensionTypes, insertSchema: insertDimensionTypeSchema },
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {

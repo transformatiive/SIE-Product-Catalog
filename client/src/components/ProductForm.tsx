@@ -102,6 +102,10 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
     queryKey: ['/api/admin/packagingTypes'],
   });
 
+  const { data: dimensionTypeOptions = [], isLoading: dimensionTypesLoading } = useQuery<{id: string, code: string, description: string}[]>({
+    queryKey: ['/api/admin/dimensionTypes'],
+  });
+
   const { data: productVersions = [] } = useQuery<ProductVersion[]>({
     queryKey: ['/api/products', product?.id, 'versions'],
     enabled: !!product?.id,
@@ -802,18 +806,20 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                   <div className="space-y-3">
                     {dimensions.map((dimension, index) => (
                       <div key={dimension.id} className="grid grid-cols-2 lg:grid-cols-5 gap-3 items-end p-3 border border-border rounded-md">
-                        <div className="space-y-1">
-                          <Label className="text-xs font-medium text-muted-foreground">Nome da Dimensão</Label>
-                          <Input
-                            placeholder="ex.: c/Ø, l, h"
+                        <div className="space-y-1 lg:col-span-2">
+                          <SearchableSelect
                             value={dimension.name}
-                            onChange={(e) => updateDimension(dimension.id, 'name', e.target.value)}
-                            data-testid={`input-dimension-name-${index}`}
-                            className="h-8"
+                            onChange={(val) => updateDimension(dimension.id, 'name', val)}
+                            options={dimensionTypeOptions}
+                            label="Dimensão"
+                            placeholder="Seleccionar dimensão..."
+                            apiEndpoint="/api/admin/dimensionTypes"
+                            isLoading={dimensionTypesLoading}
+                            onOptionAdded={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/dimensionTypes'] })}
                           />
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-xs font-medium text-muted-foreground">Valor (mm)</Label>
+                          <Label className="text-xs font-medium text-muted-foreground">Valor</Label>
                           <Input
                             placeholder="ex.: 332"
                             value={dimension.value}
