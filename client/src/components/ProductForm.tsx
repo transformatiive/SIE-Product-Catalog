@@ -1303,16 +1303,14 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                     <p className="text-sm text-muted-foreground mt-1">Marcações e etiquetas obrigatórias no produto</p>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="markings" className="text-sm font-medium text-foreground">Marcações (Formato JSON Array)</Label>
                     <Textarea
                       id="markings"
                       {...form.register('markings')}
-                      placeholder='["Datador", "Símbolo SIE", "Capacidade Nominal", "Logo da Empresa"]'
+                      placeholder="Datador, Símbolo SIE, Capacidade Nominal, Logo da Empresa"
                       data-testid="textarea-markings"
                       rows={3}
-                      className="font-mono text-sm"
                     />
-                    <p className="text-xs text-muted-foreground">Inserir marcações como um array JSON. Cada marcação deve estar entre aspas e separadas por vírgulas.</p>
+                    <p className="text-xs text-muted-foreground">Listar marcações separadas por vírgula</p>
                   </div>
                 </div>
 
@@ -1508,16 +1506,14 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                     <p className="text-sm text-muted-foreground mt-1">Especificações de envio, armazenamento e embalagem</p>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="packaging" className="text-sm font-medium text-foreground">Detalhes de Embalagem (Formato JSON)</Label>
                     <Textarea
                       id="packaging"
                       {...form.register('packaging')}
-                      placeholder='{"unitsPerPallet": 105, "unitsPerTruck": 3360, "palletDimensions": "1200x800mm", "stackHeight": 8}'
+                      placeholder="Unidades por palete: 105, Unidades por camião: 3360, Dimensões palete: 1200x800mm"
                       data-testid="textarea-packaging"
-                      rows={4}
-                      className="font-mono text-sm"
+                      rows={3}
                     />
-                    <p className="text-xs text-muted-foreground">Especificar informações de embalagem em formato JSON. Incluir unidades por palete, capacidade do camião, dimensões, etc.</p>
+                    <p className="text-xs text-muted-foreground">Informações adicionais de embalagem</p>
                   </div>
                 </div>
 
