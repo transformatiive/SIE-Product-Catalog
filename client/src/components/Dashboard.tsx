@@ -16,6 +16,7 @@ type ViewMode = 'list' | 'search' | 'form' | 'create';
 export default function Dashboard() {
   const [currentView, setCurrentView] = useState<ViewMode>('list');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [clonedProductData, setClonedProductData] = useState<Partial<InsertProduct> | null>(null);
   const [searchFilters, setSearchFilters] = useState<ProductSearch>({});
   const [isDarkMode, setIsDarkMode] = useState(false);
   const { toast } = useToast();
@@ -124,7 +125,73 @@ export default function Dashboard() {
 
   const handleCreateNew = () => {
     setSelectedProduct(null);
+    setClonedProductData(null);
     setCurrentView('create');
+  };
+
+  const handleCloneProduct = (product: Product) => {
+    // Copy all editable fields, excluding unique identifiers
+    const clonedData: Partial<InsertProduct> = {
+      model: product.model,
+      family: product.family,
+      type: product.type,
+      product: product.product,
+      // Exclude: productCode, barcode, designation (unique/auto-generated)
+      nominalCapacity: product.nominalCapacity,
+      totalCapacity: product.totalCapacity || undefined,
+      rawMaterial: product.rawMaterial,
+      colors: product.colors,
+      weight: product.weight,
+      weightWithAccessories: product.weightWithAccessories || undefined,
+      dimensions: product.dimensions,
+      closingSystem: product.closingSystem || undefined,
+      capType: product.capType || undefined,
+      capDimensions: product.capDimensions || undefined,
+      sealingType: product.sealingType || undefined,
+      vedantePead: product.vedantePead || false,
+      vedanteEpdm: product.vedanteEpdm || false,
+      vedanteOutros: product.vedanteOutros || undefined,
+      handlingSystem: product.handlingSystem || undefined,
+      pegasLaterais: product.pegasLaterais || false,
+      pegaSuperior: product.pegaSuperior || false,
+      cavidades: product.cavidades || false,
+      manuseamentoOutros: product.manuseamentoOutros || undefined,
+      markings: product.markings || undefined,
+      datador: product.datador || false,
+      simboloSie: product.simboloSie || false,
+      simboloMp: product.simboloMp || false,
+      gravacaoCliente: product.gravacaoCliente || false,
+      visor: product.visor || false,
+      bica: product.bica || false,
+      coexPoliamida: product.coexPoliamida || false,
+      adaptacao: product.adaptacao || false,
+      autoculanteCliente: product.autoculanteCliente || undefined,
+      especificacoesEmbFlexiveis: product.especificacoesEmbFlexiveis || undefined,
+      stackable: product.stackable || false,
+      stackingCapacity: product.stackingCapacity || undefined,
+      packaging: product.packaging || undefined,
+      palletDimensions: product.palletDimensions || undefined,
+      productOnPalletDimensions: product.productOnPalletDimensions || undefined,
+      arrangementScheme: product.arrangementScheme || undefined,
+      totalUnits: product.totalUnits || undefined,
+      certifications: product.certifications || undefined,
+      foodContact: product.foodContact || false,
+      specialFeatures: product.specialFeatures || undefined,
+      selectedCertificationTypeId: product.selectedCertificationTypeId || undefined,
+      selectedPackagingTypeId: product.selectedPackagingTypeId || undefined,
+      selectedSpecificationId: product.selectedSpecificationId || undefined,
+      productImage: product.productImage || undefined,
+      technicalDrawing: product.technicalDrawing || undefined,
+      notes: product.notes || undefined,
+    };
+    
+    setClonedProductData(clonedData);
+    setSelectedProduct(null);
+    setCurrentView('create');
+    toast({ 
+      title: "Produto duplicado", 
+      description: "Preencha o código do produto e outros campos únicos." 
+    });
   };
 
   const handleSaveProduct = (productData: InsertProduct) => {
@@ -229,10 +296,12 @@ export default function Dashboard() {
       case 'form':
         return (
           <ProductForm
+            key={`edit-${selectedProduct?.id}`}
             product={selectedProduct || undefined}
             onSave={handleSaveProduct}
             onCancel={handleBack}
             onGeneratePDF={handleGeneratePDF}
+            onClone={handleCloneProduct}
             isLoading={updateProductMutation.isPending}
             isGeneratingPDF={generatePDFMutation.isPending}
           />
@@ -241,6 +310,8 @@ export default function Dashboard() {
       case 'create':
         return (
           <ProductForm
+            key={clonedProductData ? 'clone' : 'new'}
+            initialData={clonedProductData || undefined}
             onSave={handleSaveProduct}
             onCancel={handleBack}
             isLoading={createProductMutation.isPending}

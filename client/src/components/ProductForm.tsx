@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, X, Plus, Trash2, FileText, History, Clock, Link2 } from "lucide-react";
+import { Save, X, Plus, Trash2, FileText, History, Clock, Link2, Copy } from "lucide-react";
 import { InsertProduct, insertProductSchema, Product, ProductVersion } from "@shared/schema";
 import ImageUpload from "./ImageUpload";
 import { SearchableSelect } from "./SearchableSelect";
@@ -18,9 +18,11 @@ import { queryClient } from "@/lib/queryClient";
 
 interface ProductFormProps {
   product?: Product;
+  initialData?: Partial<InsertProduct>;
   onSave?: (product: InsertProduct) => void;
   onCancel?: () => void;
   onGeneratePDF?: (product: Product) => void;
+  onClone?: (product: Product) => void;
   isLoading?: boolean;
   isGeneratingPDF?: boolean;
 }
@@ -53,7 +55,9 @@ interface PackagingData {
   stackHeight: string;
 }
 
-export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, isLoading = false, isGeneratingPDF = false }: ProductFormProps) {
+export default function ProductForm({ product, initialData, onSave, onCancel, onGeneratePDF, onClone, isLoading = false, isGeneratingPDF = false }: ProductFormProps) {
+  // Use initialData for cloning when no product is provided
+  const sourceData = product || initialData;
   const { data: familyOptions = [], isLoading: familiesLoading } = useQuery<{id: string, code: string, description: string}[]>({
     queryKey: ['/api/admin/families'],
   });
@@ -104,9 +108,10 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
   });
 
   const [dimensions, setDimensions] = useState<DimensionField[]>(() => {
-    if (product?.dimensions) {
+    const dims = product?.dimensions || initialData?.dimensions;
+    if (dims) {
       try {
-        const parsed = JSON.parse(product.dimensions);
+        const parsed = JSON.parse(dims);
         return Object.entries(parsed).map(([name, value], index) => ({
           id: `dim-${index}`,
           name,
@@ -120,9 +125,10 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
   });
 
   const [certifications, setCertifications] = useState<CertificationField[]>(() => {
-    if (product?.certifications) {
+    const certs = product?.certifications || initialData?.certifications;
+    if (certs) {
       try {
-        const parsed = JSON.parse(product.certifications);
+        const parsed = JSON.parse(certs);
         return parsed.map((cert: string, index: number) => ({
           id: `cert-${index}`,
           value: cert,
@@ -135,9 +141,10 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
   });
 
   const [markings, setMarkings] = useState<MarkingField[]>(() => {
-    if (product?.markings) {
+    const marks = product?.markings || initialData?.markings;
+    if (marks) {
       try {
-        const parsed = JSON.parse(product.markings);
+        const parsed = JSON.parse(marks);
         return parsed.map((marking: string, index: number) => ({
           id: `marking-${index}`,
           value: marking,
@@ -150,9 +157,10 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
   });
 
   const [specialFeatures, setSpecialFeatures] = useState<SpecialFeatureField[]>(() => {
-    if (product?.specialFeatures) {
+    const features = product?.specialFeatures || initialData?.specialFeatures;
+    if (features) {
       try {
-        const parsed = JSON.parse(product.specialFeatures);
+        const parsed = JSON.parse(features);
         return parsed.map((feature: string, index: number) => ({
           id: `feature-${index}`,
           value: feature,
@@ -165,9 +173,10 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
   });
 
   const [packagingData, setPackagingData] = useState<PackagingData>(() => {
-    if (product?.packaging) {
+    const pkg = product?.packaging || initialData?.packaging;
+    if (pkg) {
       try {
-        const parsed = JSON.parse(product.packaging);
+        const parsed = JSON.parse(pkg);
         return {
           unitsPerPallet: parsed.unitsPerPallet?.toString() || '',
           unitsPerTruck: parsed.unitsPerTruck?.toString() || '',
@@ -191,62 +200,63 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
     };
   });
 
-  const [productImage, setProductImage] = useState<string | null>(product?.productImage || null);
-  const [technicalDrawing, setTechnicalDrawing] = useState<string | null>(product?.technicalDrawing || null);
+  const [productImage, setProductImage] = useState<string | null>(product?.productImage || initialData?.productImage || null);
+  const [technicalDrawing, setTechnicalDrawing] = useState<string | null>(product?.technicalDrawing || initialData?.technicalDrawing || null);
 
   const form = useForm<InsertProduct>({
     resolver: zodResolver(insertProductSchema),
     defaultValues: {
-      model: product?.model || '',
-      family: product?.family || '',
-      type: product?.type || '',
-      product: product?.product || '',
+      model: sourceData?.model || '',
+      family: sourceData?.family || '',
+      type: sourceData?.type || '',
+      product: sourceData?.product || '',
+      // When cloning (initialData provided), leave unique identifiers empty
       productCode: product?.productCode || '',
       designation: product?.designation || '',
       barcode: product?.barcode || '',
-      nominalCapacity: product?.nominalCapacity || '',
-      totalCapacity: product?.totalCapacity || '',
-      rawMaterial: product?.rawMaterial || '',
-      colors: product?.colors || '',
-      weight: product?.weight || '',
-      weightWithAccessories: product?.weightWithAccessories || '',
-      dimensions: product?.dimensions || '',
-      closingSystem: product?.closingSystem || '',
-      capType: product?.capType || '',
-      capDimensions: product?.capDimensions || '',
-      sealingType: product?.sealingType || '',
-      vedantePead: product?.vedantePead ?? false,
-      vedanteEpdm: product?.vedanteEpdm ?? false,
-      vedanteOutros: product?.vedanteOutros || '',
-      handlingSystem: product?.handlingSystem || '',
-      pegasLaterais: product?.pegasLaterais ?? false,
-      pegaSuperior: product?.pegaSuperior ?? false,
-      cavidades: product?.cavidades ?? false,
-      manuseamentoOutros: product?.manuseamentoOutros || '',
-      certifications: product?.certifications || '',
-      markings: product?.markings || '',
-      datador: product?.datador ?? false,
-      simboloSie: product?.simboloSie ?? false,
-      simboloMp: product?.simboloMp ?? false,
-      gravacaoCliente: product?.gravacaoCliente ?? false,
-      visor: product?.visor ?? false,
-      bica: product?.bica ?? false,
-      coexPoliamida: product?.coexPoliamida ?? false,
-      adaptacao: product?.adaptacao ?? false,
-      autoculanteCliente: product?.autoculanteCliente || '',
-      especificacoesEmbFlexiveis: product?.especificacoesEmbFlexiveis || '',
-      foodContact: product?.foodContact ?? false,
-      stackable: product?.stackable ?? false,
-      stackingCapacity: product?.stackingCapacity || '',
-      packaging: product?.packaging || '',
-      palletDimensions: product?.palletDimensions || '',
-      productOnPalletDimensions: product?.productOnPalletDimensions || '',
-      arrangementScheme: product?.arrangementScheme || '',
-      totalUnits: product?.totalUnits || '',
-      specialFeatures: product?.specialFeatures || '',
-      productImage: product?.productImage || '',
-      technicalDrawing: product?.technicalDrawing || '',
-      notes: product?.notes || '',
+      nominalCapacity: sourceData?.nominalCapacity || '',
+      totalCapacity: sourceData?.totalCapacity || '',
+      rawMaterial: sourceData?.rawMaterial || '',
+      colors: sourceData?.colors || '',
+      weight: sourceData?.weight || '',
+      weightWithAccessories: sourceData?.weightWithAccessories || '',
+      dimensions: sourceData?.dimensions || '',
+      closingSystem: sourceData?.closingSystem || '',
+      capType: sourceData?.capType || '',
+      capDimensions: sourceData?.capDimensions || '',
+      sealingType: sourceData?.sealingType || '',
+      vedantePead: sourceData?.vedantePead ?? false,
+      vedanteEpdm: sourceData?.vedanteEpdm ?? false,
+      vedanteOutros: sourceData?.vedanteOutros || '',
+      handlingSystem: sourceData?.handlingSystem || '',
+      pegasLaterais: sourceData?.pegasLaterais ?? false,
+      pegaSuperior: sourceData?.pegaSuperior ?? false,
+      cavidades: sourceData?.cavidades ?? false,
+      manuseamentoOutros: sourceData?.manuseamentoOutros || '',
+      certifications: sourceData?.certifications || '',
+      markings: sourceData?.markings || '',
+      datador: sourceData?.datador ?? false,
+      simboloSie: sourceData?.simboloSie ?? false,
+      simboloMp: sourceData?.simboloMp ?? false,
+      gravacaoCliente: sourceData?.gravacaoCliente ?? false,
+      visor: sourceData?.visor ?? false,
+      bica: sourceData?.bica ?? false,
+      coexPoliamida: sourceData?.coexPoliamida ?? false,
+      adaptacao: sourceData?.adaptacao ?? false,
+      autoculanteCliente: sourceData?.autoculanteCliente || '',
+      especificacoesEmbFlexiveis: sourceData?.especificacoesEmbFlexiveis || '',
+      foodContact: sourceData?.foodContact ?? false,
+      stackable: sourceData?.stackable ?? false,
+      stackingCapacity: sourceData?.stackingCapacity || '',
+      packaging: sourceData?.packaging || '',
+      palletDimensions: sourceData?.palletDimensions || '',
+      productOnPalletDimensions: sourceData?.productOnPalletDimensions || '',
+      arrangementScheme: sourceData?.arrangementScheme || '',
+      totalUnits: sourceData?.totalUnits || '',
+      specialFeatures: sourceData?.specialFeatures || '',
+      productImage: sourceData?.productImage || '',
+      technicalDrawing: sourceData?.technicalDrawing || '',
+      notes: sourceData?.notes || '',
       isActive: product?.isActive ?? true,
     },
   });
@@ -839,15 +849,15 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="productCode" className="text-sm font-medium text-foreground">Referência</Label>
+                      <Label htmlFor="productCode" className="text-sm font-medium text-foreground">Referência *</Label>
                       <Input
                         id="productCode"
-                        value={watchedProductCode || ''}
+                        {...form.register('productCode')}
                         data-testid="input-product-code"
-                        className="h-9 font-mono bg-muted cursor-not-allowed"
-                        disabled
-                        readOnly
+                        placeholder="Gerado automaticamente ou introduza manualmente"
+                        className="h-9 font-mono"
                       />
+                      <p className="text-xs text-muted-foreground">Código único do produto (editável)</p>
                     </div>
 
                     <div className="space-y-2">
@@ -1570,17 +1580,29 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
                   Cancelar
                 </Button>
                 {product && (
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={handleGeneratePDF}
-                    disabled={isGeneratingPDF}
-                    data-testid="button-generate-pdf"
-                    className="min-w-32"
-                  >
-                    <FileText className="w-4 h-4 mr-2" />
-                    {isGeneratingPDF ? 'A gerar...' : 'Gerar PDF'}
-                  </Button>
+                  <>
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={() => onClone?.(product)}
+                      data-testid="button-clone"
+                      className="min-w-32"
+                    >
+                      <Copy className="w-4 h-4 mr-2" />
+                      Duplicar
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={handleGeneratePDF}
+                      disabled={isGeneratingPDF}
+                      data-testid="button-generate-pdf"
+                      className="min-w-32"
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      {isGeneratingPDF ? 'A gerar...' : 'Gerar PDF'}
+                    </Button>
+                  </>
                 )}
                 <Button 
                   type="submit" 
