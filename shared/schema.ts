@@ -81,8 +81,9 @@ export const products = pgTable("products", {
   selectedSpecificationId: varchar("selected_specification_id"), // FK to specifications
   
   // Image fields
-  productImage: text("product_image"), // File path to product image
-  technicalDrawing: text("technical_drawing"), // File path to technical drawing/3D blueprint
+  productImage: text("product_image"), // Imagem principal do produto (frente)
+  technicalDrawing: text("technical_drawing"), // Imagem técnica / desenho 2D (verso)
+  palletizationImage: text("palletization_image"), // Imagem de paletização / acondicionamento (opcional)
   
   // Version tracking - current version info is denormalized for efficient queries
   currentVersionNumber: integer("current_version_number").default(1).notNull(),
@@ -162,6 +163,7 @@ export const productVersions = pgTable("product_versions", {
   selectedSpecificationId: varchar("selected_specification_id"),
   productImage: text("product_image"),
   technicalDrawing: text("technical_drawing"),
+  palletizationImage: text("palletization_image"),
   notes: text("notes"),
 });
 
