@@ -35,6 +35,23 @@ Preferred communication style: Simple, everyday language.
 - **Forms**: Multi-step forms with dynamic field arrays for dimensions and certifications
 - **Data Display**: Table views with pagination, card layouts, and detailed specification views
 
+## Key Features
+
+### Product Clone/Duplicate
+- Click "Duplicar" button on any existing product to create a copy
+- All fields are copied except unique identifiers (id, productCode, barcode)
+- Form switches to create mode with title "Criar Novo Produto"
+- Referência (productCode) field has two modes:
+  - **Auto mode**: Field auto-generates from dropdown selections (bg-muted background)
+  - **Manual mode**: Once user types, auto-generation stops (white background)
+- Uses React keys to force component remount when switching between edit/clone/create modes
+
+### Shareable Links
+- Generate unique secure tokens (nanoid 32 chars) for external viewing
+- Public route `/share/{token}` bypasses authentication
+- Configurable expiration dates with validation
+- Access controls managed in "Partilhar" tab
+
 # External Dependencies
 
 ## UI Libraries

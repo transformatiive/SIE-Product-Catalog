@@ -202,6 +202,9 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
 
   const [productImage, setProductImage] = useState<string | null>(product?.productImage || initialData?.productImage || null);
   const [technicalDrawing, setTechnicalDrawing] = useState<string | null>(product?.technicalDrawing || initialData?.technicalDrawing || null);
+  
+  // Track if user has manually edited the productCode field
+  const [productCodeManuallyEdited, setProductCodeManuallyEdited] = useState(false);
 
   const form = useForm<InsertProduct>({
     resolver: zodResolver(insertProductSchema),
@@ -372,20 +375,24 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
     console.log('Generated barcode:', barcode);
     form.setValue('barcode', barcode, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
 
-    // Generate Referência (productCode) - always generate with placeholders
+    // Generate Referência (productCode) - only if not manually edited
     // Format: MODELO_DISPLAY + "." + MATERIA_PRIMA_CODE + "." + CORANTE_CODE + "." + CERT_SHORT + PACK_SHORT + "." + SPEC_DISPLAY
     // Use code as fallback if shortCode not available
-    const certShort = certification?.shortCode || certification?.code || '';
-    const packShort = packaging?.shortCode || packaging?.code || '';
-    const reference = [
-      model?.displayCode || model?.code || '[modelo]',
-      rawMaterial?.code || '[matéria]',
-      color?.code || '[cor]',
-      (certShort || '[C]') + (packShort || '[E]'),
-      specification?.displayCode || specification?.code || '[espec]',
-    ].join('.');
-    console.log('Generated reference:', reference);
-    form.setValue('productCode', reference, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+    if (!productCodeManuallyEdited) {
+      const certShort = certification?.shortCode || certification?.code || '';
+      const packShort = packaging?.shortCode || packaging?.code || '';
+      const reference = [
+        model?.displayCode || model?.code || '[modelo]',
+        rawMaterial?.code || '[matéria]',
+        color?.code || '[cor]',
+        (certShort || '[C]') + (packShort || '[E]'),
+        specification?.displayCode || specification?.code || '[espec]',
+      ].join('.');
+      console.log('Generated reference:', reference);
+      form.setValue('productCode', reference, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+    } else {
+      console.log('Skipping productCode auto-generation: manually edited');
+    }
 
     // Generate Designação - always generate with available parts
     // Format: PRODUTO_NAME + CAPACIDADE_DESC + MODELO_DESC + CORANTE_NAME + SISTEMA_FECHO + MEDIDA_TAMPA_DESC + CERT_ABBREV + PACK_ABBREV + SPEC_DESC
@@ -416,7 +423,7 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
     productTypeOptions, capacityOptions, modelOptions, colorOptions, 
     capSizeOptions, rawMaterialOptions, closingSystemOptions,
     certificationTypeOptions, packagingTypeOptions, specificationOptions,
-    form
+    form, productCodeManuallyEdited, initializedFromProduct
   ]);
 
   const addDimension = () => {
@@ -852,12 +859,16 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                       <Label htmlFor="productCode" className="text-sm font-medium text-foreground">Referência *</Label>
                       <Input
                         id="productCode"
-                        {...form.register('productCode')}
+                        {...form.register('productCode', {
+                          onChange: () => setProductCodeManuallyEdited(true)
+                        })}
                         data-testid="input-product-code"
                         placeholder="Gerado automaticamente ou introduza manualmente"
-                        className="h-9 font-mono"
+                        className={`h-9 font-mono ${productCodeManuallyEdited ? '' : 'bg-muted'}`}
                       />
-                      <p className="text-xs text-muted-foreground">Código único do produto (editável)</p>
+                      <p className="text-xs text-muted-foreground">
+                        {productCodeManuallyEdited ? 'Modo manual - edite livremente' : 'Gerado automaticamente - clique para editar'}
+                      </p>
                     </div>
 
                     <div className="space-y-2">
