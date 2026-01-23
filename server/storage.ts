@@ -10,9 +10,12 @@ import {
   type ProductSearch,
   type ProductVersion,
   type InsertProductVersion,
+  type ShareLink,
+  type InsertShareLink,
   products, 
   productVersions,
-  users 
+  users,
+  shareLinks 
 } from "@shared/schema";
 
 // Database connection
@@ -44,6 +47,14 @@ export interface IStorage {
   getProductVersions(productId: string): Promise<ProductVersion[]>;
   getProductVersion(versionId: string): Promise<ProductVersion | undefined>;
   createProductVersion(version: InsertProductVersion): Promise<ProductVersion>;
+  
+  // Share Link methods
+  getShareLinks(productId: string): Promise<ShareLink[]>;
+  getShareLinkByToken(token: string): Promise<ShareLink | undefined>;
+  createShareLink(shareLink: InsertShareLink): Promise<ShareLink>;
+  updateShareLink(id: string, shareLink: Partial<InsertShareLink>): Promise<ShareLink | undefined>;
+  deleteShareLink(id: string): Promise<boolean>;
+  incrementShareLinkAccess(token: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -365,6 +376,76 @@ export class DatabaseStorage implements IStorage {
       technicalDrawing: product.technicalDrawing,
       notes: product.notes,
     };
+  }
+  
+  // Share Link methods
+  async getShareLinks(productId: string): Promise<ShareLink[]> {
+    try {
+      const result = await db.select()
+        .from(shareLinks)
+        .where(eq(shareLinks.productId, productId))
+        .orderBy(desc(shareLinks.createdAt));
+      return result;
+    } catch (error) {
+      console.error('Error getting share links:', error);
+      return [];
+    }
+  }
+  
+  async getShareLinkByToken(token: string): Promise<ShareLink | undefined> {
+    try {
+      const result = await db.select()
+        .from(shareLinks)
+        .where(eq(shareLinks.token, token))
+        .limit(1);
+      return result[0];
+    } catch (error) {
+      console.error('Error getting share link by token:', error);
+      return undefined;
+    }
+  }
+  
+  async createShareLink(shareLink: InsertShareLink): Promise<ShareLink> {
+    const result = await db.insert(shareLinks).values(shareLink).returning();
+    return result[0];
+  }
+  
+  async updateShareLink(id: string, updates: Partial<InsertShareLink>): Promise<ShareLink | undefined> {
+    try {
+      const result = await db.update(shareLinks)
+        .set(updates)
+        .where(eq(shareLinks.id, id))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error updating share link:', error);
+      return undefined;
+    }
+  }
+  
+  async deleteShareLink(id: string): Promise<boolean> {
+    try {
+      const result = await db.delete(shareLinks)
+        .where(eq(shareLinks.id, id))
+        .returning();
+      return result.length > 0;
+    } catch (error) {
+      console.error('Error deleting share link:', error);
+      return false;
+    }
+  }
+  
+  async incrementShareLinkAccess(token: string): Promise<void> {
+    try {
+      await db.update(shareLinks)
+        .set({
+          accessCount: sql`${shareLinks.accessCount} + 1`,
+          lastAccessedAt: new Date(),
+        })
+        .where(eq(shareLinks.token, token));
+    } catch (error) {
+      console.error('Error incrementing share link access:', error);
+    }
   }
 }
 

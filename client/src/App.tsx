@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Dashboard from "@/components/Dashboard";
 import Admin from "@/pages/Admin";
 import Login from "@/pages/Login";
+import SharedProduct from "@/pages/SharedProduct";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 
@@ -35,11 +36,21 @@ function ProtectedRoutes() {
 }
 
 function App() {
+  const [location] = useLocation();
+  
+  const isPublicRoute = location.startsWith('/share/');
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <ProtectedRoutes />
+        {isPublicRoute ? (
+          <Switch>
+            <Route path="/share/:token" component={SharedProduct} />
+          </Switch>
+        ) : (
+          <ProtectedRoutes />
+        )}
       </TooltipProvider>
     </QueryClientProvider>
   );

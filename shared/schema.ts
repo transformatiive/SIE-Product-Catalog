@@ -232,6 +232,56 @@ export type User = typeof users.$inferSelect;
 export type LoginData = z.infer<typeof loginSchema>;
 
 // ================================
+// SHARE LINKS FOR EXTERNAL ACCESS
+// ================================
+
+export const shareLinks = pgTable("share_links", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  productId: varchar("product_id").notNull(), // FK to products
+  token: varchar("token").notNull().unique(), // Unique random token for URL
+  
+  // Access configuration
+  accessType: text("access_type").notNull().default("read_only"), // "public", "read_only"
+  allowPdfDownload: boolean("allow_pdf_download").default(true).notNull(),
+  
+  // Expiration settings
+  expiresAt: timestamp("expires_at"), // null = never expires
+  
+  // Usage tracking
+  accessCount: integer("access_count").default(0).notNull(),
+  lastAccessedAt: timestamp("last_accessed_at"),
+  
+  // Metadata
+  createdBy: varchar("created_by"), // FK to users who created the link
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  notes: text("notes"), // Optional notes about who this link is for
+});
+
+export const insertShareLinkSchema = createInsertSchema(shareLinks).omit({
+  id: true,
+  accessCount: true,
+  lastAccessedAt: true,
+  createdAt: true,
+});
+
+export const createShareLinkSchema = z.object({
+  productId: z.string(),
+  accessType: z.enum(["public", "read_only"]).default("read_only"),
+  allowPdfDownload: z.boolean().default(true),
+  expiresAt: z.string().nullable().optional().refine((val) => {
+    if (!val) return true; // null/empty is valid (no expiration)
+    const date = new Date(val);
+    return !isNaN(date.getTime());
+  }, { message: "Data de expiração inválida" }),
+  notes: z.string().optional(),
+});
+
+export type InsertShareLink = z.infer<typeof insertShareLinkSchema>;
+export type ShareLink = typeof shareLinks.$inferSelect;
+export type CreateShareLinkData = z.infer<typeof createShareLinkSchema>;
+
+// ================================
 // SUPPORT TABLES FOR DROPDOWNS
 // ================================
 

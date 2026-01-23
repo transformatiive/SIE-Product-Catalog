@@ -4,6 +4,7 @@ import path from "path";
 import multer from "multer";
 import fs from "fs-extra";
 import bcrypt from "bcryptjs";
+import { nanoid } from "nanoid";
 import { eq } from "drizzle-orm";
 import { storage, db } from "./storage";
 import { 
@@ -12,6 +13,7 @@ import {
   productSearchSchema,
   loginSchema,
   insertUserSchema,
+  createShareLinkSchema,
   families,
   insertFamilySchema,
   productTypes,
@@ -912,6 +914,165 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting admin option:", error);
       res.status(500).json({ message: "Falha ao eliminar opção" });
+    }
+  });
+
+  // ================================
+  // SHARE LINK ROUTES
+  // ================================
+
+  // GET /api/products/:id/share-links - Get all share links for a product (protected)
+  app.get("/api/products/:id/share-links", requireAuth, async (req, res) => {
+    try {
+      const shareLinks = await storage.getShareLinks(req.params.id);
+      res.json(shareLinks);
+    } catch (error) {
+      console.error("Error getting share links:", error);
+      res.status(500).json({ message: "Falha ao obter links partilháveis" });
+    }
+  });
+
+  // POST /api/products/:id/share-links - Create a share link (protected)
+  app.post("/api/products/:id/share-links", requireAuth, async (req, res) => {
+    try {
+      const product = await storage.getProduct(req.params.id);
+      if (!product) {
+        return res.status(404).json({ message: "Produto não encontrado" });
+      }
+
+      const validation = createShareLinkSchema.safeParse({
+        ...req.body,
+        productId: req.params.id,
+      });
+      
+      if (!validation.success) {
+        return res.status(400).json({
+          message: "Dados inválidos",
+          errors: fromZodError(validation.error).toString(),
+        });
+      }
+
+      const token = nanoid(32); // Generate secure random token
+      const shareLink = await storage.createShareLink({
+        productId: req.params.id,
+        token,
+        accessType: validation.data.accessType,
+        allowPdfDownload: validation.data.allowPdfDownload,
+        expiresAt: validation.data.expiresAt ? new Date(validation.data.expiresAt) : null,
+        createdBy: req.session.userId,
+        notes: validation.data.notes,
+        isActive: true,
+      });
+
+      res.status(201).json(shareLink);
+    } catch (error) {
+      console.error("Error creating share link:", error);
+      res.status(500).json({ message: "Falha ao criar link partilhável" });
+    }
+  });
+
+  // DELETE /api/share-links/:id - Delete a share link (protected)
+  app.delete("/api/share-links/:id", requireAuth, async (req, res) => {
+    try {
+      const deleted = await storage.deleteShareLink(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Link não encontrado" });
+      }
+      res.json({ message: "Link eliminado com sucesso" });
+    } catch (error) {
+      console.error("Error deleting share link:", error);
+      res.status(500).json({ message: "Falha ao eliminar link" });
+    }
+  });
+
+  // ================================
+  // PUBLIC SHARE ROUTES (NO AUTH)
+  // ================================
+
+  // GET /api/share/:token - Get product data via share token (PUBLIC)
+  app.get("/api/share/:token", async (req, res) => {
+    try {
+      const shareLink = await storage.getShareLinkByToken(req.params.token);
+      
+      if (!shareLink) {
+        return res.status(404).json({ message: "Link inválido ou expirado" });
+      }
+
+      if (!shareLink.isActive) {
+        return res.status(403).json({ message: "Este link foi desativado" });
+      }
+
+      // Check expiration
+      if (shareLink.expiresAt && new Date(shareLink.expiresAt) < new Date()) {
+        return res.status(403).json({ message: "Este link expirou" });
+      }
+
+      const product = await storage.getProduct(shareLink.productId);
+      if (!product) {
+        return res.status(404).json({ message: "Produto não encontrado" });
+      }
+
+      // Increment access count
+      await storage.incrementShareLinkAccess(req.params.token);
+
+      res.json({
+        product,
+        shareLink: {
+          accessType: shareLink.accessType,
+          allowPdfDownload: shareLink.allowPdfDownload,
+        },
+      });
+    } catch (error) {
+      console.error("Error accessing shared product:", error);
+      res.status(500).json({ message: "Falha ao aceder ao produto" });
+    }
+  });
+
+  // GET /api/share/:token/pdf - Download PDF via share token (PUBLIC)
+  app.get("/api/share/:token/pdf", async (req, res) => {
+    try {
+      const shareLink = await storage.getShareLinkByToken(req.params.token);
+      
+      if (!shareLink) {
+        return res.status(404).json({ message: "Link inválido ou expirado" });
+      }
+
+      if (!shareLink.isActive) {
+        return res.status(403).json({ message: "Este link foi desativado" });
+      }
+
+      if (!shareLink.allowPdfDownload) {
+        return res.status(403).json({ message: "Download de PDF não permitido para este link" });
+      }
+
+      // Check expiration
+      if (shareLink.expiresAt && new Date(shareLink.expiresAt) < new Date()) {
+        return res.status(403).json({ message: "Este link expirou" });
+      }
+
+      const product = await storage.getProduct(shareLink.productId);
+      if (!product) {
+        return res.status(404).json({ message: "Produto não encontrado" });
+      }
+
+      // Import the PDF template dynamically
+      const { TechnicalDatasheetPDF } = await import('./pdf-template');
+      
+      // Create the PDF document
+      const pdfDocument = React.createElement(TechnicalDatasheetPDF, { product });
+      
+      // Render PDF to buffer
+      const pdfBuffer = await renderToBuffer(pdfDocument as React.ReactElement);
+
+      // Set response headers
+      const filename = `${product.productCode}-Datasheet.pdf`;
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Error generating shared PDF:", error);
+      res.status(500).json({ message: "Falha ao gerar PDF" });
     }
   });
 

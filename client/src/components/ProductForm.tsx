@@ -9,10 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, X, Plus, Trash2, FileText, History, Clock } from "lucide-react";
+import { Save, X, Plus, Trash2, FileText, History, Clock, Link2 } from "lucide-react";
 import { InsertProduct, insertProductSchema, Product, ProductVersion } from "@shared/schema";
 import ImageUpload from "./ImageUpload";
 import { SearchableSelect } from "./SearchableSelect";
+import { ShareLinksManager } from "./ShareLinksManager";
 import { queryClient } from "@/lib/queryClient";
 
 interface ProductFormProps {
@@ -583,7 +584,7 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
         <CardContent className="p-6">
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <Tabs defaultValue="basic" className="w-full">
-              <TabsList className={`grid w-full ${product ? 'grid-cols-5' : 'grid-cols-4'} h-11 bg-muted/50 p-1`}>
+              <TabsList className={`grid w-full ${product ? 'grid-cols-6' : 'grid-cols-4'} h-11 bg-muted/50 p-1`}>
                 <TabsTrigger value="basic" className="font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">Informação Básica</TabsTrigger>
                 <TabsTrigger value="technical" className="font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">Detalhes Técnicos</TabsTrigger>
                 <TabsTrigger value="specs" className="font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">Especificações</TabsTrigger>
@@ -592,6 +593,12 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
                   <TabsTrigger value="versions" className="font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
                     <History className="w-4 h-4 mr-1" />
                     Versões
+                  </TabsTrigger>
+                )}
+                {product && (
+                  <TabsTrigger value="share" className="font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
+                    <Link2 className="w-4 h-4 mr-1" />
+                    Partilhar
                   </TabsTrigger>
                 )}
               </TabsList>
@@ -1535,6 +1542,13 @@ export default function ProductForm({ product, onSave, onCancel, onGeneratePDF, 
                       </div>
                     )}
                   </div>
+                </TabsContent>
+              )}
+
+              {/* Share Links Tab - Only for existing products */}
+              {product && (
+                <TabsContent value="share" className="space-y-6 mt-6">
+                  <ShareLinksManager productId={product.id} productCode={product.productCode} />
                 </TabsContent>
               )}
             </Tabs>
