@@ -266,7 +266,7 @@ export default function SharedProduct() {
             </CardContent>
           </Card>
 
-          {(product.productImage || product.technicalDrawing) && (
+          {(product.productImage || product.technicalDrawing || product.palletizationImage) && (
             <Card className="md:col-span-2">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
@@ -275,10 +275,10 @@ export default function SharedProduct() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="grid md:grid-cols-3 gap-6">
                   {product.productImage && (
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground mb-2">Imagem do Produto</p>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Imagem Principal (Frente)</p>
                       <img 
                         src={product.productImage} 
                         alt="Produto" 
@@ -288,10 +288,20 @@ export default function SharedProduct() {
                   )}
                   {product.technicalDrawing && (
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground mb-2">Desenho Técnico</p>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Desenho Técnico 2D (Verso)</p>
                       <img 
                         src={product.technicalDrawing} 
                         alt="Desenho Técnico" 
+                        className="max-w-full rounded-lg border shadow-sm"
+                      />
+                    </div>
+                  )}
+                  {product.palletizationImage && (
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Paletização / Acondicionamento</p>
+                      <img 
+                        src={product.palletizationImage} 
+                        alt="Paletização" 
                         className="max-w-full rounded-lg border shadow-sm"
                       />
                     </div>
