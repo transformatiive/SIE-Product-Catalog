@@ -202,6 +202,7 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
 
   const [productImage, setProductImage] = useState<string | null>(product?.productImage || initialData?.productImage || null);
   const [technicalDrawing, setTechnicalDrawing] = useState<string | null>(product?.technicalDrawing || initialData?.technicalDrawing || null);
+  const [palletizationImage, setPalletizationImage] = useState<string | null>(product?.palletizationImage || initialData?.palletizationImage || null);
   
   // Track if user has manually edited the productCode field
   const [productCodeManuallyEdited, setProductCodeManuallyEdited] = useState(false);
@@ -259,6 +260,7 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
       specialFeatures: sourceData?.specialFeatures || '',
       productImage: sourceData?.productImage || '',
       technicalDrawing: sourceData?.technicalDrawing || '',
+      palletizationImage: sourceData?.palletizationImage || '',
       notes: sourceData?.notes || '',
       isActive: product?.isActive ?? true,
     },
@@ -535,6 +537,7 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
       packaging: Object.keys(cleanPackagingObject).length > 0 ? JSON.stringify(cleanPackagingObject) : '',
       productImage: productImage || '',
       technicalDrawing: technicalDrawing || '',
+      palletizationImage: palletizationImage || '',
       designation: data.designation || '',
       barcode: data.barcode || '',
       selectedCertificationTypeId: selectedCertType?.id || null,
@@ -1474,24 +1477,32 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                 <div className="space-y-4">
                   <div className="border-b pb-3">
                     <h3 className="text-lg font-semibold text-foreground">Imagens do Produto</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Imagem principal e desenho técnico</p>
+                    <p className="text-sm text-muted-foreground mt-1">Imagem principal, desenho técnico e paletização</p>
                   </div>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <ImageUpload
-                      label="Imagem do Produto"
-                      description="Carregue uma imagem do produto (JPEG, PNG, GIF, WebP - máx. 10MB)"
+                      label="Imagem Principal (Frente)"
+                      description="Imagem do produto vista frontal (JPEG, PNG, GIF, WebP - máx. 10MB)"
                       value={productImage ?? undefined}
                       onChange={setProductImage}
                       disabled={isLoading}
                       data-testid="upload-product-image"
                     />
                     <ImageUpload
-                      label="Desenho Técnico / Blueprint 3D"
-                      description="Carregue o desenho técnico ou blueprint 3D do produto (JPEG, PNG, GIF, WebP - máx. 10MB)"
+                      label="Desenho Técnico 2D (Verso)"
+                      description="Desenho técnico ou blueprint 2D do produto (JPEG, PNG, GIF, WebP - máx. 10MB)"
                       value={technicalDrawing ?? undefined}
                       onChange={setTechnicalDrawing}
                       disabled={isLoading}
                       data-testid="upload-technical-drawing"
+                    />
+                    <ImageUpload
+                      label="Paletização (Opcional)"
+                      description="Imagem de paletização / acondicionamento (JPEG, PNG, GIF, WebP - máx. 10MB)"
+                      value={palletizationImage ?? undefined}
+                      onChange={setPalletizationImage}
+                      disabled={isLoading}
+                      data-testid="upload-palletization-image"
                     />
                   </div>
                 </div>
