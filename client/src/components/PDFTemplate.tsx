@@ -1,212 +1,189 @@
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 import { Product } from '@shared/schema';
 
-// SIE Logo as base64 data URL
-const SIE_LOGO_BASE64 = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDYuNjEgMTQxLjczIj48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6I2I0MjAyNTt9LmNscy0ye2ZpbGw6I2ZmZjt9PC9zdHlsZT48L2RlZnM+PHRpdGxlPnNpZV9jb3I8L3RpdGxlPjxnIGlkPSJMYXllcl8yIiBkYXRhLW5hbWU9IkxheWVyIDIiPjxnIGlkPSJMYXllcl8xLTIiIGRhdGEtbmFtZT0iTGF5ZXIgMSI+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMjI1LjQ0LDcuMTdIMTQzYTIxLjA3LDIxLjA3LDAsMCwwLTE1LjEzLDYuMzlIMTE3LjUxQTIwLjIyLDIwLjIyLDAsMCwwLDk4LjcxLDBIMjAuMThDOSwwLDAsOS41LDAsMjEuMjJ2ODIuNTdDMCwxMTUuNTEsOSwxMjUsMjAuMTgsMTI1SDQyLjI2YTIxLjMsMjEuMywwLDAsMCwyMC41OCwxNi43Mmg4Mi4zOWEyMSwyMSwwLDAsMCwxNy41My05LjU1aDYyLjY4QTIxLjE5LDIxLjE5LDAsMCwwLDI0Ni42MSwxMTFWMjguMzlBMjEuMTksMjEuMTksMCwwLDAsMjI1LjQ0LDcuMTdaIi8+PHBhdGggY2xhc3M9ImNscy0yIiBkPSJNMTEyLjQ4LDQ3LjMxdi0uNjJjMC01LjA2LTEuMTktOS4xLTMuNTUtMTJhMTkuMTgsMTkuMTgsMCwwLDAtOS4yLTYuMTcsNDguNjYsNDguNjYsMCwwLDAtMTMuMDYtMi4yN2MtNC44Ni0uMjQtMTAuMTItLjM3LTE1LjYyLS4zNy02Ljc0LDAtMTMuMTkuMTYtMTkuMTcuNDlBNDguNzMsNDguNzMsMCwwLDAsMzUuNywyOS43NmEyNC4yNiwyNC4yNiwwLDAsMC0xMS4yMSw5LjMxYy0yLjcsNC4xOC00LjA3LDEwLjE1LTQuMDcsMTcuNzMsMCwxMS4wNyw0LjYyLDE3LjQ4LDEzLjcyLDE5YTE0My4zNiwxNDMuMzYsMCwwLDAsMjcuNjQsMS44LDE0MC40NCwxNDAuNDQsMCwwLDEsMjcsMS43NEM5Ni4zMiw4MC42NiwxMDAsODUuODIsMTAwLDk1LjE2YzAsMy40OS0uNjgsNC44OS0xLjI2LDVsLS4xNCwwYTQyLjczLDQyLjczLDAsMCwxLTEyLjA1LDJjLTQuODEuMi0xMCwuMy0xNS40OC4zYTE0MS42NiwxNDEuNjYsMCwwLDEtMjcuNzQtMi4zNGMtNy0xLjQyLTEwLjQtNi4zOS0xMC40LTE1LjE4VjgxTDIwLjQyLDk0LjU0di42MmMwLDEwLjMyLDQuMzUsMTYuNDUsMTIuOTQsMTguMjRhMTQxLjgsMTQxLjgsMCwwLDAsMjguMzgsMi40N2M1LjUxLDAsMTAuNzctLjEyLDE1LjYyLS4zN2E1Mi4zNiw1Mi4zNiwwLDAsMCwxMy0yLjE1LDM2Ljc0LDM2Ljc0LDAsMCwwLDE2LTkuODJjNC00LjQzLDYuMDgtMTAuNjUsNi4wOC0xOC40OSwwLTExLTQuNjUtMTcuMzYtMTMuODQtMTguOTJBMTQ0LjUzLDE0NC41MywwLDAsMCw3MSw2NC4zNCwxNDAuMzYsMTQwLjM2LDAsMCwxLDQ0LDYyLjZjLTcuNDktMS4yOC0xMS4xMy02LjQ4LTExLjEzLTE1LjkxLDAtMi4yOC43OC01LjQsNy41NC02LjI4YTE3MC4xMiwxNzAuMTIsMCwwLDEsMjEuMjktMS4xNGM1LjUyLDAsMTAuNzMuMSwxNS40OC4zYTQyLjc4LDQyLjc4LDAsMCwxLDEyLjEsMi4wNiwxNi4wNSwxNi4wNSwwLDAsMSw3LjgzLDUuMTRDOTksNDkuMTEsMTAwLDUyLjQ5LDEwMCw1Ni44djQuMDhaIi8+PHBvbHlnb24gY2xhc3M9ImNscy0yIiBwb2ludHM9IjEyNS4zMiAzNy4wMiAxMjUuMzIgMTE3Ljk0IDEzOC42MiAxMDQuOTcgMTM4LjYyIDIzLjczIDEyNS4zMiAzNy4wMiIvPjxwb2x5Z29uIGNsYXNzPSJjbHMtMiIgcG9pbnRzPSIxNjYuNSA3Ny42NSAxOTkuNzkgNzcuOTcgMjEyLjgxIDY0Ljc4IDE2Ni41IDY0LjM2IDE2Ni41IDM5LjI5IDIxNC4zMiAzOS43NyAyMzYuNTEgMjUuODYgMTY0LjI1IDI1Ljg2IDE1My4yMSAzNy4wMyAxNTMuMjEgMTE1Ljg4IDIwNy4xOCAxMTUuODggMjIwLjQ3IDEwMi41OCAxNjYuNSAxMDIuNTggMTY2LjUgNzcuNjUiLz48L2c+PC9nPjwvc3ZnPg==';
-
-// SIE Brand Colors
 const COLORS = {
   primary: '#E31E24',
   text: '#333333',
   textLight: '#666666',
-  textMuted: '#999999',
   background: '#FFFFFF',
-  backgroundLight: '#F5F5F5',
-  border: '#DDDDDD',
-  success: '#2E7D32',
+  backgroundLight: '#F8F8F8',
+  border: '#E0E0E0',
 };
 
 const styles = StyleSheet.create({
   page: {
     backgroundColor: COLORS.background,
-    paddingTop: 30,
-    paddingBottom: 50,
-    paddingHorizontal: 35,
+    padding: 40,
     fontSize: 9,
     fontFamily: 'Helvetica',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 25,
+    alignItems: 'center',
+    marginBottom: 20,
     paddingBottom: 15,
-    borderBottomWidth: 3,
+    borderBottomWidth: 2,
     borderBottomColor: COLORS.primary,
   },
-  headerLeft: {
-    flex: 1,
-  },
-  headerRight: {
+  logoBox: {
     width: 80,
-    alignItems: 'flex-end',
-  },
-  logo: {
-    width: 65,
-    height: 38,
-  },
-  docType: {
-    fontSize: 7,
-    color: COLORS.textMuted,
-    marginTop: 5,
-    textTransform: 'uppercase',
-  },
-  productTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: 4,
-  },
-  productSubtitle: {
-    fontSize: 11,
-    color: COLORS.text,
-    marginBottom: 3,
-  },
-  productRef: {
-    fontSize: 9,
-    color: COLORS.textLight,
-    fontFamily: 'Courier',
-  },
-  capacityBox: {
-    backgroundColor: COLORS.backgroundLight,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    borderRadius: 3,
-    padding: 10,
-    marginBottom: 20,
+    height: 45,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  capacityLabel: {
-    fontSize: 8,
+  logoText: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  headerCenter: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  title: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: COLORS.text,
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 10,
     color: COLORS.textLight,
   },
-  capacityValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORS.primary,
+  headerRight: {
+    alignItems: 'flex-end',
   },
-  twoColumn: {
-    flexDirection: 'row',
-    gap: 15,
+  docLabel: {
+    fontSize: 8,
+    color: COLORS.textLight,
+    textTransform: 'uppercase',
   },
-  column: {
-    flex: 1,
-  },
-  section: {
-    marginBottom: 12,
-  },
-  sectionTitle: {
+  refCode: {
     fontSize: 10,
     fontWeight: 'bold',
     color: COLORS.primary,
-    marginBottom: 6,
-    paddingBottom: 3,
+    marginTop: 2,
+  },
+  mainContent: {
+    flexDirection: 'row',
+    marginTop: 10,
+  },
+  leftColumn: {
+    width: '48%',
+    marginRight: '4%',
+  },
+  rightColumn: {
+    width: '48%',
+  },
+  section: {
+    marginBottom: 15,
+  },
+  sectionHeader: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    marginBottom: 8,
+  },
+  sectionTitle: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
+  },
+  dataRow: {
+    flexDirection: 'row',
+    paddingVertical: 4,
+    paddingHorizontal: 6,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
-  row: {
+  dataRowAlt: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 3,
-    paddingHorizontal: 5,
-  },
-  rowAlt: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 3,
-    paddingHorizontal: 5,
+    paddingVertical: 4,
+    paddingHorizontal: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
     backgroundColor: COLORS.backgroundLight,
   },
-  label: {
+  dataLabel: {
+    width: '50%',
     fontSize: 8,
     color: COLORS.text,
-    flex: 1,
   },
-  value: {
+  dataValue: {
+    width: '50%',
     fontSize: 8,
     color: COLORS.textLight,
-    flex: 1,
     textAlign: 'right',
   },
-  tagContainer: {
+  tagRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
   },
   tag: {
     backgroundColor: COLORS.backgroundLight,
     borderWidth: 1,
     borderColor: COLORS.border,
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-    borderRadius: 2,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    marginRight: 4,
+    marginBottom: 4,
     fontSize: 7,
-    color: COLORS.text,
   },
   certTag: {
-    backgroundColor: '#E8F5E8',
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-    borderRadius: 2,
+    backgroundColor: '#E8F5E9',
+    borderWidth: 1,
+    borderColor: '#4CAF50',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    marginRight: 4,
+    marginBottom: 4,
     fontSize: 7,
-    color: COLORS.success,
-    fontWeight: 'bold',
-    marginBottom: 2,
+    color: '#2E7D32',
   },
   imageSection: {
     marginTop: 15,
   },
-  imageGrid: {
+  imageRow: {
     flexDirection: 'row',
-    gap: 10,
+    justifyContent: 'space-between',
   },
   imageBox: {
-    flex: 1,
+    width: '30%',
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 3,
     padding: 8,
-    backgroundColor: COLORS.backgroundLight,
     alignItems: 'center',
-    minHeight: 100,
   },
-  imageTitle: {
+  imageLabel: {
     fontSize: 7,
-    color: COLORS.textMuted,
+    color: COLORS.textLight,
     marginBottom: 5,
+    textTransform: 'uppercase',
   },
   productImage: {
-    maxWidth: '100%',
-    maxHeight: 90,
+    maxWidth: 80,
+    maxHeight: 60,
     objectFit: 'contain',
-  },
-  recycleBox: {
-    backgroundColor: '#E8F5E8',
-    padding: 8,
-    borderRadius: 3,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  recycleText: {
-    fontSize: 8,
-    fontWeight: 'bold',
-    color: COLORS.success,
   },
   footer: {
     position: 'absolute',
-    bottom: 20,
-    left: 35,
-    right: 35,
+    bottom: 25,
+    left: 40,
+    right: 40,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 8,
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
+    paddingTop: 8,
   },
   footerText: {
     fontSize: 7,
-    color: COLORS.textMuted,
+    color: COLORS.textLight,
   },
   footerBrand: {
     fontSize: 7,
@@ -223,7 +200,8 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
   const parseJSON = (jsonString: string | null, fallback: any = []) => {
     if (!jsonString) return fallback;
     try {
-      return JSON.parse(jsonString);
+      const parsed = JSON.parse(jsonString);
+      return parsed;
     } catch {
       return fallback;
     }
@@ -234,205 +212,265 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
   const markings = parseJSON(product.markings, []);
   const packaging = parseJSON(product.packaging, {});
 
-  const hasValue = (val: any) => val !== null && val !== undefined && val !== '' && val !== 'N/A';
+  const hasValue = (val: any) => {
+    if (val === null || val === undefined || val === '' || val === 'N/A') return false;
+    if (typeof val === 'string' && val.trim() === '') return false;
+    return true;
+  };
+
+  const cleanValue = (val: string | null | undefined): string => {
+    if (!val) return '';
+    const cleaned = val.replace(/^[=\-<>]+/, '').trim();
+    return cleaned;
+  };
+
+  const cleanCertifications = (certs: any[]): string[] => {
+    if (!Array.isArray(certs)) return [];
+    return certs
+      .filter(c => c && typeof c === 'string')
+      .map(c => cleanValue(c))
+      .filter(c => c.length > 0 && c.length < 50);
+  };
 
   const formatDate = () => new Date().toLocaleDateString('pt-PT');
 
-  // Build specs arrays - only include filled fields
-  const mainSpecs: Array<{ label: string; value: string }> = [];
-  if (hasValue(product.model)) mainSpecs.push({ label: 'Modelo', value: product.model });
-  if (hasValue(product.family)) mainSpecs.push({ label: 'Familia', value: product.family });
-  if (hasValue(product.type)) mainSpecs.push({ label: 'Tipo', value: product.type });
-  if (hasValue(product.product)) mainSpecs.push({ label: 'Produto', value: product.product });
-  if (hasValue(product.rawMaterial)) mainSpecs.push({ label: 'Materia-Prima', value: product.rawMaterial });
-  if (hasValue(product.totalCapacity)) mainSpecs.push({ label: 'Capacidade Total', value: product.totalCapacity || '' });
-
-  const physSpecs: Array<{ label: string; value: string }> = [];
-  if (hasValue(product.weight)) physSpecs.push({ label: 'Peso (+/-5%)', value: product.weight });
-  if (hasValue(product.weightWithAccessories)) physSpecs.push({ label: 'Peso c/ Acessorios', value: product.weightWithAccessories || '' });
-  if (hasValue(product.closingSystem)) physSpecs.push({ label: 'Sistema de Fecho', value: product.closingSystem || '' });
-  if (hasValue(product.sealingType)) physSpecs.push({ label: 'Tipo de Vedacao', value: product.sealingType || '' });
-  if (hasValue(product.capType)) physSpecs.push({ label: 'Tipo de Tampa', value: product.capType || '' });
-  if (hasValue(product.capDimensions)) physSpecs.push({ label: 'Medida Tampa', value: product.capDimensions || '' });
-  if (hasValue(product.handlingSystem)) physSpecs.push({ label: 'Manuseamento', value: product.handlingSystem || '' });
-
-  const packSpecs: Array<{ label: string; value: string }> = [];
-  if (hasValue(product.palletDimensions)) packSpecs.push({ label: 'Dim. Palete', value: product.palletDimensions || '' });
-  if (hasValue(product.productOnPalletDimensions)) packSpecs.push({ label: 'Dim. Prod. Palete', value: product.productOnPalletDimensions || '' });
-  if (hasValue(product.totalUnits)) packSpecs.push({ label: 'Total Unidades', value: product.totalUnits || '' });
-  if (hasValue(product.arrangementScheme)) packSpecs.push({ label: 'Esquema', value: product.arrangementScheme || '' });
-  Object.entries(packaging).forEach(([key, value]) => {
-    if (hasValue(value)) packSpecs.push({ label: key, value: String(value) });
-  });
-
-  const boolSpecs: Array<{ label: string; value: string }> = [];
-  if (product.foodContact !== undefined) boolSpecs.push({ label: 'Contacto Alimentar', value: product.foodContact ? 'Sim' : 'Nao' });
-  if (product.datador !== undefined) boolSpecs.push({ label: 'Datador', value: product.datador ? 'Sim' : 'Nao' });
-  if (product.simboloSie !== undefined) boolSpecs.push({ label: 'Simbolo SIE', value: product.simboloSie ? 'Sim' : 'Nao' });
+  const cleanedCerts = cleanCertifications(certifications);
+  const cleanedMarkings = cleanCertifications(markings);
 
   const hasImages = product.productImage || product.technicalDrawing || product.palletizationImage;
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Header */}
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            {hasValue(product.designation) && (
-              <Text style={styles.productTitle}>{product.designation}</Text>
-            )}
-            {!hasValue(product.designation) && hasValue(product.product) && (
-              <Text style={styles.productTitle}>{product.product}</Text>
-            )}
-            {hasValue(product.model) && (
-              <Text style={styles.productSubtitle}>{product.model}</Text>
-            )}
-            {hasValue(product.productCode) && (
-              <Text style={styles.productRef}>REF: {product.productCode}</Text>
-            )}
-            {hasValue(product.barcode) && (
-              <Text style={styles.productRef}>EAN: {product.barcode}</Text>
-            )}
+          <View style={styles.logoBox}>
+            <Text style={styles.logoText}>SIE</Text>
+          </View>
+          <View style={styles.headerCenter}>
+            <Text style={styles.title}>FICHA TECNICA</Text>
+            <Text style={styles.subtitle}>
+              {hasValue(product.designation) ? product.designation : product.product || 'Produto'}
+            </Text>
           </View>
           <View style={styles.headerRight}>
-            <Image src={SIE_LOGO_BASE64} style={styles.logo} />
-            <Text style={styles.docType}>Ficha Tecnica</Text>
+            <Text style={styles.docLabel}>Referencia</Text>
+            <Text style={styles.refCode}>{product.productCode || '-'}</Text>
+            {hasValue(product.barcode) && (
+              <>
+                <Text style={[styles.docLabel, { marginTop: 4 }]}>EAN</Text>
+                <Text style={styles.refCode}>{product.barcode}</Text>
+              </>
+            )}
           </View>
         </View>
 
-        {/* Capacity Highlight */}
-        {hasValue(product.nominalCapacity) && (
-          <View style={styles.capacityBox}>
-            <Text style={styles.capacityLabel}>CAPACIDADE NOMINAL</Text>
-            <Text style={styles.capacityValue}>{product.nominalCapacity}</Text>
+        <View style={styles.mainContent}>
+          <View style={styles.leftColumn}>
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Identificacao</Text>
+              </View>
+              {hasValue(product.model) && (
+                <View style={styles.dataRow}>
+                  <Text style={styles.dataLabel}>Modelo</Text>
+                  <Text style={styles.dataValue}>{product.model}</Text>
+                </View>
+              )}
+              {hasValue(product.family) && (
+                <View style={styles.dataRowAlt}>
+                  <Text style={styles.dataLabel}>Familia</Text>
+                  <Text style={styles.dataValue}>{product.family}</Text>
+                </View>
+              )}
+              {hasValue(product.type) && (
+                <View style={styles.dataRow}>
+                  <Text style={styles.dataLabel}>Tipo</Text>
+                  <Text style={styles.dataValue}>{product.type}</Text>
+                </View>
+              )}
+              {hasValue(product.product) && (
+                <View style={styles.dataRowAlt}>
+                  <Text style={styles.dataLabel}>Produto</Text>
+                  <Text style={styles.dataValue}>{product.product}</Text>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Especificacoes</Text>
+              </View>
+              {hasValue(product.nominalCapacity) && (
+                <View style={styles.dataRow}>
+                  <Text style={styles.dataLabel}>Capacidade Nominal</Text>
+                  <Text style={styles.dataValue}>{product.nominalCapacity}</Text>
+                </View>
+              )}
+              {hasValue(product.totalCapacity) && (
+                <View style={styles.dataRowAlt}>
+                  <Text style={styles.dataLabel}>Capacidade Total</Text>
+                  <Text style={styles.dataValue}>{product.totalCapacity}</Text>
+                </View>
+              )}
+              {hasValue(product.weight) && (
+                <View style={styles.dataRow}>
+                  <Text style={styles.dataLabel}>Peso (+/-5%)</Text>
+                  <Text style={styles.dataValue}>{product.weight}</Text>
+                </View>
+              )}
+              {hasValue(product.rawMaterial) && (
+                <View style={styles.dataRowAlt}>
+                  <Text style={styles.dataLabel}>Materia-Prima</Text>
+                  <Text style={styles.dataValue}>{product.rawMaterial}</Text>
+                </View>
+              )}
+              {hasValue(product.colors) && (
+                <View style={styles.dataRow}>
+                  <Text style={styles.dataLabel}>Cores</Text>
+                  <Text style={styles.dataValue}>{product.colors}</Text>
+                </View>
+              )}
+              {product.foodContact !== undefined && (
+                <View style={styles.dataRowAlt}>
+                  <Text style={styles.dataLabel}>Contacto Alimentar</Text>
+                  <Text style={styles.dataValue}>{product.foodContact ? 'Apto' : 'Nao Apto'}</Text>
+                </View>
+              )}
+            </View>
+
+            {Object.keys(dimensions).length > 0 && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Dimensoes (mm)</Text>
+                </View>
+                {Object.entries(dimensions).map(([key, value], i) => (
+                  <View key={key} style={i % 2 === 0 ? styles.dataRow : styles.dataRowAlt}>
+                    <Text style={styles.dataLabel}>{key}</Text>
+                    <Text style={styles.dataValue}>{String(value)}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
-        )}
 
-        {/* Two Column Layout */}
-        <View style={styles.twoColumn}>
-          {/* Left Column */}
-          <View style={styles.column}>
-            {mainSpecs.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>ESPECIFICACOES TECNICAS</Text>
-                {mainSpecs.map((spec, i) => (
-                  <View key={i} style={i % 2 === 0 ? styles.row : styles.rowAlt}>
-                    <Text style={styles.label}>{spec.label}</Text>
-                    <Text style={styles.value}>{spec.value}</Text>
-                  </View>
-                ))}
+          <View style={styles.rightColumn}>
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Detalhes Tecnicos</Text>
               </View>
-            )}
+              {hasValue(product.closingSystem) && (
+                <View style={styles.dataRow}>
+                  <Text style={styles.dataLabel}>Sistema de Fecho</Text>
+                  <Text style={styles.dataValue}>{product.closingSystem}</Text>
+                </View>
+              )}
+              {hasValue(product.sealingType) && (
+                <View style={styles.dataRowAlt}>
+                  <Text style={styles.dataLabel}>Tipo de Vedacao</Text>
+                  <Text style={styles.dataValue}>{product.sealingType}</Text>
+                </View>
+              )}
+              {hasValue(product.capType) && (
+                <View style={styles.dataRow}>
+                  <Text style={styles.dataLabel}>Tipo de Tampa</Text>
+                  <Text style={styles.dataValue}>{product.capType}</Text>
+                </View>
+              )}
+              {hasValue(product.capDimensions) && (
+                <View style={styles.dataRowAlt}>
+                  <Text style={styles.dataLabel}>Medida Tampa</Text>
+                  <Text style={styles.dataValue}>{product.capDimensions}</Text>
+                </View>
+              )}
+              {hasValue(product.handlingSystem) && (
+                <View style={styles.dataRow}>
+                  <Text style={styles.dataLabel}>Manuseamento</Text>
+                  <Text style={styles.dataValue}>{product.handlingSystem}</Text>
+                </View>
+              )}
+            </View>
 
-            {physSpecs.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>PROPRIEDADES FISICAS</Text>
-                {physSpecs.map((spec, i) => (
-                  <View key={i} style={i % 2 === 0 ? styles.row : styles.rowAlt}>
-                    <Text style={styles.label}>{spec.label}</Text>
-                    <Text style={styles.value}>{spec.value}</Text>
-                  </View>
-                ))}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Embalagem</Text>
               </View>
-            )}
+              {hasValue(product.palletDimensions) && (
+                <View style={styles.dataRow}>
+                  <Text style={styles.dataLabel}>Dim. Palete</Text>
+                  <Text style={styles.dataValue}>{product.palletDimensions}</Text>
+                </View>
+              )}
+              {hasValue(product.totalUnits) && (
+                <View style={styles.dataRowAlt}>
+                  <Text style={styles.dataLabel}>Total Unidades</Text>
+                  <Text style={styles.dataValue}>{product.totalUnits}</Text>
+                </View>
+              )}
+              {hasValue(product.arrangementScheme) && (
+                <View style={styles.dataRow}>
+                  <Text style={styles.dataLabel}>Esquema</Text>
+                  <Text style={styles.dataValue}>{product.arrangementScheme}</Text>
+                </View>
+              )}
+              {Object.entries(packaging).slice(0, 4).map(([key, value], i) => (
+                hasValue(value) && (
+                  <View key={key} style={i % 2 === 0 ? styles.dataRowAlt : styles.dataRow}>
+                    <Text style={styles.dataLabel}>{key}</Text>
+                    <Text style={styles.dataValue}>{String(value)}</Text>
+                  </View>
+                )
+              ))}
+            </View>
 
-            {hasValue(product.colors) && (
+            {cleanedCerts.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>CORES DISPONIVEIS</Text>
-                <View style={styles.tagContainer}>
-                  {product.colors.split(',').map((color, i) => (
-                    <Text key={i} style={styles.tag}>{color.trim()}</Text>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Certificacoes</Text>
+                </View>
+                <View style={styles.tagRow}>
+                  {cleanedCerts.map((cert, i) => (
+                    <Text key={i} style={styles.certTag}>{cert}</Text>
                   ))}
                 </View>
               </View>
             )}
 
-            {boolSpecs.length > 0 && (
+            {cleanedMarkings.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>CARACTERISTICAS</Text>
-                {boolSpecs.map((spec, i) => (
-                  <View key={i} style={i % 2 === 0 ? styles.row : styles.rowAlt}>
-                    <Text style={styles.label}>{spec.label}</Text>
-                    <Text style={styles.value}>{spec.value}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-          </View>
-
-          {/* Right Column */}
-          <View style={styles.column}>
-            {Object.keys(dimensions).length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>DIMENSOES</Text>
-                {Object.entries(dimensions).map(([key, value], i) => (
-                  <View key={i} style={i % 2 === 0 ? styles.row : styles.rowAlt}>
-                    <Text style={styles.label}>{key}</Text>
-                    <Text style={styles.value}>{String(value)}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {packSpecs.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>EMBALAGEM E PALETIZACAO</Text>
-                {packSpecs.map((spec, i) => (
-                  <View key={i} style={i % 2 === 0 ? styles.row : styles.rowAlt}>
-                    <Text style={styles.label}>{spec.label}</Text>
-                    <Text style={styles.value}>{spec.value}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {certifications.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>CERTIFICACOES</Text>
-                {certifications.map((cert: string, i: number) => (
-                  <Text key={i} style={styles.certTag}>{cert}</Text>
-                ))}
-              </View>
-            )}
-
-            {markings.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>MARCACOES</Text>
-                <View style={styles.tagContainer}>
-                  {markings.map((mark: string, i: number) => (
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Marcacoes</Text>
+                </View>
+                <View style={styles.tagRow}>
+                  {cleanedMarkings.map((mark, i) => (
                     <Text key={i} style={styles.tag}>{mark}</Text>
                   ))}
                 </View>
               </View>
             )}
-
-            <View style={styles.recycleBox}>
-              <Text style={styles.recycleText}>100% RECICLAVEL</Text>
-              <Text style={{ fontSize: 6, color: COLORS.success }}>REUTILIZAVEL</Text>
-            </View>
           </View>
         </View>
 
-        {/* Product Images */}
         {hasImages && (
           <View style={styles.imageSection}>
-            <Text style={styles.sectionTitle}>IMAGENS DO PRODUTO</Text>
-            <View style={styles.imageGrid}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Imagens</Text>
+            </View>
+            <View style={styles.imageRow}>
               {product.productImage && (
                 <View style={styles.imageBox}>
-                  <Text style={styles.imageTitle}>FRENTE</Text>
+                  <Text style={styles.imageLabel}>Produto</Text>
                   <Image src={product.productImage} style={styles.productImage} />
                 </View>
               )}
               {product.technicalDrawing && (
                 <View style={styles.imageBox}>
-                  <Text style={styles.imageTitle}>DESENHO TECNICO</Text>
+                  <Text style={styles.imageLabel}>Desenho Tecnico</Text>
                   <Image src={product.technicalDrawing} style={styles.productImage} />
                 </View>
               )}
               {product.palletizationImage && (
                 <View style={styles.imageBox}>
-                  <Text style={styles.imageTitle}>PALETIZACAO</Text>
+                  <Text style={styles.imageLabel}>Paletizacao</Text>
                   <Image src={product.palletizationImage} style={styles.productImage} />
                 </View>
               )}
@@ -440,21 +478,10 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
           </View>
         )}
 
-        {/* Footer */}
         <View style={styles.footer} fixed>
-          <View>
-            <Text style={styles.footerText}>Gerado: {formatDate()}</Text>
-            {hasValue(product.currentVersionNumber) && (
-              <Text style={styles.footerText}>Versao: {product.currentVersionNumber}</Text>
-            )}
-          </View>
+          <Text style={styles.footerText}>Gerado: {formatDate()}</Text>
           <Text style={styles.footerBrand}>SIE - Sociedade Internacional de Embalagens</Text>
-          <View style={{ alignItems: 'flex-end' }}>
-            {hasValue(product.productCode) && (
-              <Text style={styles.footerText}>{product.productCode}</Text>
-            )}
-            <Text style={styles.footerText}>Pag. 1</Text>
-          </View>
+          <Text style={styles.footerText}>{product.productCode || ''}</Text>
         </View>
       </Page>
     </Document>
