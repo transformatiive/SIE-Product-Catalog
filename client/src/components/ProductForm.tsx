@@ -209,7 +209,8 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
   const [palletizationImage, setPalletizationImage] = useState<string | null>(product?.palletizationImage || initialData?.palletizationImage || null);
   
   // Track if user has manually edited the productCode field
-  const [productCodeManuallyEdited, setProductCodeManuallyEdited] = useState(false);
+  // When editing an existing product, preserve the existing code by default
+  const [productCodeManuallyEdited, setProductCodeManuallyEdited] = useState(!!product?.productCode);
 
   const form = useForm<InsertProduct>({
     resolver: zodResolver(insertProductSchema),
