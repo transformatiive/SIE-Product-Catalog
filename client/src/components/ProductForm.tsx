@@ -782,68 +782,149 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                   </div>
                 </div>
 
-                {/* 4. Product Dimensions Section (matches Excel: c/Ø, l, h) */}
+                {/* 4. Product Dimensions Section - Fixed Fields */}
                 <div className="space-y-4">
                   <div className="border-b pb-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-foreground">Dimensões do Produto</h3>
-                        <p className="text-sm text-muted-foreground mt-1">Medições físicas (c/Ø, l, h em mm)</p>
-                      </div>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={addDimension}
-                        data-testid="button-add-dimension"
-                        className="h-8"
-                      >
-                        <Plus className="w-4 h-4 mr-1" />
-                        Adicionar Dimensão
-                      </Button>
-                    </div>
+                    <h3 className="text-lg font-semibold text-foreground">Dimensões do Produto</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Medições físicas em milímetros (mm)</p>
                   </div>
-                  <div className="space-y-3">
-                    {dimensions.map((dimension, index) => (
-                      <div key={dimension.id} className="grid grid-cols-2 lg:grid-cols-5 gap-3 items-end p-3 border border-border rounded-md">
-                        <div className="space-y-1 lg:col-span-2">
-                          <SearchableSelect
-                            value={dimension.name}
-                            onChange={(val) => updateDimension(dimension.id, 'name', val)}
-                            options={dimensionTypeOptions}
-                            label="Dimensão"
-                            placeholder="Seleccionar dimensão..."
-                            apiEndpoint="/api/admin/dimensionTypes"
-                            isLoading={dimensionTypesLoading}
-                            onOptionAdded={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/dimensionTypes'] })}
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs font-medium text-muted-foreground">Valor</Label>
-                          <Input
-                            placeholder="ex.: 332"
-                            value={dimension.value}
-                            onChange={(e) => updateDimension(dimension.id, 'value', e.target.value)}
-                            data-testid={`input-dimension-value-${index}`}
-                            className="h-8"
-                          />
-                        </div>
-                        {dimensions.length > 1 && (
-                          <div className="lg:col-start-5">
-                            <Button 
-                              type="button" 
-                              variant="destructive" 
-                              size="sm"
-                              onClick={() => removeDimension(dimension.id)}
-                              data-testid={`button-remove-dimension-${index}`}
-                              className="h-8 w-8 p-0"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-foreground">Altura (h)</Label>
+                      <Input
+                        placeholder="mm"
+                        value={dimensions.find(d => d.name === 'Altura')?.value || ''}
+                        onChange={(e) => {
+                          const existing = dimensions.find(d => d.name === 'Altura');
+                          if (existing) {
+                            updateDimension(existing.id, 'value', e.target.value);
+                          } else {
+                            setDimensions(prev => [...prev, { id: `dim-altura-${Date.now()}`, name: 'Altura', value: e.target.value }]);
+                          }
+                        }}
+                        data-testid="input-dimension-altura"
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-foreground">Largura (l)</Label>
+                      <Input
+                        placeholder="mm"
+                        value={dimensions.find(d => d.name === 'Largura')?.value || ''}
+                        onChange={(e) => {
+                          const existing = dimensions.find(d => d.name === 'Largura');
+                          if (existing) {
+                            updateDimension(existing.id, 'value', e.target.value);
+                          } else {
+                            setDimensions(prev => [...prev, { id: `dim-largura-${Date.now()}`, name: 'Largura', value: e.target.value }]);
+                          }
+                        }}
+                        data-testid="input-dimension-largura"
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-foreground">Comprimento (c)</Label>
+                      <Input
+                        placeholder="mm"
+                        value={dimensions.find(d => d.name === 'Comprimento')?.value || ''}
+                        onChange={(e) => {
+                          const existing = dimensions.find(d => d.name === 'Comprimento');
+                          if (existing) {
+                            updateDimension(existing.id, 'value', e.target.value);
+                          } else {
+                            setDimensions(prev => [...prev, { id: `dim-comprimento-${Date.now()}`, name: 'Comprimento', value: e.target.value }]);
+                          }
+                        }}
+                        data-testid="input-dimension-comprimento"
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-foreground">Diâmetro (Ø)</Label>
+                      <Input
+                        placeholder="mm"
+                        value={dimensions.find(d => d.name === 'Diâmetro')?.value || ''}
+                        onChange={(e) => {
+                          const existing = dimensions.find(d => d.name === 'Diâmetro');
+                          if (existing) {
+                            updateDimension(existing.id, 'value', e.target.value);
+                          } else {
+                            setDimensions(prev => [...prev, { id: `dim-diametro-${Date.now()}`, name: 'Diâmetro', value: e.target.value }]);
+                          }
+                        }}
+                        data-testid="input-dimension-diametro"
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-foreground">Diâmetro Superior (Ø sup)</Label>
+                      <Input
+                        placeholder="mm"
+                        value={dimensions.find(d => d.name === 'Diâmetro Superior')?.value || ''}
+                        onChange={(e) => {
+                          const existing = dimensions.find(d => d.name === 'Diâmetro Superior');
+                          if (existing) {
+                            updateDimension(existing.id, 'value', e.target.value);
+                          } else {
+                            setDimensions(prev => [...prev, { id: `dim-diametro-sup-${Date.now()}`, name: 'Diâmetro Superior', value: e.target.value }]);
+                          }
+                        }}
+                        data-testid="input-dimension-diametro-sup"
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-foreground">Diâmetro Inferior (Ø inf)</Label>
+                      <Input
+                        placeholder="mm"
+                        value={dimensions.find(d => d.name === 'Diâmetro Inferior')?.value || ''}
+                        onChange={(e) => {
+                          const existing = dimensions.find(d => d.name === 'Diâmetro Inferior');
+                          if (existing) {
+                            updateDimension(existing.id, 'value', e.target.value);
+                          } else {
+                            setDimensions(prev => [...prev, { id: `dim-diametro-inf-${Date.now()}`, name: 'Diâmetro Inferior', value: e.target.value }]);
+                          }
+                        }}
+                        data-testid="input-dimension-diametro-inf"
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-foreground">Profundidade (p)</Label>
+                      <Input
+                        placeholder="mm"
+                        value={dimensions.find(d => d.name === 'Profundidade')?.value || ''}
+                        onChange={(e) => {
+                          const existing = dimensions.find(d => d.name === 'Profundidade');
+                          if (existing) {
+                            updateDimension(existing.id, 'value', e.target.value);
+                          } else {
+                            setDimensions(prev => [...prev, { id: `dim-profundidade-${Date.now()}`, name: 'Profundidade', value: e.target.value }]);
+                          }
+                        }}
+                        data-testid="input-dimension-profundidade"
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-foreground">Espessura (e)</Label>
+                      <Input
+                        placeholder="mm"
+                        value={dimensions.find(d => d.name === 'Espessura')?.value || ''}
+                        onChange={(e) => {
+                          const existing = dimensions.find(d => d.name === 'Espessura');
+                          if (existing) {
+                            updateDimension(existing.id, 'value', e.target.value);
+                          } else {
+                            setDimensions(prev => [...prev, { id: `dim-espessura-${Date.now()}`, name: 'Espessura', value: e.target.value }]);
+                          }
+                        }}
+                        data-testid="input-dimension-espessura"
+                        className="h-9"
+                      />
+                    </div>
                   </div>
                 </div>
 
