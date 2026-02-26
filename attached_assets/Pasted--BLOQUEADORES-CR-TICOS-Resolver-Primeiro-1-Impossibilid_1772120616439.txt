@@ -1,0 +1,159 @@
+🔴 BLOQUEADORES CRÍTICOS (Resolver Primeiro)
+
+1. Impossibilidade de Criar Novas Referências
+
+Problema: Sistema indica que código já existe, impedindo criação de novos produtos Ação: Investigar e corrigir validação de códigos únicos Prioridade: URGENTE - bloqueia testes
+
+2. Gestão de Versões
+
+Problemas:
+
+Alterações mínimas (ex: correção de acento) geram versões novas
+
+Não é possível anular versões irrelevantes
+
+Não consegue selecionar versões ao exportar PDF ou enviar link
+
+Ação Necessária:
+
+Implementar funcionalidade de anulação de versões
+
+Adicionar seletor de versões na exportação/envio
+
+Considerar critérios para quando criar versão nova (mudanças significativas vs correções)
+
+🟡 CAMPOS EM FALTA / NOVOS
+
+3. Campo "Forma" (CONFIRMADO EM FALTA)
+
+Exemplos por tipo:
+
+Frascos: redondo, quadrado
+
+Barricas: boca larga, cinta, cónica, duas tubladuras
+
+Ação: Adicionar campo "Forma" (ou nome alternativo como "Subtipo")
+
+4. Campo "Acessórios"
+
+Localização: Área de especificações Tipo: Campo de texto livre Ação: Adicionar campo texto nas especificações
+
+5. Campo "Gravação de Cliente"
+
+Comportamento: Quando opção selecionada, mostrar campo adicional para detalhes Ação: Implementar campo condicional
+
+6. Informação de Aprovação
+
+Atual: Apenas "aprovado", data e código Necessário: Adicionar quem aprova (ex: "Departamento Qualidade SIE") Ação: Adicionar campo de departamento/responsável no template
+
+🟠 CAMPOS A CLARIFICAR / DUPLICADOS
+
+7. "Produto" vs "Designação"
+
+Dúvida do cliente: Parecem ser a mesma coisa Ação: Clarificar diferença ou consolidar num único campo
+
+8. "Sistema de Fecho" vs "Tipo de Tampa"
+
+Dúvida do cliente: Não percebeu diferença entre os dois campos Ação: Explicar distinção ou consolidar se forem redundantes
+
+9. "Nome do Produto" (mencionado no final)
+
+Dúvida: Será igual a "Designação"? Ação: Clarificar ou consolidar
+
+🔧 MELHORIAS DE UX / LAYOUT
+
+10. Capacidades (Nominal e Total)
+
+Pedido: Colocar campos lado a lado ou um em cima do outro (proximidade) Ação: Reorganizar layout
+
+11. Empilhável - Obrigatoriedade de Escolha
+
+Problema: Tem de ficar claro no documento se é ou não empilhável Ação: Tornar campo obrigatório com opções "Empilhável" / "Não Empilhável"
+
+12. Total de Unidades - Separação
+
+Problema: Campo atual não permite escolher unidade separadamente Necessário: Poder escolher entre palete, caixa, saco, etc. Ação: Separar em dois campos (quantidade + unidade)
+
+⚙️ CAMPOS PARAMETRIZÁVEIS
+
+13. Unidades de Medida - Implementação Seletiva
+
+Campos prioritários que precisam seletor de unidade:
+
+Capacidade nominal (ml vs L)
+
+Capacidade total (ml vs L)
+
+Peso
+
+Peso com acessórios
+
+Campos que podem manter unidade fixa:
+
+Dimensões de produtos (tipicamente em mm)
+
+Dimensões de tampa
+
+Ação: Implementar seletores apenas nos campos onde faz sentido variação
+
+14. Peso - Percentagem Editável
+
+Atual: 5% fixo Necessário: Campo editável (ex: PET tem percentagem inferior) Ação: Tornar percentagem parametrizável
+
+15. Certificações - Campos Tipo Toggle
+
+ADR:
+
+Botão ativável (tipo "Datador")
+
+Quando ativo, mostrar campo texto para código ADR
+
+Contato Alimentar:
+
+Botão ativável (tipo "Datador")
+
+Ação: Implementar toggles + campo condicional para código ADR
+
+📝 CORREÇÕES SIMPLES
+
+16. Erro Ortográfico
+
+Correção: "autoculante" → "Autocolante" Ação: Corrigir texto
+
+📋 FUNCIONALIDADES PENDENTES (Já Conhecidas)
+
+17. Criação/Atualização de Códigos
+
+Status: Parcialmente implementada, complexidade conhecida Prazo previsto cliente: Final da semana (mas têm margem) Ação: Continuar implementação conforme planeado
+
+18. Templates
+
+Status: Cliente vai enviar templates mais usuais Nota Importante - Estrutura Atual vs Desejada:
+
+ATUAL:
+
+Frente: Monofolha (modelo generalista, não referência específica)
+
+Verso: Pseudo-ficha técnica (especificações possíveis do modelo)
+
+DESEJADO:
+
+Frente: Informação geral mas específica ao produto
+
+Verso: Especificações da referência exata (ex: se azul → ref azul; se branca com ADR → outro doc)
+
+Ação: Aguardar templates e adaptar conforme estrutura desejada
+
+📊 RESUMO DE PRIORIDADES
+
+🔴 URGENTE:
+
+Corrigir bloqueio criação de referências
+
+Implementar gestão de versões
+
+🟡 ALTA: 3. Adicionar campo "Forma" 4. Clarificar campos duplicados (Produto/Designação, Sistema Fecho/Tipo Tampa) 5. Implementar seletores de unidade de medida
+
+🟢 MÉDIA: 6. Melhorias UX (layout capacidades, empilhável obrigatório) 7. Campos parametrizáveis (peso %, certificações toggles) 8. Novos campos (Acessórios, Gravação Cliente, Aprovador)
+
+⚪ BAIXA: 9. Correção ortográfica 10. Aguardar templates para ajustes finais
