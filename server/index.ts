@@ -4,7 +4,9 @@ import pgSession from "connect-pg-simple";
 import bcrypt from "bcryptjs";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { storage } from "./storage";
+import { storage, db } from "./storage";
+import { users } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 async function initializeAdminUser() {
   try {
@@ -19,6 +21,11 @@ async function initializeAdminUser() {
         password: hashedPassword,
       });
       log("Admin user created: admin@sie.pt");
+    } else if (!existingAdmin.isActive) {
+      await db.update(users)
+        .set({ isActive: true, updatedAt: new Date() })
+        .where(eq(users.id, existingAdmin.id));
+      log("Admin user reactivated: admin@sie.pt");
     }
   } catch (error) {
     console.error("Error initializing admin user:", error);

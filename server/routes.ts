@@ -871,11 +871,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const showAll = req.query.all === 'true';
-      const options = showAll 
-        ? await db.select().from(tableConfig.table)
-        : await db.select().from(tableConfig.table).where(eq(tableConfig.table.isActive, true));
+      let options;
+      try {
+        options = showAll 
+          ? await db.select().from(tableConfig.table)
+          : await db.select().from(tableConfig.table).where(eq(tableConfig.table.isActive, true));
+      } catch (queryError) {
+        options = [];
+      }
       
-      res.json(options);
+      res.json(options || []);
     } catch (error) {
       console.error("Error getting admin options:", error);
       res.status(500).json({ message: "Falha ao obter opções" });

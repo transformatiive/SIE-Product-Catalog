@@ -1,5 +1,7 @@
-import { drizzle } from "drizzle-orm/neon-http";
-import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-serverless";
+import { Pool } from "@neondatabase/serverless";
+import ws from "ws";
+import { neonConfig } from "@neondatabase/serverless";
 import { eq, and, like, sql, desc, asc } from "drizzle-orm";
 import { 
   type User, 
@@ -26,8 +28,10 @@ if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL environment variable is required");
 }
 
-const sql_client = neon(process.env.DATABASE_URL!);
-export const db = drizzle(sql_client);
+neonConfig.webSocketConstructor = ws;
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL! });
+export const db = drizzle(pool);
 
 export interface IStorage {
   // User methods
@@ -73,7 +77,7 @@ export class DatabaseStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
     try {
       const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
-      return result[0];
+      return result?.[0];
     } catch (error) {
       console.error('Error getting user:', error);
       return undefined;
@@ -83,7 +87,7 @@ export class DatabaseStorage implements IStorage {
   async getUserByEmail(email: string): Promise<User | undefined> {
     try {
       const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
-      return result[0];
+      return result?.[0];
     } catch (error) {
       console.error('Error getting user by email:', error);
       return undefined;
@@ -103,7 +107,7 @@ export class DatabaseStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     try {
       const result = await db.insert(users).values(insertUser).returning();
-      return result[0];
+      return result?.[0];
     } catch (error) {
       console.error('Error creating user:', error);
       throw error;
@@ -116,7 +120,7 @@ export class DatabaseStorage implements IStorage {
         .set({ ...userData, updatedAt: new Date() })
         .where(eq(users.id, id))
         .returning();
-      return result[0];
+      return result?.[0];
     } catch (error) {
       console.error('Error updating user:', error);
       return undefined;
@@ -197,7 +201,7 @@ export class DatabaseStorage implements IStorage {
   async getProduct(id: string): Promise<Product | undefined> {
     try {
       const result = await db.select().from(products).where(eq(products.id, id)).limit(1);
-      return result[0];
+      return result?.[0];
     } catch (error) {
       console.error('Error getting product:', error);
       return undefined;
@@ -206,8 +210,8 @@ export class DatabaseStorage implements IStorage {
 
   async getProductByCode(productCode: string): Promise<Product | undefined> {
     try {
-      const result = await db.select().from(products).where(eq(products.productCode, productCode)).limit(1);
-      return result[0];
+      const result = await db.select().from(products).where(eq(products.productCode, productCode));
+      return result?.[0];
     } catch (error) {
       console.error('Error getting product by code:', error);
       return undefined;
@@ -220,7 +224,10 @@ export class DatabaseStorage implements IStorage {
         ...insertProduct,
         currentVersionNumber: 1,
       }).returning();
-      const product = result[0];
+      const product = result?.[0];
+      if (!product) {
+        throw new Error('Failed to create product - no result returned');
+      }
       
       const versionData = this.extractVersionData(product);
       const version = await this.createProductVersion({
@@ -260,7 +267,7 @@ export class DatabaseStorage implements IStorage {
         .where(eq(products.id, id))
         .returning();
       
-      const updatedProduct = result[0];
+      const updatedProduct = result?.[0];
       if (!updatedProduct) return undefined;
       
       const versionData = this.extractVersionData(updatedProduct);
@@ -314,7 +321,7 @@ export class DatabaseStorage implements IStorage {
         .from(productVersions)
         .where(eq(productVersions.id, versionId))
         .limit(1);
-      return result[0];
+      return result?.[0];
     } catch (error) {
       console.error('Error getting product version:', error);
       return undefined;
@@ -324,7 +331,11 @@ export class DatabaseStorage implements IStorage {
   async createProductVersion(version: InsertProductVersion): Promise<ProductVersion> {
     try {
       const result = await db.insert(productVersions).values(version).returning();
-      return result[0];
+      const created = result?.[0];
+      if (!created) {
+        throw new Error('Failed to create version - no result returned');
+      }
+      return created;
     } catch (error) {
       console.error('Error creating product version:', error);
       throw error;
@@ -337,7 +348,7 @@ export class DatabaseStorage implements IStorage {
         .set({ isAnnulled: true })
         .where(eq(productVersions.id, versionId))
         .returning();
-      return result[0];
+      return result?.[0];
     } catch (error) {
       console.error('Error annulling version:', error);
       return undefined;
@@ -350,7 +361,7 @@ export class DatabaseStorage implements IStorage {
         .set({ isAnnulled: false })
         .where(eq(productVersions.id, versionId))
         .returning();
-      return result[0];
+      return result?.[0];
     } catch (error) {
       console.error('Error restoring version:', error);
       return undefined;
@@ -370,13 +381,13 @@ export class DatabaseStorage implements IStorage {
 
   async createShape(insertShape: InsertShape): Promise<Shape> {
     const result = await db.insert(shapes).values(insertShape).returning();
-    return result[0];
+    return result?.[0];
   }
 
   async updateShape(id: string, shapeData: Partial<InsertShape>): Promise<Shape | undefined> {
     try {
       const result = await db.update(shapes).set(shapeData).where(eq(shapes.id, id)).returning();
-      return result[0];
+      return result?.[0];
     } catch (error) {
       console.error('Error updating shape:', error);
       return undefined;
@@ -486,7 +497,7 @@ export class DatabaseStorage implements IStorage {
         .from(shareLinks)
         .where(eq(shareLinks.token, token))
         .limit(1);
-      return result[0];
+      return result?.[0];
     } catch (error) {
       console.error('Error getting share link by token:', error);
       return undefined;
@@ -495,7 +506,7 @@ export class DatabaseStorage implements IStorage {
   
   async createShareLink(shareLink: InsertShareLink): Promise<ShareLink> {
     const result = await db.insert(shareLinks).values(shareLink).returning();
-    return result[0];
+    return result?.[0];
   }
   
   async updateShareLink(id: string, updates: Partial<InsertShareLink>): Promise<ShareLink | undefined> {
@@ -504,7 +515,7 @@ export class DatabaseStorage implements IStorage {
         .set(updates)
         .where(eq(shareLinks.id, id))
         .returning();
-      return result[0];
+      return result?.[0];
     } catch (error) {
       console.error('Error updating share link:', error);
       return undefined;

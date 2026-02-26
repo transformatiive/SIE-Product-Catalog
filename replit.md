@@ -26,6 +26,7 @@ Preferred communication style: Simple, everyday language.
 
 ## Data Architecture
 - **Database**: PostgreSQL with Drizzle ORM migrations
+- **Database Driver**: Neon Serverless WebSocket pool driver (`drizzle-orm/neon-serverless` with `@neondatabase/serverless` Pool). Uses WebSocket (`ws` package) for reliable connection. Note: The Neon HTTP driver (`neon-http`) has known bugs with null results on empty queries and INSERT...RETURNING - do not switch back to it.
 - **Schema**: Products table with JSON fields for complex data (dimensions, certifications, packaging), plus admin support tables and version history
 - **Validation**: Centralized Zod schemas in shared directory for consistent validation
 - **Search**: SQL-based filtering with support for partial matches and date ranges
