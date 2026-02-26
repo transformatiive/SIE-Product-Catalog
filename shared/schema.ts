@@ -10,6 +10,7 @@ export const products = pgTable("products", {
   model: text("model").notNull(),
   family: text("family").notNull(),
   type: text("type").notNull(),
+  shape: text("shape"), // Forma (e.g., redondo, quadrado, boca larga)
   product: text("product").notNull(),
   productCode: text("product_code").notNull().unique(),
   
@@ -19,11 +20,17 @@ export const products = pgTable("products", {
   
   // Capacity and dimensions
   nominalCapacity: text("nominal_capacity").notNull(),
+  nominalCapacityUnit: text("nominal_capacity_unit").default("L"), // ml or L
   totalCapacity: text("total_capacity"),
+  totalCapacityUnit: text("total_capacity_unit").default("L"), // ml or L
   rawMaterial: text("raw_material").notNull(),
   colors: text("colors").notNull(),
   weight: text("weight").notNull(),
+  weightUnit: text("weight_unit").default("g"), // g or kg
+  weightTolerance: text("weight_tolerance").default("5"), // editable percentage
   weightWithAccessories: text("weight_with_accessories"),
+  weightWithAccessoriesUnit: text("weight_with_accessories_unit").default("g"), // g or kg
+  accessories: text("accessories"), // Acessórios - free text
   dimensions: text("dimensions").notNull(), // JSON string for multiple dimensions
   
   // Closure System (Sistema de Fecho)
@@ -57,6 +64,7 @@ export const products = pgTable("products", {
   coexPoliamida: boolean("coex_poliamida").default(false), // COEX Polyamide
   adaptacao: boolean("adaptacao").default(false), // Adaptation
   autoculanteCliente: text("autoculante_cliente"), // Customer self-adhesive specs
+  gravacaoClienteDetails: text("gravacao_cliente_details"), // Customer engraving details
   especificacoesEmbFlexiveis: text("especificacoes_emb_flexiveis"), // Flexible packaging specs
   
   // Stacking
@@ -68,11 +76,15 @@ export const products = pgTable("products", {
   palletDimensions: text("pallet_dimensions"), // Dimensões da Palete (mm)
   productOnPalletDimensions: text("product_on_pallet_dimensions"), // Dimensões mercadoria na palete (mm)
   arrangementScheme: text("arrangement_scheme"), // Esquema de arrumação
-  totalUnits: text("total_units"), // Total (unid)
+  totalUnits: text("total_units"), // Total (unid) - legacy combined field
+  totalUnitsQuantity: text("total_units_quantity"), // Quantity number
+  totalUnitsType: text("total_units_type"), // Type: palete, caixa, saco, etc.
   
   // Certifications and compliance
   certifications: text("certifications"), // JSON array as string
   foodContact: boolean("food_contact").default(false),
+  adrCertified: boolean("adr_certified").default(false), // ADR certification toggle
+  adrCode: text("adr_code"), // ADR code when certified
   specialFeatures: text("special_features"), // JSON array as string
   
   // Code generation selections (for auto-generating barcode, reference, designation)
@@ -84,6 +96,10 @@ export const products = pgTable("products", {
   productImage: text("product_image"), // Imagem principal do produto (frente)
   technicalDrawing: text("technical_drawing"), // Imagem técnica / desenho 2D (verso)
   palletizationImage: text("palletization_image"), // Imagem de paletização / acondicionamento (opcional)
+  
+  // Approval
+  approvedBy: text("approved_by"), // Who approved (e.g., "Departamento Qualidade SIE")
+  approvalDate: text("approval_date"), // Approval date
   
   // Version tracking - current version info is denormalized for efficient queries
   currentVersionNumber: integer("current_version_number").default(1).notNull(),
@@ -110,20 +126,29 @@ export const productVersions = pgTable("product_versions", {
   createdBy: varchar("created_by"), // User who created this version (FK to users)
   changeNotes: text("change_notes"), // Optional notes about what changed
   
+  isAnnulled: boolean("is_annulled").default(false), // Soft-delete for irrelevant versions
+  
   // Snapshot of all product data at this version
   model: text("model").notNull(),
   family: text("family").notNull(),
   type: text("type").notNull(),
+  shape: text("shape"),
   product: text("product").notNull(),
   productCode: text("product_code").notNull(),
   designation: text("designation"),
   barcode: text("barcode"),
   nominalCapacity: text("nominal_capacity").notNull(),
+  nominalCapacityUnit: text("nominal_capacity_unit"),
   totalCapacity: text("total_capacity"),
+  totalCapacityUnit: text("total_capacity_unit"),
   rawMaterial: text("raw_material").notNull(),
   colors: text("colors").notNull(),
   weight: text("weight").notNull(),
+  weightUnit: text("weight_unit"),
+  weightTolerance: text("weight_tolerance"),
   weightWithAccessories: text("weight_with_accessories"),
+  weightWithAccessoriesUnit: text("weight_with_accessories_unit"),
+  accessories: text("accessories"),
   dimensions: text("dimensions").notNull(),
   closingSystem: text("closing_system"),
   capType: text("cap_type"),
@@ -142,6 +167,7 @@ export const productVersions = pgTable("product_versions", {
   simboloSie: boolean("simbolo_sie").default(false),
   simboloMp: boolean("simbolo_mp").default(false),
   gravacaoCliente: boolean("gravacao_cliente").default(false),
+  gravacaoClienteDetails: text("gravacao_cliente_details"),
   visor: boolean("visor").default(false),
   bica: boolean("bica").default(false),
   coexPoliamida: boolean("coex_poliamida").default(false),
@@ -155,8 +181,12 @@ export const productVersions = pgTable("product_versions", {
   productOnPalletDimensions: text("product_on_pallet_dimensions"),
   arrangementScheme: text("arrangement_scheme"),
   totalUnits: text("total_units"),
+  totalUnitsQuantity: text("total_units_quantity"),
+  totalUnitsType: text("total_units_type"),
   certifications: text("certifications"),
   foodContact: boolean("food_contact").default(false),
+  adrCertified: boolean("adr_certified").default(false),
+  adrCode: text("adr_code"),
   specialFeatures: text("special_features"),
   selectedCertificationTypeId: varchar("selected_certification_type_id"),
   selectedPackagingTypeId: varchar("selected_packaging_type_id"),
@@ -164,6 +194,8 @@ export const productVersions = pgTable("product_versions", {
   productImage: text("product_image"),
   technicalDrawing: text("technical_drawing"),
   palletizationImage: text("palletization_image"),
+  approvedBy: text("approved_by"),
+  approvalDate: text("approval_date"),
   notes: text("notes"),
 });
 
@@ -242,6 +274,8 @@ export const shareLinks = pgTable("share_links", {
   productId: varchar("product_id").notNull(), // FK to products
   token: varchar("token").notNull().unique(), // Unique random token for URL
   
+  versionId: varchar("version_id"), // Optional: specific version to share (null = latest)
+  
   // Access configuration
   accessType: text("access_type").notNull().default("read_only"), // "public", "read_only"
   allowPdfDownload: boolean("allow_pdf_download").default(true).notNull(),
@@ -269,10 +303,11 @@ export const insertShareLinkSchema = createInsertSchema(shareLinks).omit({
 
 export const createShareLinkSchema = z.object({
   productId: z.string(),
+  versionId: z.string().nullable().optional(),
   accessType: z.enum(["public", "read_only"]).default("read_only"),
   allowPdfDownload: z.boolean().default(true),
   expiresAt: z.string().nullable().optional().refine((val) => {
-    if (!val) return true; // null/empty is valid (no expiration)
+    if (!val) return true;
     const date = new Date(val);
     return !isNaN(date.getTime());
   }, { message: "Data de expiração inválida" }),
@@ -450,6 +485,22 @@ export const insertPackagingTypeSchema = createInsertSchema(packagingTypes).omit
 });
 export type InsertPackagingType = z.infer<typeof insertPackagingTypeSchema>;
 export type PackagingType = typeof packagingTypes.$inferSelect;
+
+// Shapes (Forma)
+export const shapes = pgTable("shapes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: text("code").notNull().unique(),
+  description: text("description").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertShapeSchema = createInsertSchema(shapes).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertShape = z.infer<typeof insertShapeSchema>;
+export type Shape = typeof shapes.$inferSelect;
 
 // Models (3_Modelo)
 export const models = pgTable("models", {

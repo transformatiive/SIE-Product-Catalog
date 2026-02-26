@@ -12,7 +12,7 @@ Preferred communication style: Simple, everyday language.
 - **Framework**: React with TypeScript and Vite for fast development and building
 - **Routing**: Wouter for lightweight client-side routing
 - **UI Framework**: shadcn/ui components built on Radix UI primitives with Tailwind CSS
-- **Design System**: Material Design with industrial aesthetics, using professional blue (#0066CC) as primary color
+- **Design System**: SIE branding with red (#E31E24) as primary color, narrow sidebar (14rem), dark charcoal sidebar
 - **State Management**: TanStack Query for server state management and caching
 - **Form Handling**: React Hook Form with Zod validation for type-safe form management
 
@@ -21,19 +21,20 @@ Preferred communication style: Simple, everyday language.
 - **Language**: TypeScript with ES modules
 - **Database ORM**: Drizzle ORM for type-safe database operations
 - **Validation**: Zod schemas shared between frontend and backend
-- **PDF Generation**: React PDF renderer for technical datasheet generation
+- **PDF Generation**: React PDF renderer + server-side HTML-to-PDF for technical datasheet generation
+- **Authentication**: Custom session-based auth with 60-day sessions, user management
 
 ## Data Architecture
 - **Database**: PostgreSQL with Drizzle ORM migrations
-- **Schema**: Single products table with JSON fields for complex data (dimensions, certifications, packaging)
+- **Schema**: Products table with JSON fields for complex data (dimensions, certifications, packaging), plus admin support tables and version history
 - **Validation**: Centralized Zod schemas in shared directory for consistent validation
 - **Search**: SQL-based filtering with support for partial matches and date ranges
 
 ## Component Architecture
 - **Layout**: Sidebar navigation with collapsible design for mobile responsiveness
 - **Views**: Dashboard with multiple view modes (list, search, detail, form, create)
-- **Forms**: Multi-step forms with dynamic field arrays for dimensions and certifications
-- **Data Display**: Table views with pagination, card layouts, and detailed specification views
+- **Forms**: Multi-tab forms (Informação Básica, Detalhes Técnicos, Especificações, Embalagem e Notas, Versões, Partilhar) with dynamic field arrays
+- **Data Display**: Table views with pagination, column sorting, clickable product codes
 
 ## Key Features
 
@@ -50,7 +51,39 @@ Preferred communication style: Simple, everyday language.
 - Generate unique secure tokens (nanoid 32 chars) for external viewing
 - Public route `/share/{token}` bypasses authentication
 - Configurable expiration dates with validation
+- Optional version locking (versionId on share links)
 - Access controls managed in "Partilhar" tab
+
+### Version History
+- Every product update creates a new version snapshot
+- Version timeline shows all changes with timestamps and change notes
+- Version annulment (soft delete) with restore capability
+- Annulled versions shown with strikethrough text and "Anulada" badge
+- Version-specific PDF export and share links supported
+
+### Auto-Generated Fields
+- Three fields auto-generate based on support table selections:
+  - **Código de Barras** (Barcode)
+  - **Referência** (Product Code) - with manual override capability
+  - **Designação** (Designation) - technical description from selected fields
+- Product creation handles placeholder codes by generating TEMP-{nanoid} when needed
+
+### Admin Support Tables
+- Families, Product Types, Raw Materials, Closing Systems, Models, Specifications, Capacities, Colors, Cap Sizes, Certification Types, Packaging Types, Dimension Types, Shapes
+- All managed from admin section with searchable dropdowns
+- Each table: id, code, description, isActive, createdAt
+
+### Product Fields (Key)
+- **Classification**: Model, Family, Type, Shape (Forma), Product name
+- **Capacity**: Nominal Capacity + unit (ml/L), Total Capacity + unit (ml/L)
+- **Weight**: Weight + unit (g/kg), Weight Tolerance (editable %), Weight with Accessories + unit (g/kg)
+- **Accessories**: Free text for product accessories
+- **Certifications**: ADR toggle + code, Food Contact toggle, custom certification entries
+- **Markings**: Datador, Símbolo SIE, Símbolo MP, Gravação Cliente (with conditional details field), Visor, Bica, COEX, Adaptação, Autocolante Cliente
+- **Stacking**: Mandatory radio choice (Empilhável / Não Empilhável), conditional stacking capacity
+- **Packaging**: Total units split into Quantity + Type (palete/caixa/saco/unidade)
+- **Approval**: Approved by + Approval date
+- **Images**: 3 upload slots (main product, technical drawing, palletization)
 
 # External Dependencies
 

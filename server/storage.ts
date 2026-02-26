@@ -12,10 +12,13 @@ import {
   type InsertProductVersion,
   type ShareLink,
   type InsertShareLink,
+  type InsertShape,
+  type Shape,
   products, 
   productVersions,
   users,
-  shareLinks 
+  shareLinks,
+  shapes
 } from "@shared/schema";
 
 // Database connection
@@ -47,6 +50,14 @@ export interface IStorage {
   getProductVersions(productId: string): Promise<ProductVersion[]>;
   getProductVersion(versionId: string): Promise<ProductVersion | undefined>;
   createProductVersion(version: InsertProductVersion): Promise<ProductVersion>;
+  annulVersion(versionId: string): Promise<ProductVersion | undefined>;
+  restoreVersion(versionId: string): Promise<ProductVersion | undefined>;
+  
+  // Shapes methods
+  getShapes(): Promise<Shape[]>;
+  createShape(shape: InsertShape): Promise<Shape>;
+  updateShape(id: string, shape: Partial<InsertShape>): Promise<Shape | undefined>;
+  deleteShape(id: string): Promise<boolean>;
   
   // Share Link methods
   getShareLinks(productId: string): Promise<ShareLink[]>;
@@ -320,21 +331,90 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async annulVersion(versionId: string): Promise<ProductVersion | undefined> {
+    try {
+      const result = await db.update(productVersions)
+        .set({ isAnnulled: true })
+        .where(eq(productVersions.id, versionId))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error annulling version:', error);
+      return undefined;
+    }
+  }
+
+  async restoreVersion(versionId: string): Promise<ProductVersion | undefined> {
+    try {
+      const result = await db.update(productVersions)
+        .set({ isAnnulled: false })
+        .where(eq(productVersions.id, versionId))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error restoring version:', error);
+      return undefined;
+    }
+  }
+
+  // Shapes methods
+  async getShapes(): Promise<Shape[]> {
+    try {
+      const result = await db.select().from(shapes).orderBy(asc(shapes.description));
+      return result;
+    } catch (error) {
+      console.error('Error getting shapes:', error);
+      return [];
+    }
+  }
+
+  async createShape(insertShape: InsertShape): Promise<Shape> {
+    const result = await db.insert(shapes).values(insertShape).returning();
+    return result[0];
+  }
+
+  async updateShape(id: string, shapeData: Partial<InsertShape>): Promise<Shape | undefined> {
+    try {
+      const result = await db.update(shapes).set(shapeData).where(eq(shapes.id, id)).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error updating shape:', error);
+      return undefined;
+    }
+  }
+
+  async deleteShape(id: string): Promise<boolean> {
+    try {
+      const result = await db.delete(shapes).where(eq(shapes.id, id)).returning();
+      return result.length > 0;
+    } catch (error) {
+      console.error('Error deleting shape:', error);
+      return false;
+    }
+  }
+
   private extractVersionData(product: Product) {
     return {
       model: product.model,
       family: product.family,
       type: product.type,
+      shape: product.shape,
       product: product.product,
       productCode: product.productCode,
       designation: product.designation,
       barcode: product.barcode,
       nominalCapacity: product.nominalCapacity,
+      nominalCapacityUnit: product.nominalCapacityUnit,
       totalCapacity: product.totalCapacity,
+      totalCapacityUnit: product.totalCapacityUnit,
       rawMaterial: product.rawMaterial,
       colors: product.colors,
       weight: product.weight,
+      weightUnit: product.weightUnit,
+      weightTolerance: product.weightTolerance,
       weightWithAccessories: product.weightWithAccessories,
+      weightWithAccessoriesUnit: product.weightWithAccessoriesUnit,
+      accessories: product.accessories,
       dimensions: product.dimensions,
       closingSystem: product.closingSystem,
       capType: product.capType,
@@ -353,6 +433,7 @@ export class DatabaseStorage implements IStorage {
       simboloSie: product.simboloSie,
       simboloMp: product.simboloMp,
       gravacaoCliente: product.gravacaoCliente,
+      gravacaoClienteDetails: product.gravacaoClienteDetails,
       visor: product.visor,
       bica: product.bica,
       coexPoliamida: product.coexPoliamida,
@@ -366,14 +447,21 @@ export class DatabaseStorage implements IStorage {
       productOnPalletDimensions: product.productOnPalletDimensions,
       arrangementScheme: product.arrangementScheme,
       totalUnits: product.totalUnits,
+      totalUnitsQuantity: product.totalUnitsQuantity,
+      totalUnitsType: product.totalUnitsType,
       certifications: product.certifications,
       foodContact: product.foodContact,
+      adrCertified: product.adrCertified,
+      adrCode: product.adrCode,
       specialFeatures: product.specialFeatures,
       selectedCertificationTypeId: product.selectedCertificationTypeId,
       selectedPackagingTypeId: product.selectedPackagingTypeId,
       selectedSpecificationId: product.selectedSpecificationId,
       productImage: product.productImage,
       technicalDrawing: product.technicalDrawing,
+      palletizationImage: product.palletizationImage,
+      approvedBy: product.approvedBy,
+      approvalDate: product.approvalDate,
       notes: product.notes,
     };
   }

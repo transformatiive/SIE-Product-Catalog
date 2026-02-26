@@ -445,7 +445,11 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
     if (product.datador) parts.push('Datador');
     if (product.simboloSie) parts.push('Símbolo SIE');
     if (product.simboloMp) parts.push('Símbolo MP');
-    if (product.gravacaoCliente) parts.push('Gravação Cliente');
+    if (product.gravacaoCliente) {
+      let label = 'Gravação Cliente';
+      if (product.gravacaoClienteDetails) label += ` (${product.gravacaoClienteDetails})`;
+      parts.push(label);
+    }
     return parts.join(', ');
   };
 
@@ -455,7 +459,7 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
     if (product.bica) parts.push('Bica');
     if (product.coexPoliamida) parts.push('COEX - Poliamida');
     if (product.adaptacao) parts.push('Adaptação');
-    if (product.autoculanteCliente) parts.push(`Autoculante: ${product.autoculanteCliente}`);
+    if (product.autoculanteCliente) parts.push(`Autocolante: ${product.autoculanteCliente}`);
     if (product.especificacoesEmbFlexiveis) parts.push(`Emb. Flexíveis: ${product.especificacoesEmbFlexiveis}`);
     return parts.join(', ');
   };
@@ -514,7 +518,7 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
               ),
               h(View, { style: styles.charContent },
                 h(Text, { style: styles.charLabel }, 'CAPACIDADE NOMINAL'),
-                h(Text, { style: styles.charValue }, product.nominalCapacity)
+                h(Text, { style: styles.charValue }, `${product.nominalCapacity} ${product.nominalCapacityUnit || 'L'}`)
               )
             ),
 
@@ -523,8 +527,8 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
                 h(Text, { style: styles.charIconText }, '⚖')
               ),
               h(View, { style: styles.charContent },
-                h(Text, { style: styles.charLabel }, 'PESO (±5%)'),
-                h(Text, { style: styles.charValue }, product.weight)
+                h(Text, { style: styles.charLabel }, `PESO (±${product.weightTolerance || '5'}%)`),
+                h(Text, { style: styles.charValue }, `${product.weight} ${product.weightUnit || 'g'}`)
               )
             ),
 
@@ -547,6 +551,16 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
                 h(Text, { style: styles.charValue }, product.colors.split(',')[0]?.trim() || 'Branco'),
                 h(Text, { style: styles.charLabel }, 'Outras opções de cor sob consulta'),
                 h(View, { style: styles.colorCircle })
+              )
+            ),
+
+            product.shape && h(View, { style: styles.charItem },
+              h(View, { style: styles.charIcon },
+                h(Text, { style: styles.charIconText }, '◇')
+              ),
+              h(View, { style: styles.charContent },
+                h(Text, { style: styles.charLabel }, 'FORMA'),
+                h(Text, { style: styles.charValue }, product.shape)
               )
             ),
 
@@ -640,7 +654,9 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
 
                 h(Text, { style: styles.packagingLabel }, 'TOTAL DE UNIDADES'),
                 h(Text, { style: styles.packagingValue }, 
-                  product.totalUnits || packaging.unitsPerPallet?.toString() || '-')
+                  (product.totalUnitsQuantity && product.totalUnitsType)
+                    ? `${product.totalUnitsQuantity} / ${product.totalUnitsType}`
+                    : product.totalUnits || packaging.unitsPerPallet?.toString() || '-')
               ),
 
               h(View, { style: styles.productImageSection },
@@ -664,7 +680,7 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
                   h(Text, { style: styles.specIconSmall }, '⚱')
                 ),
                 h(Text, { style: styles.specLabel }, 'CAPACIDADE NOMINAL'),
-                h(Text, { style: styles.specValue }, product.nominalCapacity)
+                h(Text, { style: styles.specValue }, `${product.nominalCapacity} ${product.nominalCapacityUnit || 'L'}`)
               ),
 
               product.totalCapacity && h(View, { style: styles.specRow },
@@ -672,23 +688,39 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
                   h(Text, { style: styles.specIconSmall }, '⚱')
                 ),
                 h(Text, { style: styles.specLabel }, 'CAPACIDADE TOTAL'),
-                h(Text, { style: styles.specValue }, product.totalCapacity)
+                h(Text, { style: styles.specValue }, `${product.totalCapacity} ${product.totalCapacityUnit || 'L'}`)
               ),
 
               h(View, { style: styles.specRow },
                 h(View, { style: styles.specIcon },
                   h(Text, { style: styles.specIconSmall }, '⚖')
                 ),
-                h(Text, { style: styles.specLabel }, 'PESO (±5%)'),
-                h(Text, { style: styles.specValue }, product.weight)
+                h(Text, { style: styles.specLabel }, `PESO (±${product.weightTolerance || '5'}%)`),
+                h(Text, { style: styles.specValue }, `${product.weight} ${product.weightUnit || 'g'}`)
               ),
 
               product.weightWithAccessories && h(View, { style: styles.specRow },
                 h(View, { style: styles.specIcon },
                   h(Text, { style: styles.specIconSmall }, '⚖')
                 ),
-                h(Text, { style: styles.specLabel }, 'PESO C/ ACESSÓRIOS (±5%)'),
-                h(Text, { style: styles.specValue }, product.weightWithAccessories)
+                h(Text, { style: styles.specLabel }, `PESO C/ ACESSÓRIOS (±${product.weightTolerance || '5'}%)`),
+                h(Text, { style: styles.specValue }, `${product.weightWithAccessories} ${product.weightWithAccessoriesUnit || 'g'}`)
+              ),
+
+              product.accessories && h(View, { style: styles.specRow },
+                h(View, { style: styles.specIcon },
+                  h(Text, { style: styles.specIconSmall }, '🔧')
+                ),
+                h(Text, { style: styles.specLabel }, 'ACESSÓRIOS'),
+                h(Text, { style: styles.specValue }, product.accessories)
+              ),
+
+              product.shape && h(View, { style: styles.specRow },
+                h(View, { style: styles.specIcon },
+                  h(Text, { style: styles.specIconSmall }, '◇')
+                ),
+                h(Text, { style: styles.specLabel }, 'FORMA'),
+                h(Text, { style: styles.specValue }, product.shape)
               ),
 
               h(View, { style: styles.specRow },
@@ -737,6 +769,14 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
                 ),
                 h(Text, { style: styles.specLabel }, 'CONTACTO ALIMENTAR'),
                 h(Text, { style: styles.specValue }, product.foodContact ? 'Apto' : 'Não Apto')
+              ),
+
+              product.adrCertified && h(View, { style: styles.specRow },
+                h(View, { style: styles.specIcon },
+                  h(Text, { style: styles.specIconSmall }, '⚠')
+                ),
+                h(Text, { style: styles.specLabel }, 'ADR'),
+                h(Text, { style: styles.specValue }, product.adrCode ? `Certificado - ${product.adrCode}` : 'Certificado')
               ),
 
               product.designation && h(View, { style: styles.specRow },
@@ -833,7 +873,8 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
       ),
 
       h(View, { style: styles.footer },
-        h(Text, { style: styles.footerText }, `Aprovado: ${formatDate(null)} | Revisão: 03 | Data: 29/08/2023`),
+        h(Text, { style: styles.footerText }, 
+          `Aprovado por: ${product.approvedBy || '-'} | Data de Aprovação: ${product.approvalDate || formatDate(null)} | Revisão: ${String(product.currentVersionNumber).padStart(2, '0')}`),
         h(Text, { style: styles.pageNumber }, 'pág. 2/2')
       )
     )

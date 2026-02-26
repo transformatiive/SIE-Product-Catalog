@@ -303,37 +303,61 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
               {hasValue(product.nominalCapacity) && (
                 <View style={styles.dataRow}>
                   <Text style={styles.dataLabel}>Capacidade Nominal</Text>
-                  <Text style={styles.dataValue}>{product.nominalCapacity}</Text>
+                  <Text style={styles.dataValue}>{product.nominalCapacity} {product.nominalCapacityUnit || 'L'}</Text>
                 </View>
               )}
               {hasValue(product.totalCapacity) && (
                 <View style={styles.dataRowAlt}>
                   <Text style={styles.dataLabel}>Capacidade Total</Text>
-                  <Text style={styles.dataValue}>{product.totalCapacity}</Text>
+                  <Text style={styles.dataValue}>{product.totalCapacity} {product.totalCapacityUnit || 'L'}</Text>
                 </View>
               )}
               {hasValue(product.weight) && (
                 <View style={styles.dataRow}>
-                  <Text style={styles.dataLabel}>Peso (+/-5%)</Text>
-                  <Text style={styles.dataValue}>{product.weight}</Text>
+                  <Text style={styles.dataLabel}>Peso (+/-{product.weightTolerance || '5'}%)</Text>
+                  <Text style={styles.dataValue}>{product.weight} {product.weightUnit || 'g'}</Text>
+                </View>
+              )}
+              {hasValue(product.weightWithAccessories) && (
+                <View style={styles.dataRowAlt}>
+                  <Text style={styles.dataLabel}>Peso c/ Acessorios (+/-{product.weightTolerance || '5'}%)</Text>
+                  <Text style={styles.dataValue}>{product.weightWithAccessories} {product.weightWithAccessoriesUnit || 'g'}</Text>
                 </View>
               )}
               {hasValue(product.rawMaterial) && (
-                <View style={styles.dataRowAlt}>
+                <View style={styles.dataRow}>
                   <Text style={styles.dataLabel}>Materia-Prima</Text>
                   <Text style={styles.dataValue}>{product.rawMaterial}</Text>
                 </View>
               )}
               {hasValue(product.colors) && (
-                <View style={styles.dataRow}>
+                <View style={styles.dataRowAlt}>
                   <Text style={styles.dataLabel}>Cores</Text>
                   <Text style={styles.dataValue}>{product.colors}</Text>
                 </View>
               )}
-              {product.foodContact !== undefined && (
+              {hasValue(product.shape) && (
+                <View style={styles.dataRow}>
+                  <Text style={styles.dataLabel}>Forma</Text>
+                  <Text style={styles.dataValue}>{product.shape}</Text>
+                </View>
+              )}
+              {hasValue(product.accessories) && (
                 <View style={styles.dataRowAlt}>
+                  <Text style={styles.dataLabel}>Acessorios</Text>
+                  <Text style={styles.dataValue}>{product.accessories}</Text>
+                </View>
+              )}
+              {product.foodContact !== undefined && (
+                <View style={styles.dataRow}>
                   <Text style={styles.dataLabel}>Contacto Alimentar</Text>
                   <Text style={styles.dataValue}>{product.foodContact ? 'Apto' : 'Nao Apto'}</Text>
+                </View>
+              )}
+              {product.adrCertified && (
+                <View style={styles.dataRowAlt}>
+                  <Text style={styles.dataLabel}>ADR</Text>
+                  <Text style={styles.dataValue}>{product.adrCode ? `Certificado - ${product.adrCode}` : 'Certificado'}</Text>
                 </View>
               )}
             </View>
@@ -400,10 +424,14 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
                   <Text style={styles.dataValue}>{product.palletDimensions}</Text>
                 </View>
               )}
-              {hasValue(product.totalUnits) && (
+              {(hasValue(product.totalUnitsQuantity) || hasValue(product.totalUnits)) && (
                 <View style={styles.dataRowAlt}>
                   <Text style={styles.dataLabel}>Total Unidades</Text>
-                  <Text style={styles.dataValue}>{product.totalUnits}</Text>
+                  <Text style={styles.dataValue}>
+                    {(product.totalUnitsQuantity && product.totalUnitsType)
+                      ? `${product.totalUnitsQuantity} / ${product.totalUnitsType}`
+                      : product.totalUnits || '-'}
+                  </Text>
                 </View>
               )}
               {hasValue(product.arrangementScheme) && (
@@ -479,7 +507,10 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
         )}
 
         <View style={styles.footer} fixed>
-          <Text style={styles.footerText}>Gerado: {formatDate()}</Text>
+          <Text style={styles.footerText}>
+            {product.approvedBy ? `Aprovado por: ${product.approvedBy}` : `Gerado: ${formatDate()}`}
+            {product.approvalDate ? ` | Data: ${product.approvalDate}` : ''}
+          </Text>
           <Text style={styles.footerBrand}>SIE - Sociedade Internacional de Embalagens</Text>
           <Text style={styles.footerText}>{product.productCode || ''}</Text>
         </View>

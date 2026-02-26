@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Download, FileText, Loader2, AlertCircle, Package, Ruler, Shield, Box, Lock } from "lucide-react";
+import { Download, FileText, Loader2, AlertCircle, Package, Ruler, Shield, Box, Lock, CheckCircle, AlertTriangle } from "lucide-react";
 import type { Product } from "@shared/schema";
 import sieLogo from "@assets/sie-logo.svg";
 
@@ -78,6 +78,13 @@ export default function SharedProduct() {
 
   const dimensions = parseDimensions(product.dimensions);
 
+  const totalUnitsDisplay = (() => {
+    if (product.totalUnitsQuantity && product.totalUnitsType) {
+      return `${product.totalUnitsQuantity} / ${product.totalUnitsType}`;
+    }
+    return product.totalUnits || '-';
+  })();
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-white dark:bg-gray-800 border-b shadow-sm">
@@ -141,6 +148,12 @@ export default function SharedProduct() {
                   <p className="text-sm font-medium text-muted-foreground">Tipo</p>
                   <p>{product.type}</p>
                 </div>
+                {product.shape && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Forma</p>
+                    <p>{product.shape}</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -156,11 +169,11 @@ export default function SharedProduct() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Capacidade Nominal</p>
-                  <p>{product.nominalCapacity}</p>
+                  <p>{product.nominalCapacity} {product.nominalCapacityUnit || 'L'}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Capacidade Total</p>
-                  <p>{product.totalCapacity || '-'}</p>
+                  <p>{product.totalCapacity ? `${product.totalCapacity} ${product.totalCapacityUnit || 'L'}` : '-'}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Matéria-Prima</p>
@@ -172,12 +185,18 @@ export default function SharedProduct() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Peso</p>
-                  <p>{product.weight}</p>
+                  <p>{product.weight} {product.weightUnit || 'g'} {product.weightTolerance ? `(±${product.weightTolerance}%)` : ''}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Peso c/ Acessórios</p>
-                  <p>{product.weightWithAccessories || '-'}</p>
+                  <p>{product.weightWithAccessories ? `${product.weightWithAccessories} ${product.weightWithAccessoriesUnit || 'g'}` : '-'}</p>
                 </div>
+                {product.accessories && (
+                  <div className="col-span-2">
+                    <p className="text-sm font-medium text-muted-foreground">Acessórios</p>
+                    <p>{product.accessories}</p>
+                  </div>
+                )}
               </div>
               <Separator />
               <div>
@@ -234,6 +253,21 @@ export default function SharedProduct() {
                 {product.vedanteEpdm && <Badge variant="outline">EPDM</Badge>}
                 {product.vedanteOutros && <Badge variant="outline">{product.vedanteOutros}</Badge>}
               </div>
+              {product.gravacaoCliente && product.gravacaoClienteDetails && (
+                <>
+                  <Separator />
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Gravação Cliente</p>
+                    <p>{product.gravacaoClienteDetails}</p>
+                  </div>
+                </>
+              )}
+              {product.autoculanteCliente && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Autocolante Cliente</p>
+                  <p>{product.autoculanteCliente}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -250,19 +284,41 @@ export default function SharedProduct() {
                   <p className="text-sm font-medium text-muted-foreground">Empilhável</p>
                   <p>{product.stackable ? 'Sim' : 'Não'}</p>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Capacidade Empilhamento</p>
-                  <p>{product.stackingCapacity || '-'}</p>
-                </div>
+                {product.stackable && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Capacidade Empilhamento</p>
+                    <p>{product.stackingCapacity || '-'}</p>
+                  </div>
+                )}
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Dimensões da Palete</p>
                   <p>{product.palletDimensions || '-'}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Unidades</p>
-                  <p>{product.totalUnits || '-'}</p>
+                  <p>{totalUnitsDisplay}</p>
                 </div>
               </div>
+
+              {(product.foodContact || product.adrCertified) && (
+                <>
+                  <Separator />
+                  <div className="flex flex-wrap gap-2">
+                    {product.foodContact && (
+                      <Badge variant="outline" className="gap-1">
+                        <CheckCircle className="w-3 h-3" />
+                        Contacto Alimentar
+                      </Badge>
+                    )}
+                    {product.adrCertified && (
+                      <Badge variant="outline" className="gap-1">
+                        <AlertTriangle className="w-3 h-3" />
+                        ADR{product.adrCode ? ` - ${product.adrCode}` : ''}
+                      </Badge>
+                    )}
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -313,8 +369,18 @@ export default function SharedProduct() {
         </div>
 
         <footer className="mt-12 text-center text-sm text-muted-foreground">
+          {(product.approvedBy || product.approvalDate) && (
+            <div className="mb-4 flex items-center justify-center gap-4">
+              {product.approvedBy && (
+                <span>Aprovado por: <strong>{product.approvedBy}</strong></span>
+              )}
+              {product.approvalDate && (
+                <span>Data de Aprovação: <strong>{product.approvalDate}</strong></span>
+              )}
+            </div>
+          )}
           <p>Ficha técnica gerada por SIE - Sistema de Informação de Embalagens</p>
-          <p className="mt-1">© {new Date().getFullYear()} SIE. Todos os direitos reservados.</p>
+          <p className="mt-1">&copy; {new Date().getFullYear()} SIE. Todos os direitos reservados.</p>
         </footer>
       </main>
     </div>

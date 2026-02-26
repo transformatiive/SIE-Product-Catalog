@@ -37,7 +37,9 @@ import {
   specifications,
   insertSpecificationSchema,
   dimensionTypes,
-  insertDimensionTypeSchema
+  insertDimensionTypeSchema,
+  shapes,
+  insertShapeSchema
 } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { renderToBuffer } from '@react-pdf/renderer';
@@ -69,6 +71,7 @@ const tableMap = {
   models: { table: models, insertSchema: insertModelSchema },
   specifications: { table: specifications, insertSchema: insertSpecificationSchema },
   dimensionTypes: { table: dimensionTypes, insertSchema: insertDimensionTypeSchema },
+  shapes: { table: shapes, insertSchema: insertShapeSchema },
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -323,10 +326,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Check if product code already exists
-      const existingProduct = await storage.getProductByCode(validation.data.productCode);
+      let productCode = validation.data.productCode;
+      const hasPlaceholders = /\[.*\]/.test(productCode);
+      
+      if (hasPlaceholders || !productCode || productCode.trim() === '') {
+        productCode = `TEMP-${nanoid(8)}`;
+        validation.data.productCode = productCode;
+      }
+
+      const existingProduct = await storage.getProductByCode(productCode);
       if (existingProduct) {
-        return res.status(409).json({ message: "Código do produto já existe" });
+        validation.data.productCode = `${productCode}-${nanoid(6)}`;
       }
 
       const userId = req.session?.userId;
@@ -418,6 +428,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PATCH /api/products/:id/versions/:versionId/annul - Annul a version
+  app.patch("/api/products/:id/versions/:versionId/annul", async (req, res) => {
+    try {
+      const { id, versionId } = req.params;
+      const product = await storage.getProduct(id);
+      if (!product) {
+        return res.status(404).json({ message: "Produto não encontrado" });
+      }
+      const version = await storage.getProductVersion(versionId);
+      if (!version || version.productId !== id) {
+        return res.status(404).json({ message: "Versão não encontrada" });
+      }
+      const result = await storage.annulVersion(versionId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error annulling version:", error);
+      res.status(500).json({ message: "Falha ao anular versão" });
+    }
+  });
+
+  // PATCH /api/products/:id/versions/:versionId/restore - Restore an annulled version
+  app.patch("/api/products/:id/versions/:versionId/restore", async (req, res) => {
+    try {
+      const { id, versionId } = req.params;
+      const product = await storage.getProduct(id);
+      if (!product) {
+        return res.status(404).json({ message: "Produto não encontrado" });
+      }
+      const version = await storage.getProductVersion(versionId);
+      if (!version || version.productId !== id) {
+        return res.status(404).json({ message: "Versão não encontrada" });
+      }
+      const result = await storage.restoreVersion(versionId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error restoring version:", error);
+      res.status(500).json({ message: "Falha ao restaurar versão" });
+    }
+  });
+
   // DELETE /api/products/:id - Delete a product
   app.delete("/api/products/:id", async (req, res) => {
     try {
@@ -445,29 +495,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/products/:id/pdf", async (req, res) => {
     try {
       const { id } = req.params;
+      const { versionId } = req.query;
       
-      // Get the product
       const product = await storage.getProduct(id);
       if (!product) {
         return res.status(404).json({ message: "Produto não encontrado" });
       }
 
-      // Import the PDF template dynamically to avoid import issues
+      let productData: any = product;
+      if (versionId && typeof versionId === 'string') {
+        const version = await storage.getProductVersion(versionId);
+        if (version && version.productId === id && !version.isAnnulled) {
+          productData = { ...product, ...version, id: product.id };
+        }
+      }
+
       const { TechnicalDatasheetPDF } = await import('./pdf-template');
-      
-      // Create the PDF document
-      const pdfDocument = React.createElement(TechnicalDatasheetPDF, { product });
-      
-      // Render PDF to buffer
+      const pdfDocument = React.createElement(TechnicalDatasheetPDF, { product: productData });
       const pdfBuffer = await renderToBuffer(pdfDocument as React.ReactElement);
       
-      // Set response headers
-      const filename = `${product.productCode}-Datasheet.pdf`;
+      const filename = `${productData.productCode}-Datasheet.pdf`;
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       res.setHeader('Content-Length', pdfBuffer.length);
-      
-      // Send the PDF
       res.send(pdfBuffer);
       
     } catch (error) {
@@ -1015,11 +1065,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Produto não encontrado" });
       }
 
-      // Increment access count
+      let productData: any = product;
+      if (shareLink.versionId) {
+        const version = await storage.getProductVersion(shareLink.versionId);
+        if (version && version.productId === shareLink.productId && !version.isAnnulled) {
+          productData = { ...product, ...version, id: product.id };
+        }
+      }
+
       await storage.incrementShareLinkAccess(req.params.token);
 
       res.json({
-        product,
+        product: productData,
         shareLink: {
           accessType: shareLink.accessType,
           allowPdfDownload: shareLink.allowPdfDownload,
@@ -1058,17 +1115,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Produto não encontrado" });
       }
 
-      // Import the PDF template dynamically
+      let productData: any = product;
+      if (shareLink.versionId) {
+        const version = await storage.getProductVersion(shareLink.versionId);
+        if (version && version.productId === shareLink.productId && !version.isAnnulled) {
+          productData = { ...product, ...version, id: product.id };
+        }
+      }
+
       const { TechnicalDatasheetPDF } = await import('./pdf-template');
-      
-      // Create the PDF document
-      const pdfDocument = React.createElement(TechnicalDatasheetPDF, { product });
-      
-      // Render PDF to buffer
+      const pdfDocument = React.createElement(TechnicalDatasheetPDF, { product: productData });
       const pdfBuffer = await renderToBuffer(pdfDocument as React.ReactElement);
 
-      // Set response headers
-      const filename = `${product.productCode}-Datasheet.pdf`;
+      const filename = `${productData.productCode}-Datasheet.pdf`;
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       res.setHeader('Content-Length', pdfBuffer.length);

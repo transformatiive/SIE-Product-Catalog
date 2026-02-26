@@ -14,7 +14,8 @@ import { InsertProduct, insertProductSchema, Product, ProductVersion } from "@sh
 import ImageUpload from "./ImageUpload";
 import { SearchableSelect } from "./SearchableSelect";
 import { ShareLinksManager } from "./ShareLinksManager";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ProductFormProps {
   product?: Product;
@@ -104,6 +105,10 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
 
   const { data: dimensionTypeOptions = [], isLoading: dimensionTypesLoading } = useQuery<{id: string, code: string, description: string}[]>({
     queryKey: ['/api/admin/dimensionTypes'],
+  });
+
+  const { data: shapeOptions = [], isLoading: shapesLoading } = useQuery<{id: string, code: string, description: string}[]>({
+    queryKey: ['/api/admin/shapes'],
   });
 
   const { data: productVersions = [] } = useQuery<ProductVersion[]>({
@@ -218,17 +223,23 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
       model: sourceData?.model || '',
       family: sourceData?.family || '',
       type: sourceData?.type || '',
+      shape: sourceData?.shape || '',
       product: sourceData?.product || '',
-      // When cloning (initialData provided), leave unique identifiers empty
       productCode: product?.productCode || '',
       designation: product?.designation || '',
       barcode: product?.barcode || '',
       nominalCapacity: sourceData?.nominalCapacity || '',
+      nominalCapacityUnit: sourceData?.nominalCapacityUnit || 'L',
       totalCapacity: sourceData?.totalCapacity || '',
+      totalCapacityUnit: sourceData?.totalCapacityUnit || 'L',
       rawMaterial: sourceData?.rawMaterial || '',
       colors: sourceData?.colors || '',
       weight: sourceData?.weight || '',
+      weightUnit: sourceData?.weightUnit || 'g',
+      weightTolerance: sourceData?.weightTolerance || '5',
       weightWithAccessories: sourceData?.weightWithAccessories || '',
+      weightWithAccessoriesUnit: sourceData?.weightWithAccessoriesUnit || 'g',
+      accessories: sourceData?.accessories || '',
       dimensions: sourceData?.dimensions || '',
       closingSystem: sourceData?.closingSystem || '',
       capType: sourceData?.capType || '',
@@ -248,6 +259,7 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
       simboloSie: sourceData?.simboloSie ?? false,
       simboloMp: sourceData?.simboloMp ?? false,
       gravacaoCliente: sourceData?.gravacaoCliente ?? false,
+      gravacaoClienteDetails: sourceData?.gravacaoClienteDetails || '',
       visor: sourceData?.visor ?? false,
       bica: sourceData?.bica ?? false,
       coexPoliamida: sourceData?.coexPoliamida ?? false,
@@ -255,6 +267,8 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
       autoculanteCliente: sourceData?.autoculanteCliente || '',
       especificacoesEmbFlexiveis: sourceData?.especificacoesEmbFlexiveis || '',
       foodContact: sourceData?.foodContact ?? false,
+      adrCertified: sourceData?.adrCertified ?? false,
+      adrCode: sourceData?.adrCode || '',
       stackable: sourceData?.stackable ?? false,
       stackingCapacity: sourceData?.stackingCapacity || '',
       packaging: sourceData?.packaging || '',
@@ -262,11 +276,15 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
       productOnPalletDimensions: sourceData?.productOnPalletDimensions || '',
       arrangementScheme: sourceData?.arrangementScheme || '',
       totalUnits: sourceData?.totalUnits || '',
+      totalUnitsQuantity: sourceData?.totalUnitsQuantity || '',
+      totalUnitsType: sourceData?.totalUnitsType || '',
       specialFeatures: sourceData?.specialFeatures || '',
       productImage: sourceData?.productImage || '',
       technicalDrawing: sourceData?.technicalDrawing || '',
       palletizationImage: sourceData?.palletizationImage || '',
       notes: sourceData?.notes || '',
+      approvedBy: sourceData?.approvedBy || '',
+      approvalDate: sourceData?.approvalDate || '',
       isActive: product?.isActive ?? true,
     },
   });
@@ -561,18 +579,33 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
       simboloSie: data.simboloSie ?? false,
       simboloMp: data.simboloMp ?? false,
       gravacaoCliente: data.gravacaoCliente ?? false,
+      gravacaoClienteDetails: data.gravacaoClienteDetails || '',
       visor: data.visor ?? false,
       bica: data.bica ?? false,
       coexPoliamida: data.coexPoliamida ?? false,
       adaptacao: data.adaptacao ?? false,
       autoculanteCliente: data.autoculanteCliente || '',
       especificacoesEmbFlexiveis: data.especificacoesEmbFlexiveis || '',
+      foodContact: data.foodContact ?? false,
+      adrCertified: data.adrCertified ?? false,
+      adrCode: data.adrCode || '',
       stackable: data.stackable ?? false,
       stackingCapacity: data.stackingCapacity || '',
       palletDimensions: data.palletDimensions || '',
       productOnPalletDimensions: data.productOnPalletDimensions || '',
       arrangementScheme: data.arrangementScheme || '',
       totalUnits: data.totalUnits || '',
+      totalUnitsQuantity: data.totalUnitsQuantity || '',
+      totalUnitsType: data.totalUnitsType || '',
+      shape: data.shape || '',
+      nominalCapacityUnit: data.nominalCapacityUnit || 'L',
+      totalCapacityUnit: data.totalCapacityUnit || 'L',
+      weightUnit: data.weightUnit || 'g',
+      weightTolerance: data.weightTolerance || '5',
+      weightWithAccessoriesUnit: data.weightWithAccessoriesUnit || 'g',
+      accessories: data.accessories || '',
+      approvedBy: data.approvedBy || '',
+      approvalDate: data.approvalDate || '',
     };
 
     console.log('Form submitted with data:', finalData);
@@ -678,6 +711,20 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                     </div>
 
                     <div className="space-y-2">
+                      <SearchableSelect
+                        value={form.watch('shape') || ''}
+                        onChange={(val) => form.setValue('shape', val)}
+                        options={shapeOptions}
+                        label="Forma"
+                        placeholder="Seleccionar forma..."
+                        apiEndpoint="/api/admin/shapes"
+                        isLoading={shapesLoading}
+                        onOptionAdded={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/shapes'] })}
+                      />
+                      <p className="text-xs text-muted-foreground">Forma do produto (ex: redondo, quadrado, boca larga)</p>
+                    </div>
+
+                    <div className="space-y-2">
                       <Label htmlFor="product" className="text-sm font-medium text-foreground">Produto *</Label>
                       <Input
                         id="product"
@@ -685,12 +732,12 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                         data-testid="input-product-name"
                         className="h-9"
                       />
-                      <p className="text-xs text-muted-foreground">Nome completo ou descrição do produto</p>
+                      <p className="text-xs text-muted-foreground">Nome comercial do produto</p>
                     </div>
                   </div>
                 </div>
 
-                {/* 2. Capacity & Material Section (matches Excel: Capacidade, Matéria Prima, Cores) */}
+                {/* 2. Capacity & Material Section */}
                 <div className="space-y-4">
                   <div className="border-b pb-3">
                     <h3 className="text-lg font-semibold text-foreground">Capacidade e Material</h3>
@@ -699,14 +746,44 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="nominalCapacity" className="text-sm font-medium text-foreground">Capacidade Nominal *</Label>
-                      <Input
-                        id="nominalCapacity"
-                        {...form.register('nominalCapacity')}
-                        placeholder="ex.: 15L"
-                        data-testid="input-nominal-capacity"
-                        className="h-9"
-                      />
+                      <div className="flex gap-2">
+                        <Input
+                          id="nominalCapacity"
+                          {...form.register('nominalCapacity')}
+                          placeholder="ex.: 15"
+                          data-testid="input-nominal-capacity"
+                          className="h-9 flex-1"
+                        />
+                        <select
+                          {...form.register('nominalCapacityUnit')}
+                          className="h-9 w-16 rounded-md border border-input bg-background px-2 text-sm"
+                        >
+                          <option value="ml">ml</option>
+                          <option value="L">L</option>
+                        </select>
+                      </div>
                       <p className="text-xs text-muted-foreground">Capacidade nominal padrão</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="totalCapacity" className="text-sm font-medium text-foreground">Capacidade Total</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="totalCapacity"
+                          {...form.register('totalCapacity')}
+                          placeholder="ex.: 17,8"
+                          data-testid="input-total-capacity"
+                          className="h-9 flex-1"
+                        />
+                        <select
+                          {...form.register('totalCapacityUnit')}
+                          className="h-9 w-16 rounded-md border border-input bg-background px-2 text-sm"
+                        >
+                          <option value="ml">ml</option>
+                          <option value="L">L</option>
+                        </select>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Capacidade máxima quando cheio até ao bordo</p>
                     </div>
 
                     <div className="space-y-2">
@@ -735,22 +812,10 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                       />
                       <p className="text-xs text-muted-foreground">Listar todas as opções de cor disponíveis</p>
                     </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="totalCapacity" className="text-sm font-medium text-foreground">Capacidade Total</Label>
-                      <Input
-                        id="totalCapacity"
-                        {...form.register('totalCapacity')}
-                        placeholder="ex.: 17,8L"
-                        data-testid="input-total-capacity"
-                        className="h-9"
-                      />
-                      <p className="text-xs text-muted-foreground">Capacidade máxima quando cheio até ao bordo</p>
-                    </div>
                   </div>
                 </div>
 
-                {/* 3. Physical Properties Section (matches Excel: Peso, Dimensões) */}
+                {/* 3. Physical Properties Section */}
                 <div className="space-y-4">
                   <div className="border-b pb-3">
                     <h3 className="text-lg font-semibold text-foreground">Peso e Propriedades Físicas</h3>
@@ -758,27 +823,66 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="weight" className="text-sm font-medium text-foreground">Peso (+/- 5%) *</Label>
-                      <Input
-                        id="weight"
-                        {...form.register('weight')}
-                        placeholder="ex.: 700g"
-                        data-testid="input-weight"
-                        className="h-9"
-                      />
-                      <p className="text-xs text-muted-foreground">Peso base sem acessórios</p>
+                      <Label htmlFor="weight" className="text-sm font-medium text-foreground">
+                        Peso (+/- {form.watch('weightTolerance') || '5'}%) *
+                      </Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="weight"
+                          {...form.register('weight')}
+                          placeholder="ex.: 700"
+                          data-testid="input-weight"
+                          className="h-9 flex-1"
+                        />
+                        <select
+                          {...form.register('weightUnit')}
+                          className="h-9 w-16 rounded-md border border-input bg-background px-2 text-sm"
+                        >
+                          <option value="g">g</option>
+                          <option value="kg">kg</option>
+                        </select>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Tolerância:</span>
+                        <Input
+                          {...form.register('weightTolerance')}
+                          placeholder="5"
+                          className="h-7 w-14 text-xs"
+                        />
+                        <span className="text-xs text-muted-foreground">%</span>
+                      </div>
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="weightWithAccessories" className="text-sm font-medium text-foreground">Peso com Acessórios</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="weightWithAccessories"
+                          {...form.register('weightWithAccessories')}
+                          placeholder="ex.: 750"
+                          data-testid="input-weight-accessories"
+                          className="h-9 flex-1"
+                        />
+                        <select
+                          {...form.register('weightWithAccessoriesUnit')}
+                          className="h-9 w-16 rounded-md border border-input bg-background px-2 text-sm"
+                        >
+                          <option value="g">g</option>
+                          <option value="kg">kg</option>
+                        </select>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Peso total incluindo todos os acessórios</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="accessories" className="text-sm font-medium text-foreground">Acessórios</Label>
                       <Input
-                        id="weightWithAccessories"
-                        {...form.register('weightWithAccessories')}
-                        placeholder="ex.: 750g"
-                        data-testid="input-weight-accessories"
+                        id="accessories"
+                        {...form.register('accessories')}
+                        placeholder="ex.: Tampa, Asa, Vedante"
                         className="h-9"
                       />
-                      <p className="text-xs text-muted-foreground">Peso total incluindo todos os acessórios</p>
+                      <p className="text-xs text-muted-foreground">Acessórios incluídos com o produto</p>
                     </div>
                   </div>
                 </div>
@@ -944,6 +1048,7 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                         disabled
                         readOnly
                       />
+                      <p className="text-xs text-muted-foreground">Descrição técnica auto-gerada a partir dos campos selecionados</p>
                     </div>
 
                     <div className="space-y-2">
@@ -1050,7 +1155,7 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                         isLoading={closingSystemsLoading}
                         onOptionAdded={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/closingSystems'] })}
                       />
-                      <p className="text-xs text-muted-foreground">Tipo de mecanismo de fecho</p>
+                      <p className="text-xs text-muted-foreground">Método de encerramento (rosca, pressão, etc.)</p>
                     </div>
 
                     <div className="space-y-2">
@@ -1062,7 +1167,7 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                         data-testid="input-cap-type"
                         className="h-9"
                       />
-                      <p className="text-xs text-muted-foreground">Tipo de tampa utilizada</p>
+                      <p className="text-xs text-muted-foreground">Modelo específico da tampa utilizada</p>
                     </div>
 
                     <div className="space-y-2">
@@ -1248,6 +1353,47 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                   </div>
                 </div>
 
+                {/* ADR and Food Contact Toggles */}
+                <div className="space-y-4">
+                  <div className="border-b pb-3">
+                    <h3 className="text-lg font-semibold text-foreground">Certificações Específicas</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Certificações ADR e contacto alimentar</p>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3 p-3 border border-border rounded-md">
+                        <Switch
+                          id="adrCertified"
+                          checked={form.watch('adrCertified') ?? false}
+                          onCheckedChange={(checked) => form.setValue('adrCertified', checked)}
+                        />
+                        <Label htmlFor="adrCertified" className="text-sm font-medium text-foreground cursor-pointer">ADR</Label>
+                      </div>
+                      {form.watch('adrCertified') && (
+                        <div className="space-y-2 ml-4">
+                          <Label htmlFor="adrCode" className="text-sm font-medium text-foreground">Código ADR</Label>
+                          <Input
+                            id="adrCode"
+                            {...form.register('adrCode')}
+                            placeholder="ex.: 3H1/Y1,9/150"
+                            className="h-9 font-mono"
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3 p-3 border border-border rounded-md">
+                        <Switch
+                          id="foodContact"
+                          checked={form.watch('foodContact') ?? false}
+                          onCheckedChange={(checked) => form.setValue('foodContact', checked)}
+                        />
+                        <Label htmlFor="foodContact" className="text-sm font-medium text-foreground cursor-pointer">Contacto Alimentar</Label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Marcações (Markings) Section */}
                 <div className="space-y-4">
                   <div className="border-b pb-3">
@@ -1295,6 +1441,17 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                       <Label htmlFor="gravacaoCliente" className="text-sm font-medium text-foreground cursor-pointer">Gravação Cliente</Label>
                     </div>
                   </div>
+                  {form.watch('gravacaoCliente') && (
+                    <div className="space-y-2 mt-4">
+                      <Label htmlFor="gravacaoClienteDetails" className="text-sm font-medium text-foreground">Detalhes da Gravação</Label>
+                      <Input
+                        id="gravacaoClienteDetails"
+                        {...form.register('gravacaoClienteDetails')}
+                        placeholder="Especificações da gravação do cliente"
+                        className="h-9"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Product Markings JSON Section */}
@@ -1364,15 +1521,15 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
                     <div className="space-y-2">
-                      <Label htmlFor="autoculanteCliente" className="text-sm font-medium text-foreground">Autoculante Cliente</Label>
+                      <Label htmlFor="autoculanteCliente" className="text-sm font-medium text-foreground">Autocolante Cliente</Label>
                       <Input
                         id="autoculanteCliente"
                         {...form.register('autoculanteCliente')}
-                        placeholder="Especificações do autoculante do cliente"
+                        placeholder="Especificações do autocolante do cliente"
                         data-testid="input-autoculante-cliente"
                         className="h-9"
                       />
-                      <p className="text-xs text-muted-foreground">Detalhes do autoculante específico do cliente</p>
+                      <p className="text-xs text-muted-foreground">Detalhes do autocolante específico do cliente</p>
                     </div>
 
                     <div className="space-y-2">
@@ -1412,34 +1569,47 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                 {/* Empilhamento (Stacking) Section */}
                 <div className="space-y-4">
                   <div className="border-b pb-3">
-                    <h3 className="text-lg font-semibold text-foreground">Empilhamento</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Capacidade de empilhamento do produto</p>
+                    <h3 className="text-lg font-semibold text-foreground">Empilhamento *</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Capacidade de empilhamento do produto (obrigatório)</p>
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="flex items-center gap-4 p-3 border border-border rounded-md">
-                      <Switch
-                        id="stackable"
-                        checked={form.watch('stackable') ?? false}
-                        onCheckedChange={(checked) => form.setValue('stackable', checked)}
-                        data-testid="switch-stackable"
-                      />
-                      <div className="space-y-1">
-                        <Label htmlFor="stackable" className="text-sm font-medium text-foreground cursor-pointer">Empilhável</Label>
-                        <p className="text-xs text-muted-foreground">Produto pode ser empilhado</p>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-foreground">Empilhável *</Label>
+                      <div className="flex gap-3">
+                        <Button
+                          type="button"
+                          variant={form.watch('stackable') === true ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => form.setValue('stackable', true)}
+                          className="flex-1"
+                        >
+                          Empilhável
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={form.watch('stackable') === false ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => form.setValue('stackable', false)}
+                          className="flex-1"
+                        >
+                          Não Empilhável
+                        </Button>
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="stackingCapacity" className="text-sm font-medium text-foreground">Capacidade de Empilhamento</Label>
-                      <Input
-                        id="stackingCapacity"
-                        {...form.register('stackingCapacity')}
-                        placeholder="ex.: 8 unidades"
-                        data-testid="input-stacking-capacity"
-                        className="h-9"
-                      />
-                      <p className="text-xs text-muted-foreground">Número máximo de unidades empilháveis</p>
-                    </div>
+                    {form.watch('stackable') && (
+                      <div className="space-y-2">
+                        <Label htmlFor="stackingCapacity" className="text-sm font-medium text-foreground">Capacidade de Empilhamento</Label>
+                        <Input
+                          id="stackingCapacity"
+                          {...form.register('stackingCapacity')}
+                          placeholder="ex.: 8 unidades"
+                          data-testid="input-stacking-capacity"
+                          className="h-9"
+                        />
+                        <p className="text-xs text-muted-foreground">Número máximo de unidades empilháveis</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1487,15 +1657,36 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="totalUnits" className="text-sm font-medium text-foreground">Total de Unidades</Label>
-                      <Input
-                        id="totalUnits"
-                        {...form.register('totalUnits')}
-                        placeholder="ex.: 60 unidades"
-                        data-testid="input-total-units"
-                        className="h-9"
-                      />
-                      <p className="text-xs text-muted-foreground">Total de unidades por palete</p>
+                      <Label className="text-sm font-medium text-foreground">Total de Unidades</Label>
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <Input
+                            id="totalUnitsQuantity"
+                            {...form.register('totalUnitsQuantity')}
+                            placeholder="Quantidade"
+                            data-testid="input-total-units-quantity"
+                            className="h-9"
+                            type="number"
+                          />
+                        </div>
+                        <div className="w-40">
+                          <Select
+                            value={form.watch('totalUnitsType') || ''}
+                            onValueChange={(val) => form.setValue('totalUnitsType', val)}
+                          >
+                            <SelectTrigger className="h-9">
+                              <SelectValue placeholder="Tipo..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="palete">Palete</SelectItem>
+                              <SelectItem value="caixa">Caixa</SelectItem>
+                              <SelectItem value="saco">Saco</SelectItem>
+                              <SelectItem value="unidade">Unidade</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Total de unidades e tipo de embalagem</p>
                     </div>
                   </div>
                 </div>
@@ -1515,6 +1706,36 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                       rows={3}
                     />
                     <p className="text-xs text-muted-foreground">Informações adicionais de embalagem</p>
+                  </div>
+                </div>
+
+                {/* Approval Section */}
+                <div className="space-y-4">
+                  <div className="border-b pb-3">
+                    <h3 className="text-lg font-semibold text-foreground">Aprovação</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Informação de aprovação do produto</p>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="approvedBy" className="text-sm font-medium text-foreground">Aprovado por</Label>
+                      <Input
+                        id="approvedBy"
+                        {...form.register('approvedBy')}
+                        placeholder="ex.: Departamento Qualidade SIE"
+                        className="h-9"
+                      />
+                      <p className="text-xs text-muted-foreground">Departamento ou pessoa responsável pela aprovação</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="approvalDate" className="text-sm font-medium text-foreground">Data de Aprovação</Label>
+                      <Input
+                        id="approvalDate"
+                        {...form.register('approvalDate')}
+                        placeholder="ex.: 2024-01-15"
+                        className="h-9"
+                      />
+                      <p className="text-xs text-muted-foreground">Data em que o produto foi aprovado</p>
+                    </div>
                   </div>
                 </div>
 
@@ -1607,22 +1828,29 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        {productVersions.map((version: ProductVersion, index: number) => (
+                        {productVersions.map((version: ProductVersion, index: number) => {
+                          const isAnnulled = (version as any).isAnnulled;
+                          return (
                           <div 
                             key={version.id} 
-                            className={`p-4 rounded-lg border ${index === 0 ? 'border-primary bg-primary/5' : 'border-border bg-muted/30'}`}
+                            className={`p-4 rounded-lg border ${isAnnulled ? 'border-border bg-muted/20 opacity-60' : index === 0 ? 'border-primary bg-primary/5' : 'border-border bg-muted/30'}`}
                           >
                             <div className="flex items-start justify-between gap-4">
                               <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${index === 0 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${isAnnulled ? 'bg-muted text-muted-foreground line-through' : index === 0 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
                                   v{version.versionNumber}
                                 </div>
                                 <div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-medium text-foreground">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className={`font-medium ${isAnnulled ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
                                       Versão {version.versionNumber}
                                     </span>
-                                    {index === 0 && (
+                                    {isAnnulled && (
+                                      <span className="text-xs px-2 py-0.5 rounded bg-destructive/10 text-destructive">
+                                        Anulada
+                                      </span>
+                                    )}
+                                    {!isAnnulled && index === 0 && (
                                       <span className="text-xs px-2 py-0.5 rounded bg-primary text-primary-foreground">
                                         Atual
                                       </span>
@@ -1642,17 +1870,47 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                                   </div>
                                 </div>
                               </div>
-                              <div className="text-right text-sm">
-                                <div className="text-muted-foreground">
-                                  {version.changeNotes || 'Sem notas'}
+                              <div className="flex items-start gap-3">
+                                <div className="text-right text-sm">
+                                  <div className="text-muted-foreground">
+                                    {version.changeNotes || 'Sem notas'}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground/70 mt-1">
+                                    Ref: {version.productCode}
+                                  </div>
                                 </div>
-                                <div className="text-xs text-muted-foreground/70 mt-1">
-                                  Ref: {version.productCode}
+                                <div>
+                                  {isAnnulled ? (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={async () => {
+                                        await apiRequest('PATCH', `/api/products/${product.id}/versions/${version.id}/restore`);
+                                        queryClient.invalidateQueries({ queryKey: ['/api/products', product.id, 'versions'] });
+                                      }}
+                                    >
+                                      Restaurar
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={async () => {
+                                        await apiRequest('PATCH', `/api/products/${product.id}/versions/${version.id}/annul`);
+                                        queryClient.invalidateQueries({ queryKey: ['/api/products', product.id, 'versions'] });
+                                      }}
+                                    >
+                                      Anular
+                                    </Button>
+                                  )}
                                 </div>
                               </div>
                             </div>
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
