@@ -1,0 +1,54 @@
+Algumas notas iniciais e pedido de clarificação:
+
+Medidas de Produtos
+
+De facto está em falta um campo que permita escolher as unidades na grande maioria dos campos. Contudo, pergunto se esse campo fará sentido para todos os campos de medidas ou só para alguns.
+É uma boa questão.
+Passo a identificar os que considero mais importantes, que estão principalmente no primeiro separador:
+Capacidade nominal
+Capacidade total
+Peso
+Peso com acessórios
+
+
+Por exemplo, para as dimensões dos produtos, creio que tipicamente este tipo de medidas é apresentado em mm, fará sentido abrir margem para erro ao dar a oportunidade ao utilizador para definir um tipo de medida diferente para cada um destes campos ? Certo, ajustado na resposta de cima
+
+Creio que poderá fazer sentido fazer uma tabela que indique, de todos os campos com dimensões, quais aqueles em que as unidades de medida podem variar de produto para produto e só aplicar a esses a opção de escolher uma unidade de medida diferente, o que acha ?
+Parece-me bem
+
+
+Templates
+
+Já me consegue enviar os diversos tempates que pretendem utilizar, explicando em que contexto deve ser utilizado um, ou outro, template ? Pode ser em Word, ou PDF, por exemplo.  
+
+vou enviar alguns, os mais usuais, sendo que depois posso criar novos com base nos existentes, isto se perceber como funciona.
+NOTA IMPORTANTE:
+Atualmente, a folha onde temos a ficha técnica é composta por duas partes... 
+A frente terá o que chamamos a Monofolha, onde apresentamos o respetivo modelo de forma generalista (e não a referencia em especifico em si)
+As costas, apesar de chamarmos Ficha Técnica, também não funciona bem dessa forma, pois apresenta as especificações de acordo com a frente... ou seja, este modelo tem estas características e poder ter estas cores, estas tampas, estas certificações... etc...
+
+O que pretendemos mudar/corrigir - a ficha técnica apresenta a referencia especificamente (que pertence ao determinado modelo)... ou seja, se for azul, apresenta a referencia em azul, se for branca com certificação ADR, já é outro documento...
+
+A ideia é adaptar este template para ter a informação apenas referente à referencia que estamos a preencher na aplicação, ficando a frente com informação geral, mas especifica ao produto e as costas com todas as especificações.
+
+Penso que expliquei a ideia.
+​​
+​​
+​​
+​​
+​​
+
+
+
+Criação / Atualização dos Códigos de Produtos
+
+NOTA: esta funcionalidade não está ainda concluída, está parcialmente implementada mas temos noção que ainda não está como vocês têm na folha de excel, conto até ao final desta semana ter disponível para testar (tem alguma complexidade) sem problema... e nesta fase estamos focados em retomar as operações aqui na empresa, mas queria ir fechando esta temática, sendo que temos margem,
+
+Observações Gerais
+
+Vamos incluir o campo "Forma" (pode estar em falta de facto) _ ok
+Vamos colocaf a Capacidade Nominal e Total mais próximas _ ok
+Certificações 
+Se entendi, o pretendido aqiu será adicionar dois campos de semelhantes ao "Datador" com as designações "Contato Alimentar" e outro com a designação "ADR" é isso ? Isto para cada linha que se introduza de certificados ? Atualmente cada linha é apenas um campo de texto indicando o nome do certificado. Como o caso do ADR é uma certificação que se usa muito, poderia funcionar como o datador... e quando ativamos esta certificação, temos de preencher o texto com o respetivo código do ADR, que ai sim, varia
+
+Relativamente a feedback adicional, sugeria recolhermos mais feedback da Qualidade durante a semana e depois implementamos as melhorias/correcções todas de seguida. - vou tratar
