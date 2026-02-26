@@ -412,6 +412,18 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
                   <Text style={styles.dataValue}>{product.handlingSystem}</Text>
                 </View>
               )}
+              {product.gravacaoCliente && hasValue(product.gravacaoClienteDetails) && (
+                <View style={styles.dataRowAlt}>
+                  <Text style={styles.dataLabel}>Gravacao Cliente</Text>
+                  <Text style={styles.dataValue}>{product.gravacaoClienteDetails}</Text>
+                </View>
+              )}
+              {hasValue(product.autoculanteCliente) && (
+                <View style={styles.dataRow}>
+                  <Text style={styles.dataLabel}>Autocolante Cliente</Text>
+                  <Text style={styles.dataValue}>{product.autoculanteCliente}</Text>
+                </View>
+              )}
             </View>
 
             <View style={styles.section}>
