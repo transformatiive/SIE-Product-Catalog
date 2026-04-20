@@ -125,7 +125,6 @@ export function PdfTemplateEditor({ initialContent, onChange, mergeFields }: Pro
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
-      Underline,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Image.configure({ inline: false, allowBase64: true }),
       TextStyle,
