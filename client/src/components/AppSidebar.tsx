@@ -1,4 +1,4 @@
-import { Search, List, Plus, Settings, Users, LogOut } from "lucide-react";
+import { Search, List, Plus, Settings, Users, LogOut, FileText } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
   Sidebar,
@@ -27,7 +27,7 @@ interface AppSidebarProps {
 export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebarProps) {
   const [location, setLocation] = useLocation();
   const { user, logout, isLoggingOut } = useAuth();
-  const isOnAdminPage = location === "/admin";
+  const isOnAdminPage = location.startsWith("/admin");
   const navigationItems = [
     {
       title: "Pesquisa",
@@ -61,6 +61,13 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
       url: "/admin?tab=users",
       disabled: false,
       key: "users",
+    },
+    {
+      title: "Templates de PDF",
+      icon: FileText,
+      url: "/admin/pdf-templates",
+      disabled: false,
+      key: "pdf-templates",
     },
   ];
 
@@ -131,9 +138,12 @@ export function AppSidebar({ currentView, onNavigate, productCount }: AppSidebar
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
               {systemItems.map((item) => {
-                const isActive = item.key === 'admin' 
-                  ? location === '/admin' && !location.includes('tab=users')
-                  : location.includes('tab=users');
+                const isActive =
+                  item.key === 'admin'
+                    ? location === '/admin' && !location.includes('tab=users')
+                    : item.key === 'users'
+                      ? location.includes('tab=users')
+                      : location.startsWith('/admin/pdf-templates');
                   
                 return (
                   <SidebarMenuItem key={item.key}>

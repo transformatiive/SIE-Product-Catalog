@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import Dashboard from "@/components/Dashboard";
 import Admin from "@/pages/Admin";
+import PdfTemplates from "@/pages/PdfTemplates";
 import Login from "@/pages/Login";
 import SharedProduct from "@/pages/SharedProduct";
 import NotFound from "@/pages/not-found";
@@ -30,6 +31,8 @@ function ProtectedRoutes() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/admin" component={Admin} />
+      <Route path="/admin/pdf-templates" component={PdfTemplates} />
+      <Route path="/admin/pdf-templates/:id" component={PdfTemplates} />
       <Route component={NotFound} />
     </Switch>
   );

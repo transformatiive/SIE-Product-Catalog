@@ -1325,6 +1325,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // POST /api/admin/pdf-templates/:id/duplicate - Duplicate a template
+  app.post("/api/admin/pdf-templates/:id/duplicate", requireAuth, async (req, res) => {
+    try {
+      const existing = await db
+        .select()
+        .from(pdfTemplates)
+        .where(eq(pdfTemplates.id, req.params.id))
+        .limit(1);
+      if (existing.length === 0) {
+        return res.status(404).json({ message: "Template não encontrado" });
+      }
+      const src = existing[0];
+      const result = await db
+        .insert(pdfTemplates)
+        .values({
+          name: `${src.name} (cópia)`,
+          description: src.description,
+          content: src.content,
+          pageSize: src.pageSize,
+          orientation: src.orientation,
+          builtInRenderer: null,
+          isGlobalDefault: false,
+          isActive: true,
+        })
+        .returning();
+      res.status(201).json(result[0]);
+    } catch (error) {
+      console.error("Error duplicating PDF template:", error);
+      res.status(500).json({ message: "Falha ao duplicar template" });
+    }
+  });
+
   // DELETE /api/admin/pdf-templates/:id - Delete (block built-ins)
   app.delete("/api/admin/pdf-templates/:id", requireAuth, async (req, res) => {
     try {
