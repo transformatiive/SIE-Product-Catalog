@@ -6,6 +6,7 @@ import { TextAlign } from "@tiptap/extension-text-align";
 import { Image } from "@tiptap/extension-image";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
+import { FontFamily } from "@tiptap/extension-font-family";
 import { Highlight } from "@tiptap/extension-highlight";
 import { Table } from "@tiptap/extension-table";
 import { TableRow } from "@tiptap/extension-table-row";
@@ -129,6 +130,7 @@ export function PdfTemplateEditor({ initialContent, onChange, mergeFields }: Pro
       Image.configure({ inline: false, allowBase64: true }),
       TextStyle,
       Color,
+      FontFamily.configure({ types: ["textStyle"] }),
       Highlight.configure({ multicolor: true }),
       Table.configure({ resizable: false }),
       TableRow,
@@ -223,6 +225,8 @@ export function PdfTemplateEditor({ initialContent, onChange, mergeFields }: Pro
           >
             <Strikethrough className="w-4 h-4" />
           </ToolbarBtn>
+          <Sep />
+          <FontFamilyPicker editor={editor} />
           <Sep />
           <ToolbarBtn
             active={editor.isActive("paragraph")}
@@ -462,6 +466,62 @@ function ToolbarBtn({
 
 function Sep() {
   return <div className="w-px bg-border mx-1 my-1" />;
+}
+
+const FONT_FAMILIES = [
+  { label: "Predefinida", value: "" },
+  { label: "Sans-serif", value: "Inter, Arial, Helvetica, sans-serif" },
+  { label: "Serif", value: "Georgia, 'Times New Roman', serif" },
+  { label: "Monoespaçada", value: "'Courier New', Courier, monospace" },
+  { label: "Arial", value: "Arial, Helvetica, sans-serif" },
+  { label: "Helvetica", value: "Helvetica, Arial, sans-serif" },
+  { label: "Times New Roman", value: "'Times New Roman', Times, serif" },
+  { label: "Georgia", value: "Georgia, serif" },
+  { label: "Courier New", value: "'Courier New', Courier, monospace" },
+  { label: "Verdana", value: "Verdana, Geneva, sans-serif" },
+  { label: "Tahoma", value: "Tahoma, Geneva, sans-serif" },
+  { label: "Trebuchet MS", value: "'Trebuchet MS', sans-serif" },
+];
+
+function FontFamilyPicker({ editor }: { editor: any }) {
+  const current = editor.getAttributes("textStyle").fontFamily || "";
+  const currentLabel =
+    FONT_FAMILIES.find((f) => f.value === current)?.label || "Tipo de letra";
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="min-w-[8rem] justify-start"
+          title="Tipo de letra"
+        >
+          <span
+            className="truncate text-xs"
+            style={{ fontFamily: current || undefined }}
+          >
+            {currentLabel}
+          </span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="max-h-80 overflow-auto">
+        {FONT_FAMILIES.map((f) => (
+          <DropdownMenuItem
+            key={f.label}
+            onClick={() =>
+              f.value
+                ? editor.chain().focus().setFontFamily(f.value).run()
+                : editor.chain().focus().unsetFontFamily().run()
+            }
+            style={{ fontFamily: f.value || undefined }}
+          >
+            {f.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
 
 const PRESET_COLORS = [
