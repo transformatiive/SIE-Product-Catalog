@@ -1,6 +1,9 @@
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 import { Product } from '@shared/schema';
 import sieLogo from '@assets/sie-logo.png';
+import centro2020Logo from '@assets/centro-2020-logo.png';
+import portugal2020Logo from '@assets/portugal-2020-logo.png';
+import uniaoEuropeiaLogo from '@assets/uniao-europeia-logo.png';
 
 const COLORS = {
   primary: '#E31E24',
@@ -345,10 +348,14 @@ const styles = StyleSheet.create({
   },
   certificationLogos: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
     alignItems: 'center',
     marginTop: 8,
     flexWrap: 'wrap',
+  },
+  certLogoImage: {
+    height: 36,
+    objectFit: 'contain',
   },
   certLogo: {
     paddingHorizontal: 10,
@@ -644,15 +651,9 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
                 <Text style={styles.sectionTitle}>Certificações</Text>
                 <Text style={styles.sectionSubtitle}>Produto certificado pelos organismos:</Text>
                 <View style={styles.certificationLogos}>
-                  <View style={styles.certLogo}>
-                    <Text style={styles.certLogoText}>CENTRO{'\n'}2020</Text>
-                  </View>
-                  <View style={styles.certLogo}>
-                    <Text style={styles.certLogoText}>PORTUGAL{'\n'}2020</Text>
-                  </View>
-                  <View style={styles.certLogo}>
-                    <Text style={styles.certLogoText}>UNIÃO{'\n'}EUROPEIA</Text>
-                  </View>
+                  <Image src={centro2020Logo} style={[styles.certLogoImage, { width: 96 }]} />
+                  <Image src={portugal2020Logo} style={[styles.certLogoImage, { width: 36 }]} />
+                  <Image src={uniaoEuropeiaLogo} style={[styles.certLogoImage, { width: 53 }]} />
                 </View>
               </View>
             </View>

@@ -42,6 +42,14 @@ const SIE_LOGO_PATH = (() => {
   return fs.existsSync(p) ? p : null;
 })();
 
+const certificationLogoFile = (filename: string) => {
+  const p = path.join(process.cwd(), 'attached_assets', filename);
+  return fs.existsSync(p) ? p : null;
+};
+const CENTRO_2020_LOGO_PATH = certificationLogoFile('centro-2020-logo.png');
+const PORTUGAL_2020_LOGO_PATH = certificationLogoFile('portugal-2020-logo.png');
+const UNIAO_EUROPEIA_LOGO_PATH = certificationLogoFile('uniao-europeia-logo.png');
+
 const styles = StyleSheet.create({
   page: {
     flexDirection: 'column',
@@ -385,10 +393,14 @@ const styles = StyleSheet.create({
   },
   certificationLogos: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
     alignItems: 'center',
     marginTop: 8,
     flexWrap: 'wrap',
+  },
+  certLogoImage: {
+    height: 36,
+    objectFit: 'contain',
   },
   certLogo: {
     paddingHorizontal: 10,
@@ -719,15 +731,21 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
               h(Text, { style: styles.sectionTitle }, 'Certificações'),
               h(Text, { style: styles.sectionSubtitle }, 'Produto certificado pelos organismos:'),
               h(View, { style: styles.certificationLogos },
-                h(View, { style: styles.certLogo },
-                  h(Text, { style: styles.certLogoText }, 'CENTRO\n2020')
-                ),
-                h(View, { style: styles.certLogo },
-                  h(Text, { style: styles.certLogoText }, 'PORTUGAL\n2020')
-                ),
-                h(View, { style: styles.certLogo },
-                  h(Text, { style: styles.certLogoText }, 'UNIÃO\nEUROPEIA')
-                )
+                CENTRO_2020_LOGO_PATH
+                  ? h(Image, { style: [styles.certLogoImage, { width: 96 }], src: CENTRO_2020_LOGO_PATH })
+                  : h(View, { style: styles.certLogo },
+                      h(Text, { style: styles.certLogoText }, 'CENTRO\n2020')
+                    ),
+                PORTUGAL_2020_LOGO_PATH
+                  ? h(Image, { style: [styles.certLogoImage, { width: 36 }], src: PORTUGAL_2020_LOGO_PATH })
+                  : h(View, { style: styles.certLogo },
+                      h(Text, { style: styles.certLogoText }, 'PORTUGAL\n2020')
+                    ),
+                UNIAO_EUROPEIA_LOGO_PATH
+                  ? h(Image, { style: [styles.certLogoImage, { width: 53 }], src: UNIAO_EUROPEIA_LOGO_PATH })
+                  : h(View, { style: styles.certLogo },
+                      h(Text, { style: styles.certLogoText }, 'UNIÃO\nEUROPEIA')
+                    )
               )
             )
           )

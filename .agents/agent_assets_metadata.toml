@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "SWitpshjQHYgpMLFfPzZD"
+uri = "file://attached_assets/portugal-2020-logo.png"
+type = "image"
+title = "PT2020 logo - check"
