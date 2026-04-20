@@ -929,9 +929,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ================================
 
   // GET /api/admin/:tableName - Get all options for a table
-  app.get("/api/admin/:tableName", async (req, res) => {
+  app.get("/api/admin/:tableName", async (req, res, next) => {
     try {
       const { tableName } = req.params;
+      if (tableName === "pdf-templates") return next();
       const tableConfig = tableMap[tableName as keyof typeof tableMap];
       
       if (!tableConfig) {
@@ -956,9 +957,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST /api/admin/:tableName - Create a new option
-  app.post("/api/admin/:tableName", async (req, res) => {
+  app.post("/api/admin/:tableName", async (req, res, next) => {
     try {
       const { tableName } = req.params;
+      if (tableName === "pdf-templates") return next();
       const tableConfig = tableMap[tableName as keyof typeof tableMap];
       
       if (!tableConfig) {
@@ -982,9 +984,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // PUT /api/admin/:tableName/:id - Update an option
-  app.put("/api/admin/:tableName/:id", async (req, res) => {
+  app.put("/api/admin/:tableName/:id", async (req, res, next) => {
     try {
       const { tableName, id } = req.params;
+      if (tableName === "pdf-templates") return next();
       const tableConfig = tableMap[tableName as keyof typeof tableMap];
       
       if (!tableConfig) {
@@ -1017,9 +1020,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // DELETE /api/admin/:tableName/:id - Soft delete (set isActive=false)
-  app.delete("/api/admin/:tableName/:id", async (req, res) => {
+  app.delete("/api/admin/:tableName/:id", async (req, res, next) => {
     try {
       const { tableName, id } = req.params;
+      if (tableName === "pdf-templates") return next();
       const tableConfig = tableMap[tableName as keyof typeof tableMap];
       
       if (!tableConfig) {
