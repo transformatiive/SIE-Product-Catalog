@@ -656,9 +656,22 @@ function TemplateEdit({ id }: { id: string }) {
           </CardHeader>
           <CardContent className="flex-1 overflow-hidden">
             {isBuiltIn ? (
-              <div className="h-full flex items-center justify-center text-sm text-muted-foreground border rounded-md bg-muted/20 p-6 text-center">
-                O template "SIE Padrão" usa o renderizador do sistema. Veja a
-                pré-visualização ao lado.
+              <div className="h-full flex flex-col items-center justify-center gap-4 text-sm text-muted-foreground border rounded-md bg-muted/20 p-6 text-center">
+                <div>
+                  <p className="font-medium text-foreground mb-1">
+                    Este é o template do sistema
+                  </p>
+                  <p>
+                    O "SIE Padrão" usa o motor de renderização interno e não
+                    tem editor visual. Para criar um template editável tipo
+                    Word, duplique este ou crie um novo.
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button asChild variant="outline">
+                    <Link href="/admin/pdf-templates">Voltar à lista</Link>
+                  </Button>
+                </div>
               </div>
             ) : (
               <PdfTemplateEditor
