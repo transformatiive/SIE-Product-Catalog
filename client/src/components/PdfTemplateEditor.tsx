@@ -12,6 +12,15 @@ import { TableCell } from "@tiptap/extension-table-cell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Bold,
   Italic,
@@ -98,6 +107,8 @@ interface Props {
 
 export function PdfTemplateEditor({ initialContent, onChange, mergeFields }: Props) {
   const [search, setSearch] = useState("");
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
+  const [imageUrl, setImageUrl] = useState("");
 
   const editor = useEditor({
     extensions: [
@@ -143,10 +154,15 @@ export function PdfTemplateEditor({ initialContent, onChange, mergeFields }: Pro
   };
 
   const insertImageByUrl = () => {
-    const url = window.prompt(
-      "URL ou caminho da imagem (ex.: /uploads/imagem.png ou /attached_assets/foto.jpg):",
-    );
+    setImageUrl("");
+    setImageDialogOpen(true);
+  };
+
+  const confirmInsertImage = () => {
+    const url = imageUrl.trim();
     if (url) editor.chain().focus().setImage({ src: url }).run();
+    setImageDialogOpen(false);
+    setImageUrl("");
   };
 
   const insertTable = () => {
@@ -313,6 +329,41 @@ export function PdfTemplateEditor({ initialContent, onChange, mergeFields }: Pro
           </div>
         </ScrollArea>
       </aside>
+
+      <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Inserir imagem</DialogTitle>
+            <DialogDescription>
+              Indique o URL ou caminho da imagem (ex.: /uploads/imagem.png ou
+              /attached_assets/foto.jpg).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label>URL da imagem</Label>
+            <Input
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://... ou /uploads/imagem.png"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  confirmInsertImage();
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setImageDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmInsertImage} disabled={!imageUrl.trim()}>
+              Inserir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
