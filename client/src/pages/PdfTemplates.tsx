@@ -675,6 +675,7 @@ function TemplateEdit({ id }: { id: string }) {
               </div>
             ) : (
               <PdfTemplateEditor
+                key={template?.id || "loading"}
                 initialContent={content}
                 onChange={setContent}
                 mergeFields={mergeFields}
