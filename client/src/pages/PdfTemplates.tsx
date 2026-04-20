@@ -364,6 +364,7 @@ function TemplateEdit({ id }: { id: string }) {
   const [isGlobalDefault, setIsGlobalDefault] = useState(false);
   const [isActive, setIsActive] = useState(true);
   const [content, setContent] = useState<any>(null);
+  const [contentLoadedFor, setContentLoadedFor] = useState<string | null>(null);
   const [previewProductId, setPreviewProductId] = useState<string>("");
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -371,6 +372,7 @@ function TemplateEdit({ id }: { id: string }) {
 
   useEffect(() => {
     if (!template) return;
+    if (contentLoadedFor === template.id) return;
     setName(template.name);
     setDescription(template.description || "");
     setPageSize(template.pageSize);
@@ -382,7 +384,8 @@ function TemplateEdit({ id }: { id: string }) {
     } catch {
       setContent(null);
     }
-  }, [template]);
+    setContentLoadedFor(template.id);
+  }, [template, contentLoadedFor]);
 
   const isBuiltIn = !!template?.builtInRenderer;
 
@@ -508,7 +511,7 @@ function TemplateEdit({ id }: { id: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (isLoading || !template) {
+  if (isLoading || !template || contentLoadedFor !== template.id) {
     return <p className="p-6 text-muted-foreground">A carregar template...</p>;
   }
 
