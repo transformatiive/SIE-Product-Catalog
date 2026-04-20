@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useEditor, EditorContent, ReactNodeViewRenderer, NodeViewWrapper } from "@tiptap/react";
 import { Node, mergeAttributes } from "@tiptap/core";
 import { StarterKit } from "@tiptap/starter-kit";
-import { Underline } from "@tiptap/extension-underline";
 import { TextAlign } from "@tiptap/extension-text-align";
 import { Image } from "@tiptap/extension-image";
+import { TextStyle } from "@tiptap/extension-text-style";
+import { Color } from "@tiptap/extension-color";
+import { Highlight } from "@tiptap/extension-highlight";
 import { Table } from "@tiptap/extension-table";
 import { TableRow } from "@tiptap/extension-table-row";
 import { TableHeader } from "@tiptap/extension-table-header";
@@ -40,6 +42,8 @@ import {
   Search,
   Pilcrow,
   Columns2,
+  Palette,
+  Highlighter,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -123,6 +127,9 @@ export function PdfTemplateEditor({ initialContent, onChange, mergeFields }: Pro
       Underline,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Image.configure({ inline: false, allowBase64: true }),
+      TextStyle,
+      Color,
+      Highlight.configure({ multicolor: true }),
       Table.configure({ resizable: false }),
       TableRow,
       TableHeader,
@@ -283,6 +290,27 @@ export function PdfTemplateEditor({ initialContent, onChange, mergeFields }: Pro
             <AlignRight className="w-4 h-4" />
           </ToolbarBtn>
           <Sep />
+          <ColorPicker
+            icon={<Palette className="w-4 h-4" />}
+            title="Cor do texto"
+            currentColor={editor.getAttributes("textStyle").color || ""}
+            onPick={(c) =>
+              c
+                ? editor.chain().focus().setColor(c).run()
+                : editor.chain().focus().unsetColor().run()
+            }
+          />
+          <ColorPicker
+            icon={<Highlighter className="w-4 h-4" />}
+            title="Cor de fundo"
+            currentColor={editor.getAttributes("highlight").color || ""}
+            onPick={(c) =>
+              c
+                ? editor.chain().focus().toggleHighlight({ color: c }).run()
+                : editor.chain().focus().unsetHighlight().run()
+            }
+          />
+          <Sep />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -434,4 +462,76 @@ function ToolbarBtn({
 
 function Sep() {
   return <div className="w-px bg-border mx-1 my-1" />;
+}
+
+const PRESET_COLORS = [
+  "#000000", "#444444", "#888888", "#cccccc", "#ffffff",
+  "#E31E24", "#d97706", "#ca8a04", "#16a34a", "#0ea5e9",
+  "#2563eb", "#7c3aed", "#db2777",
+  "#fee2e2", "#fef3c7", "#dcfce7", "#dbeafe", "#ede9fe", "#fce7f3",
+];
+
+function ColorPicker({
+  icon,
+  title,
+  currentColor,
+  onPick,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  currentColor: string;
+  onPick: (color: string) => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          title={title}
+          aria-label={title}
+        >
+          <div className="flex flex-col items-center justify-center gap-0.5">
+            {icon}
+            <div
+              className="w-4 h-1 rounded-sm border border-border"
+              style={{ backgroundColor: currentColor || "transparent" }}
+            />
+          </div>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="p-2 w-auto">
+        <div className="grid grid-cols-7 gap-1 mb-2">
+          {PRESET_COLORS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => onPick(c)}
+              className="w-6 h-6 rounded-sm border border-border hover-elevate"
+              style={{ backgroundColor: c }}
+              title={c}
+            />
+          ))}
+        </div>
+        <div className="flex items-center gap-2 border-t pt-2">
+          <input
+            type="color"
+            value={currentColor || "#000000"}
+            onChange={(e) => onPick(e.target.value)}
+            className="w-8 h-8 cursor-pointer rounded border border-border bg-transparent"
+            aria-label="Cor personalizada"
+          />
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => onPick("")}
+          >
+            Remover
+          </Button>
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
