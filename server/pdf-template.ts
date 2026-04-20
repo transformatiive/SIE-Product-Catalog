@@ -1,4 +1,4 @@
-import { createElement as h, Fragment } from 'react';
+import { createElement as h } from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 import { Product } from '@shared/schema';
 import path from 'path';
@@ -734,9 +734,9 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
         )
       ),
 
-      h(View, { style: styles.footer },
+      h(View, { style: styles.footer, fixed: true },
         h(Text, { style: styles.footerText },
-          `Aprovado por: ${product.approvedBy || '-'}  |  Data: ${product.approvalDate || formatDate(null)}  |  Revisão: ${String((product as any).currentVersionNumber ?? 1).padStart(2, '0')}`),
+          `Aprovado por: ${product.approvedBy || '-'}  |  Data: ${product.approvalDate || formatDate(null)}`),
         h(Text, { style: styles.pageNumber }, 'pág. 2/2')
       )
     )
