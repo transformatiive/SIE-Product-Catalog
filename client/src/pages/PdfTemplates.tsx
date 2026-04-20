@@ -464,10 +464,12 @@ function TemplateEdit({ id }: { id: string }) {
         if (!res.ok) {
           // Built-in templates can't be previewed via draft endpoint; fall back to saved preview
           if (isBuiltIn) {
-            const url = `/api/admin/pdf-templates/${id}/preview-pdf${
-              previewProductId ? `?productId=${previewProductId}` : ""
-            }`;
-            setPreviewUrl(`${url}&_t=${Date.now()}`);
+            const params = new URLSearchParams();
+            if (previewProductId) params.set("productId", previewProductId);
+            params.set("_t", String(Date.now()));
+            setPreviewUrl(
+              `/api/admin/pdf-templates/${id}/preview-pdf?${params.toString()}`,
+            );
             setPreviewLoading(false);
             return;
           }
