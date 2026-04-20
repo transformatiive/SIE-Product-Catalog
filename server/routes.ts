@@ -39,8 +39,13 @@ import {
   dimensionTypes,
   insertDimensionTypeSchema,
   shapes,
-  insertShapeSchema
+  insertShapeSchema,
+  pdfTemplates,
+  insertPdfTemplateSchema,
+  updatePdfTemplateSchema,
 } from "@shared/schema";
+import { renderTemplateToDocument } from "./template-renderer";
+import { MERGE_FIELDS } from "@shared/mergeFields";
 import { fromZodError } from "zod-validation-error";
 import { renderToBuffer } from '@react-pdf/renderer';
 import React from 'react';
@@ -73,6 +78,69 @@ const tableMap = {
   dimensionTypes: { table: dimensionTypes, insertSchema: insertDimensionTypeSchema },
   shapes: { table: shapes, insertSchema: insertShapeSchema },
 };
+
+async function resolveTemplateForProduct(product: { family?: string | null }): Promise<any> {
+  // 1) Family.defaultTemplateId
+  if (product.family) {
+    try {
+      const fam = await db
+        .select()
+        .from(families)
+        .where(eq(families.description, product.family))
+        .limit(1);
+      const tplId = fam[0]?.defaultTemplateId;
+      if (tplId) {
+        const tpl = await db
+          .select()
+          .from(pdfTemplates)
+          .where(eq(pdfTemplates.id, tplId))
+          .limit(1);
+        if (tpl[0] && tpl[0].isActive) return tpl[0];
+      }
+    } catch (e) {
+      console.warn("resolveTemplateForProduct family lookup failed", e);
+    }
+  }
+
+  // 2) Global default
+  try {
+    const def = await db
+      .select()
+      .from(pdfTemplates)
+      .where(eq(pdfTemplates.isGlobalDefault, true))
+      .limit(1);
+    if (def[0] && def[0].isActive) return def[0];
+  } catch (e) {
+    console.warn("resolveTemplateForProduct global default lookup failed", e);
+  }
+
+  // 3) Built-in SIE Padrão fallback
+  try {
+    const builtin = await db
+      .select()
+      .from(pdfTemplates)
+      .where(eq(pdfTemplates.builtInRenderer, "sie-default"))
+      .limit(1);
+    if (builtin[0]) return builtin[0];
+  } catch (e) {
+    console.warn("resolveTemplateForProduct built-in lookup failed", e);
+  }
+
+  // Last-resort synthetic built-in (in case seed didn't run)
+  return {
+    id: "_fallback",
+    name: "SIE Padrão",
+    description: null,
+    content: null,
+    pageSize: "A4",
+    orientation: "portrait",
+    builtInRenderer: "sie-default",
+    isGlobalDefault: true,
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ================================
@@ -510,8 +578,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const { TechnicalDatasheetPDF } = await import('./pdf-template');
-      const pdfDocument = React.createElement(TechnicalDatasheetPDF, { product: productData });
+      const template = await resolveTemplateForProduct(productData);
+      const pdfDocument = renderTemplateToDocument(template, productData);
       const pdfBuffer = await renderToBuffer(pdfDocument as React.ReactElement);
       
       const filename = `${productData.productCode}-Datasheet.pdf`;
@@ -1128,8 +1196,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const { TechnicalDatasheetPDF } = await import('./pdf-template');
-      const pdfDocument = React.createElement(TechnicalDatasheetPDF, { product: productData });
+      const template = await resolveTemplateForProduct(productData);
+      const pdfDocument = renderTemplateToDocument(template, productData);
       const pdfBuffer = await renderToBuffer(pdfDocument as React.ReactElement);
 
       const filename = `${productData.productCode}-Datasheet.pdf`;
@@ -1140,6 +1208,238 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating shared PDF:", error);
       res.status(500).json({ message: "Falha ao gerar PDF" });
+    }
+  });
+
+  // ================================
+  // PDF TEMPLATES
+  // ================================
+
+  // GET /api/merge-fields - Catalog of merge fields available in templates
+  app.get("/api/merge-fields", requireAuth, (_req, res) => {
+    res.json(MERGE_FIELDS);
+  });
+
+  // GET /api/admin/pdf-templates - List all templates
+  app.get("/api/admin/pdf-templates", requireAuth, async (_req, res) => {
+    try {
+      const list = await db.select().from(pdfTemplates).orderBy(pdfTemplates.name);
+      res.json(list);
+    } catch (error) {
+      console.error("Error listing PDF templates:", error);
+      res.status(500).json({ message: "Falha ao obter templates" });
+    }
+  });
+
+  // GET /api/admin/pdf-templates/:id - Get one template
+  app.get("/api/admin/pdf-templates/:id", requireAuth, async (req, res) => {
+    try {
+      const result = await db
+        .select()
+        .from(pdfTemplates)
+        .where(eq(pdfTemplates.id, req.params.id))
+        .limit(1);
+      if (result.length === 0) {
+        return res.status(404).json({ message: "Template não encontrado" });
+      }
+      res.json(result[0]);
+    } catch (error) {
+      console.error("Error getting PDF template:", error);
+      res.status(500).json({ message: "Falha ao obter template" });
+    }
+  });
+
+  // POST /api/admin/pdf-templates - Create
+  app.post("/api/admin/pdf-templates", requireAuth, async (req, res) => {
+    try {
+      const validation = insertPdfTemplateSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({
+          message: "Dados inválidos",
+          errors: fromZodError(validation.error).toString(),
+        });
+      }
+      const data = validation.data;
+      // Built-in renderer is reserved for the seeded SIE Padrão
+      data.builtInRenderer = null;
+      if (data.isGlobalDefault) {
+        await db
+          .update(pdfTemplates)
+          .set({ isGlobalDefault: false })
+          .where(eq(pdfTemplates.isGlobalDefault, true));
+      }
+      const result = await db.insert(pdfTemplates).values(data).returning();
+      res.status(201).json(result[0]);
+    } catch (error) {
+      console.error("Error creating PDF template:", error);
+      res.status(500).json({ message: "Falha ao criar template" });
+    }
+  });
+
+  // PUT /api/admin/pdf-templates/:id - Update
+  app.put("/api/admin/pdf-templates/:id", requireAuth, async (req, res) => {
+    try {
+      const existing = await db
+        .select()
+        .from(pdfTemplates)
+        .where(eq(pdfTemplates.id, req.params.id))
+        .limit(1);
+      if (existing.length === 0) {
+        return res.status(404).json({ message: "Template não encontrado" });
+      }
+
+      const validation = updatePdfTemplateSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({
+          message: "Dados inválidos",
+          errors: fromZodError(validation.error).toString(),
+        });
+      }
+      const data: any = { ...validation.data, updatedAt: new Date() };
+      // Lock down built-in templates: only name/description and isGlobalDefault editable
+      if (existing[0].builtInRenderer) {
+        delete data.content;
+        delete data.builtInRenderer;
+        delete data.pageSize;
+        delete data.orientation;
+      } else {
+        delete data.builtInRenderer; // never allow promoting custom to built-in
+      }
+
+      if (data.isGlobalDefault === true) {
+        await db
+          .update(pdfTemplates)
+          .set({ isGlobalDefault: false })
+          .where(eq(pdfTemplates.isGlobalDefault, true));
+      }
+
+      const result = await db
+        .update(pdfTemplates)
+        .set(data)
+        .where(eq(pdfTemplates.id, req.params.id))
+        .returning();
+      res.json(result[0]);
+    } catch (error) {
+      console.error("Error updating PDF template:", error);
+      res.status(500).json({ message: "Falha ao actualizar template" });
+    }
+  });
+
+  // DELETE /api/admin/pdf-templates/:id - Delete (block built-ins)
+  app.delete("/api/admin/pdf-templates/:id", requireAuth, async (req, res) => {
+    try {
+      const existing = await db
+        .select()
+        .from(pdfTemplates)
+        .where(eq(pdfTemplates.id, req.params.id))
+        .limit(1);
+      if (existing.length === 0) {
+        return res.status(404).json({ message: "Template não encontrado" });
+      }
+      if (existing[0].builtInRenderer) {
+        return res
+          .status(400)
+          .json({ message: "Templates do sistema não podem ser eliminados" });
+      }
+      // Clear FK references on families before deleting
+      await db
+        .update(families)
+        .set({ defaultTemplateId: null })
+        .where(eq(families.defaultTemplateId, req.params.id));
+      await db.delete(pdfTemplates).where(eq(pdfTemplates.id, req.params.id));
+      res.json({ ok: true });
+    } catch (error) {
+      console.error("Error deleting PDF template:", error);
+      res.status(500).json({ message: "Falha ao eliminar template" });
+    }
+  });
+
+  // GET /api/admin/pdf-templates/:id/preview-pdf?productId=...
+  app.get("/api/admin/pdf-templates/:id/preview-pdf", requireAuth, async (req, res) => {
+    try {
+      const tpl = await db
+        .select()
+        .from(pdfTemplates)
+        .where(eq(pdfTemplates.id, req.params.id))
+        .limit(1);
+      if (tpl.length === 0) {
+        return res.status(404).json({ message: "Template não encontrado" });
+      }
+
+      let product;
+      const productId = typeof req.query.productId === "string" ? req.query.productId : undefined;
+      if (productId) {
+        product = await storage.getProduct(productId);
+      }
+      if (!product) {
+        const all = await storage.getProducts();
+        product = all[0];
+      }
+      if (!product) {
+        return res.status(400).json({
+          message: "Sem produtos para pré-visualizar. Crie pelo menos um produto.",
+        });
+      }
+
+      const doc = renderTemplateToDocument(tpl[0], product, { previewMode: true });
+      const buf = await renderToBuffer(doc as React.ReactElement);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `inline; filename="preview.pdf"`);
+      res.setHeader("Content-Length", buf.length);
+      res.send(buf);
+    } catch (error) {
+      console.error("Error rendering template preview:", error);
+      res.status(500).json({ message: "Falha ao gerar pré-visualização" });
+    }
+  });
+
+  // POST /api/admin/pdf-templates/preview-draft - Preview unsaved draft
+  app.post("/api/admin/pdf-templates/preview-draft", requireAuth, async (req, res) => {
+    try {
+      const validation = insertPdfTemplateSchema.partial().safeParse(req.body.template);
+      if (!validation.success) {
+        return res.status(400).json({
+          message: "Dados inválidos",
+          errors: fromZodError(validation.error).toString(),
+        });
+      }
+      const draft: any = {
+        id: "draft",
+        name: "Draft",
+        description: null,
+        content: validation.data.content || null,
+        pageSize: validation.data.pageSize || "A4",
+        orientation: validation.data.orientation || "portrait",
+        builtInRenderer: null,
+        isGlobalDefault: false,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      let product;
+      if (req.body.productId) {
+        product = await storage.getProduct(req.body.productId);
+      }
+      if (!product) {
+        const all = await storage.getProducts();
+        product = all[0];
+      }
+      if (!product) {
+        return res.status(400).json({
+          message: "Sem produtos para pré-visualizar. Crie pelo menos um produto.",
+        });
+      }
+
+      const doc = renderTemplateToDocument(draft, product, { previewMode: true });
+      const buf = await renderToBuffer(doc as React.ReactElement);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `inline; filename="preview.pdf"`);
+      res.setHeader("Content-Length", buf.length);
+      res.send(buf);
+    } catch (error) {
+      console.error("Error rendering draft preview:", error);
+      res.status(500).json({ message: "Falha ao gerar pré-visualização" });
     }
   });
 

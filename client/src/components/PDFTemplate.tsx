@@ -642,6 +642,12 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
                 {manuseamentoString
                   ? <SpecRow label="Sistema de manuseamento" value={manuseamentoString} />
                   : (product.handlingSystem ? <SpecRow label="Sistema de manuseamento" value={product.handlingSystem} /> : null)}
+                {product.gravacaoCliente && product.gravacaoClienteDetails
+                  ? <SpecRow label="Gravação Cliente" value={product.gravacaoClienteDetails} />
+                  : null}
+                {product.autoculanteCliente
+                  ? <SpecRow label="Autocolante Cliente" value={product.autoculanteCliente} />
+                  : null}
                 {marcacoesString ? <SpecRow label="Marcações" value={marcacoesString} /> : null}
                 {outrasCaracteristicasString ? <SpecRow label="Outras características" value={outrasCaracteristicasString} /> : null}
                 {product.adrCertified ? <SpecRow label="ADR" value={product.adrCode ? `Certificado - ${product.adrCode}` : 'Certificado'} /> : null}

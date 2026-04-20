@@ -327,6 +327,7 @@ export const families = pgTable("families", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   code: text("code").notNull().unique(),
   description: text("description").notNull(),
+  defaultTemplateId: varchar("default_template_id"), // FK to pdf_templates (optional)
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -535,6 +536,41 @@ export const insertSpecificationSchema = createInsertSchema(specifications).omit
 });
 export type InsertSpecification = z.infer<typeof insertSpecificationSchema>;
 export type Specification = typeof specifications.$inferSelect;
+
+// ================================
+// PDF TEMPLATES
+// ================================
+
+export const pdfTemplates = pgTable("pdf_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  // TipTap document JSON serialized as text. Null when builtInRenderer is set.
+  content: text("content"),
+  pageSize: text("page_size").default("A4").notNull(), // A4 | A3 | Letter | Legal
+  orientation: text("orientation").default("portrait").notNull(), // portrait | landscape
+  // When set, render via the named built-in React component instead of the JSON doc.
+  builtInRenderer: text("built_in_renderer"), // 'sie-default' | null
+  isGlobalDefault: boolean("is_global_default").default(false).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertPdfTemplateSchema = createInsertSchema(pdfTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  pageSize: z.enum(["A4", "A3", "Letter", "Legal"]).default("A4"),
+  orientation: z.enum(["portrait", "landscape"]).default("portrait"),
+});
+
+export const updatePdfTemplateSchema = insertPdfTemplateSchema.partial();
+
+export type InsertPdfTemplate = z.infer<typeof insertPdfTemplateSchema>;
+export type UpdatePdfTemplate = z.infer<typeof updatePdfTemplateSchema>;
+export type PdfTemplate = typeof pdfTemplates.$inferSelect;
 
 // Generic dropdown option type for API responses
 export type DropdownOption = {

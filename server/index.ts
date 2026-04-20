@@ -7,6 +7,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { storage, db } from "./storage";
 import { users } from "@shared/schema";
 import { eq } from "drizzle-orm";
+import { seedDefaultTemplates } from "./seed-templates";
 
 async function initializeAdminUser() {
   try {
@@ -96,6 +97,7 @@ app.use((req, res, next) => {
 
 (async () => {
   await initializeAdminUser();
+  await seedDefaultTemplates();
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
