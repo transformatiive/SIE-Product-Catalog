@@ -1,4 +1,4 @@
-import { createElement as h } from 'react';
+import { createElement as h, Fragment } from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 import { Product } from '@shared/schema';
 import path from 'path';
@@ -11,14 +11,14 @@ function resolveImagePath(webPath: string | null): string | null {
 
   try {
     const cleanPath = webPath.startsWith('/') ? webPath.slice(1) : webPath;
-    
+
     if (!cleanPath.startsWith('uploads/')) {
       console.warn(`Invalid image path: ${webPath}. Path must start with uploads/`);
       return null;
     }
 
     const fullPath = path.join(process.cwd(), 'public', cleanPath);
-    
+
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
     if (!fullPath.startsWith(uploadsDir)) {
       console.warn(`Path traversal attempt detected: ${webPath}`);
@@ -37,6 +37,11 @@ function resolveImagePath(webPath: string | null): string | null {
   }
 }
 
+const SIE_LOGO_PATH = (() => {
+  const p = path.join(process.cwd(), 'attached_assets', 'sie-logo.png');
+  return fs.existsSync(p) ? p : null;
+})();
+
 const styles = StyleSheet.create({
   page: {
     flexDirection: 'column',
@@ -46,25 +51,31 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica',
     color: '#333333',
   },
-  
+
   redHeader: {
     backgroundColor: '#E31E24',
-    height: 120,
+    height: 110,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 30,
-    paddingVertical: 20,
+    paddingVertical: 16,
   },
-  sieLogo: {
+  sieLogoBox: {
     backgroundColor: '#ffffff',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 8,
+    width: 110,
+    height: 70,
+    borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 8,
   },
-  sieLogoText: {
+  sieLogoImage: {
+    width: 90,
+    height: 52,
+    objectFit: 'contain',
+  },
+  sieLogoFallback: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#E31E24',
@@ -73,54 +84,50 @@ const styles = StyleSheet.create({
   headerSections: {
     flexDirection: 'column',
     alignItems: 'flex-end',
-    gap: 8,
+    gap: 6,
   },
-  headerSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 4,
-    marginBottom: 4,
+  headerPill: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderRadius: 3,
+    minWidth: 150,
   },
-  headerSectionIcon: {
+  headerPillText: {
     fontSize: 10,
-    color: '#E31E24',
-    marginRight: 6,
-  },
-  headerSectionText: {
-    fontSize: 11,
     fontWeight: 'bold',
     color: '#E31E24',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
+    textAlign: 'right',
   },
 
+  // PAGE 1
   page1Content: {
     padding: 30,
     flex: 1,
   },
   productRef: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
-    color: '#666666',
-    marginBottom: 8,
+    color: '#999999',
+    marginBottom: 6,
+    letterSpacing: 0.5,
   },
   productTitle: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#E31E24',
     marginBottom: 4,
   },
   productSubtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#666666',
-    marginBottom: 30,
+    marginBottom: 24,
   },
-  
+
   mainContentRow: {
     flexDirection: 'row',
-    gap: 40,
+    gap: 30,
     flex: 1,
   },
   productImageSection: {
@@ -128,261 +135,279 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#f8f8f8',
-    borderRadius: 8,
-    minHeight: 300,
-    padding: 20,
+    borderRadius: 6,
+    minHeight: 280,
+    padding: 16,
   },
   productImage: {
     maxWidth: '100%',
-    maxHeight: 280,
+    maxHeight: 260,
     objectFit: 'contain',
   },
   productImagePlaceholder: {
-    fontSize: 14,
+    fontSize: 11,
     color: '#999999',
     textAlign: 'center',
   },
-  
+
   techCharacteristics: {
-    flex: 0.6,
-    paddingTop: 20,
+    flex: 0.85,
+    paddingTop: 8,
   },
   techTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'bold',
-    color: '#333333',
-    marginBottom: 20,
+    color: '#E31E24',
+    marginBottom: 16,
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  
-  charItem: {
+
+  charRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
-    paddingVertical: 8,
+    marginBottom: 10,
   },
-  charIcon: {
-    width: 24,
-    height: 24,
+  bulletDot: {
+    width: 10,
+    height: 10,
     backgroundColor: '#E31E24',
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  charIconText: {
-    fontSize: 10,
-    color: '#ffffff',
-    fontWeight: 'bold',
+    borderRadius: 5,
+    marginRight: 10,
   },
   charContent: {
     flex: 1,
   },
   charLabel: {
-    fontSize: 8,
-    color: '#666666',
+    fontSize: 7,
+    color: '#888888',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 2,
+    letterSpacing: 0.4,
+    marginBottom: 1,
   },
   charValue: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 'bold',
     color: '#333333',
   },
-  
-  colorCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#ffffff',
-    borderWidth: 2,
-    borderColor: '#cccccc',
-    marginTop: 4,
-  },
-  
+
   bottomSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    marginTop: 40,
+    alignItems: 'center',
+    marginTop: 20,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#eeeeee',
   },
   recyclingSection: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
-  recyclingIcon: {
-    fontSize: 24,
-    color: '#2E7D32',
-    marginBottom: 4,
+  recyclingBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#2E7D32',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  recyclingText: {
-    fontSize: 12,
+  recyclingBadgeText: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: '#ffffff',
+  },
+  recyclingLabel: {
+    fontSize: 9,
     fontWeight: 'bold',
     color: '#2E7D32',
-  },
-  recyclingSubtext: {
-    fontSize: 8,
-    color: '#666666',
-    textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   websiteUrl: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#E31E24',
+    letterSpacing: 1,
   },
   pageNumber: {
-    fontSize: 10,
+    fontSize: 9,
     color: '#666666',
   },
 
+  // PAGE 2
   page2Content: {
     padding: 30,
     flex: 1,
   },
   page2Subtitle: {
-    fontSize: 14,
-    color: '#666666',
+    fontSize: 12,
+    color: '#333333',
     textAlign: 'center',
-    marginBottom: 30,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    marginBottom: 22,
+    fontWeight: 'bold',
+    letterSpacing: 0.4,
   },
-  
+
   twoColumnLayout: {
     flexDirection: 'row',
-    gap: 30,
+    gap: 20,
     flex: 1,
   },
   leftColumnPage2: {
     flex: 1,
   },
   rightColumnPage2: {
-    flex: 1,
+    flex: 1.05,
   },
-  
+
   sectionTitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
     color: '#E31E24',
-    marginBottom: 15,
+    marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   sectionSubtitle: {
-    fontSize: 9,
-    color: '#666666',
-    marginBottom: 15,
+    fontSize: 8,
+    color: '#888888',
+    marginBottom: 8,
+    fontStyle: 'italic',
   },
-  
+
   technicalDrawingContainer: {
     backgroundColor: '#f8f8f8',
-    borderRadius: 8,
-    padding: 20,
-    minHeight: 200,
+    borderRadius: 6,
+    padding: 14,
+    minHeight: 180,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   technicalDrawing: {
     maxWidth: '100%',
-    maxHeight: 180,
+    maxHeight: 160,
     objectFit: 'contain',
   },
   drawingPlaceholder: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#999999',
     textAlign: 'center',
   },
-  
+
   packagingContainer: {
-    marginTop: 20,
+    marginTop: 4,
   },
   packagingGrid: {
     backgroundColor: '#f8f8f8',
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 15,
+    borderRadius: 6,
+    padding: 12,
+    marginBottom: 12,
   },
   packagingRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    alignItems: 'center',
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e5e5',
+  },
+  packagingRowLast: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 5,
   },
   packagingLabel: {
-    fontSize: 10,
-    color: '#333333',
+    fontSize: 8,
+    color: '#666666',
     textTransform: 'uppercase',
+    letterSpacing: 0.3,
+    flex: 1,
   },
   packagingValue: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: 'bold',
     color: '#E31E24',
+    textAlign: 'right',
+    flex: 1,
   },
-  
+  palletizationImageContainer: {
+    backgroundColor: '#f8f8f8',
+    borderRadius: 6,
+    padding: 10,
+    minHeight: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  palletizationImage: {
+    maxWidth: '100%',
+    maxHeight: 110,
+    objectFit: 'contain',
+  },
+
   specsTable: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   specRow: {
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderBottomColor: '#eeeeee',
-    paddingVertical: 6,
+    paddingVertical: 5,
     alignItems: 'center',
   },
-  specIcon: {
-    width: 16,
-    height: 16,
+  specBullet: {
+    width: 8,
+    height: 8,
     backgroundColor: '#E31E24',
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  specIconSmall: {
-    fontSize: 8,
-    color: '#ffffff',
-    fontWeight: 'bold',
+    borderRadius: 4,
+    marginRight: 8,
   },
   specLabel: {
-    fontSize: 9,
-    color: '#666666',
+    fontSize: 8,
+    color: '#777777',
     flex: 1,
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
   specValue: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: 'bold',
     color: '#333333',
-    flex: 1.5,
+    flex: 1.4,
+    textAlign: 'right',
   },
-  
+
   certificationSection: {
-    marginTop: 30,
+    marginTop: 16,
   },
   certificationLogos: {
     flexDirection: 'row',
-    gap: 15,
+    gap: 10,
     alignItems: 'center',
-    marginTop: 15,
+    marginTop: 8,
+    flexWrap: 'wrap',
   },
   certLogo: {
-    width: 40,
-    height: 30,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     backgroundColor: '#f0f0f0',
     borderRadius: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#dddddd',
   },
   certLogoText: {
     fontSize: 8,
-    color: '#666666',
+    color: '#444444',
     textAlign: 'center',
+    fontWeight: 'bold',
   },
-  
+
   footer: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 16,
     left: 30,
     right: 30,
     flexDirection: 'row',
@@ -390,16 +415,59 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderTopWidth: 1,
     borderTopColor: '#eeeeee',
-    paddingTop: 15,
+    paddingTop: 10,
   },
   footerText: {
-    fontSize: 9,
-    color: '#666666',
+    fontSize: 8,
+    color: '#777777',
   },
 });
 
 interface PDFTemplateProps {
   product: Product;
+}
+
+const HEADER_PILLS = ['AGROALIMENTAR', 'FARMACÊUTICA', 'QUÍMICA', 'FITOSSANITÁRIOS'];
+
+function renderHeader() {
+  return h(View, { style: styles.redHeader },
+    h(View, { style: styles.sieLogoBox },
+      SIE_LOGO_PATH
+        ? h(Image, { style: styles.sieLogoImage, src: SIE_LOGO_PATH })
+        : h(Text, { style: styles.sieLogoFallback }, 'SIE')
+    ),
+    h(View, { style: styles.headerSections },
+      ...HEADER_PILLS.map((label, idx) =>
+        h(View, { key: idx, style: styles.headerPill },
+          h(Text, { style: styles.headerPillText }, label)
+        )
+      )
+    )
+  );
+}
+
+function renderRecycling() {
+  return h(View, { style: styles.recyclingSection },
+    h(View, { style: styles.recyclingBadge },
+      h(Text, { style: styles.recyclingBadgeText }, '100%')
+    ),
+    h(Text, { style: styles.recyclingLabel }, 'Reciclável')
+  );
+}
+
+function specRow(label: string, value: string) {
+  return h(View, { style: styles.specRow },
+    h(View, { style: styles.specBullet }),
+    h(Text, { style: styles.specLabel }, label),
+    h(Text, { style: styles.specValue }, value)
+  );
+}
+
+function packRow(label: string, value: string, last = false) {
+  return h(View, { style: last ? styles.packagingRowLast : styles.packagingRow },
+    h(Text, { style: styles.packagingLabel }, label),
+    h(Text, { style: styles.packagingValue }, value)
+  );
 }
 
 export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
@@ -412,13 +480,9 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
     }
   };
 
-  const dimensions = parseJSON(product.dimensions, {});
-  const certifications = parseJSON(product.certifications, []);
-  const specialFeatures = parseJSON(product.specialFeatures, []);
   const packaging = parseJSON(product.packaging, {});
-  const markings = parseJSON(product.markings, []);
 
-  const formatDate = (date: Date | null) => {
+  const formatDate = (date: any) => {
     if (!date) return new Date().toLocaleDateString('pt-PT');
     return new Date(date).toLocaleDateString('pt-PT');
   };
@@ -469,402 +533,200 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
   const marcacoesString = buildMarcacoesString();
   const outrasCaracteristicasString = buildOutrasCaracteristicasString();
 
+  const productImagePath = resolveImagePath(product.productImage);
+  const technicalDrawingPath = resolveImagePath(product.technicalDrawing);
+  const palletizationImagePath = resolveImagePath(product.palletizationImage);
+
+  const totalUnitsValue = (product.totalUnitsQuantity && product.totalUnitsType)
+    ? `${product.totalUnitsQuantity} / ${product.totalUnitsType}`
+    : (product.totalUnits || packaging.unitsPerPallet?.toString() || '-');
+
   return h(Document, {},
-    h(Page, { size: "A4", style: styles.page },
-      h(View, { style: styles.redHeader },
-        h(View, { style: styles.sieLogo },
-          h(Text, { style: styles.sieLogoText }, 'SIE')
-        ),
-        
-        h(View, { style: styles.headerSections },
-          h(View, { style: styles.headerSection },
-            h(Text, { style: styles.headerSectionIcon }, '📦'),
-            h(Text, { style: styles.headerSectionText }, 'PACKAGING')
-          ),
-          h(View, { style: styles.headerSection },
-            h(Text, { style: styles.headerSectionIcon }, '⚙️'),
-            h(Text, { style: styles.headerSectionText }, 'TECHNICAL')
-          ),
-          h(View, { style: styles.headerSection },
-            h(Text, { style: styles.headerSectionIcon }, '🚛'),
-            h(Text, { style: styles.headerSectionText }, 'TRAFFIC')
-          )
-        )
-      ),
+    // ---------- PAGE 1 ----------
+    h(Page, { size: 'A4', style: styles.page },
+      renderHeader(),
 
       h(View, { style: styles.page1Content },
-        h(Text, { style: styles.productRef }, `REF. ${product.productCode}`),
-        
-        h(Text, { style: styles.productTitle }, product.product.toUpperCase()),
-        h(Text, { style: styles.productSubtitle }, product.type.toUpperCase()),
+        h(Text, { style: styles.productRef }, `REF. ${product.productCode || '-'}`),
+        h(Text, { style: styles.productTitle }, (product.product || '').toUpperCase()),
+        h(Text, { style: styles.productSubtitle }, (product.type || '').toUpperCase()),
 
         h(View, { style: styles.mainContentRow },
           h(View, { style: styles.productImageSection },
-            resolveImagePath(product.productImage)
-              ? h(Image, { 
-                  style: styles.productImage, 
-                  src: resolveImagePath(product.productImage)! 
-                })
-              : h(Text, { style: styles.productImagePlaceholder }, 
-                  'IMAGEM DO PRODUTO\n(Imagem será exibida aqui)')
+            productImagePath
+              ? h(Image, { style: styles.productImage, src: productImagePath })
+              : h(Text, { style: styles.productImagePlaceholder },
+                  'Imagem do produto\n(não carregada)')
           ),
 
           h(View, { style: styles.techCharacteristics },
-            h(Text, { style: styles.techTitle }, 'CARACTERÍSTICAS\nTÉCNICAS'),
-            
-            h(View, { style: styles.charItem },
-              h(View, { style: styles.charIcon },
-                h(Text, { style: styles.charIconText }, '⚱')
-              ),
+            h(Text, { style: styles.techTitle }, 'Características Técnicas'),
+
+            h(View, { style: styles.charRow },
+              h(View, { style: styles.bulletDot }),
               h(View, { style: styles.charContent },
                 h(Text, { style: styles.charLabel }, 'CAPACIDADE NOMINAL'),
-                h(Text, { style: styles.charValue }, `${product.nominalCapacity} ${product.nominalCapacityUnit || 'L'}`)
+                h(Text, { style: styles.charValue }, `${product.nominalCapacity || '-'} ${product.nominalCapacityUnit || 'L'}`)
               )
             ),
 
-            h(View, { style: styles.charItem },
-              h(View, { style: styles.charIcon },
-                h(Text, { style: styles.charIconText }, '⚖')
-              ),
+            product.totalCapacity ? h(View, { style: styles.charRow },
+              h(View, { style: styles.bulletDot }),
+              h(View, { style: styles.charContent },
+                h(Text, { style: styles.charLabel }, 'CAPACIDADE TOTAL'),
+                h(Text, { style: styles.charValue }, `${product.totalCapacity} ${product.totalCapacityUnit || 'L'}`)
+              )
+            ) : null,
+
+            h(View, { style: styles.charRow },
+              h(View, { style: styles.bulletDot }),
               h(View, { style: styles.charContent },
                 h(Text, { style: styles.charLabel }, `PESO (±${product.weightTolerance || '5'}%)`),
-                h(Text, { style: styles.charValue }, `${product.weight} ${product.weightUnit || 'g'}`)
+                h(Text, { style: styles.charValue }, `${product.weight || '-'} ${product.weightUnit || 'g'}`)
               )
             ),
 
-            h(View, { style: styles.charItem },
-              h(View, { style: styles.charIcon },
-                h(Text, { style: styles.charIconText }, '🔬')
-              ),
+            product.weightWithAccessories ? h(View, { style: styles.charRow },
+              h(View, { style: styles.bulletDot }),
               h(View, { style: styles.charContent },
-                h(Text, { style: styles.charLabel }, 'MATERIAL PRIMA'),
-                h(Text, { style: styles.charValue }, product.rawMaterial)
+                h(Text, { style: styles.charLabel }, `PESO C/ ACESSÓRIOS (±${product.weightTolerance || '5'}%)`),
+                h(Text, { style: styles.charValue }, `${product.weightWithAccessories} ${product.weightWithAccessoriesUnit || 'g'}`)
               )
-            ),
+            ) : null,
 
-            h(View, { style: styles.charItem },
-              h(View, { style: styles.charIcon },
-                h(Text, { style: styles.charIconText }, '🎨')
-              ),
+            h(View, { style: styles.charRow },
+              h(View, { style: styles.bulletDot }),
               h(View, { style: styles.charContent },
-                h(Text, { style: styles.charLabel }, 'CORES PRINCIPAIS'),
-                h(Text, { style: styles.charValue }, product.colors.split(',')[0]?.trim() || 'Branco'),
-                h(Text, { style: styles.charLabel }, 'Outras opções de cor sob consulta'),
-                h(View, { style: styles.colorCircle })
+                h(Text, { style: styles.charLabel }, 'MATÉRIA PRIMA'),
+                h(Text, { style: styles.charValue }, product.rawMaterial || '-')
               )
             ),
 
-            product.shape && h(View, { style: styles.charItem },
-              h(View, { style: styles.charIcon },
-                h(Text, { style: styles.charIconText }, '◇')
-              ),
+            product.colors ? h(View, { style: styles.charRow },
+              h(View, { style: styles.bulletDot }),
+              h(View, { style: styles.charContent },
+                h(Text, { style: styles.charLabel }, 'CORES DISPONÍVEIS'),
+                h(Text, { style: styles.charValue }, product.colors)
+              )
+            ) : null,
+
+            h(View, { style: styles.charRow },
+              h(View, { style: styles.bulletDot }),
+              h(View, { style: styles.charContent },
+                h(Text, { style: styles.charLabel }, 'CONTACTO ALIMENTAR'),
+                h(Text, { style: styles.charValue }, product.foodContact ? 'Apto' : 'Não Apto')
+              )
+            ),
+
+            product.shape ? h(View, { style: styles.charRow },
+              h(View, { style: styles.bulletDot }),
               h(View, { style: styles.charContent },
                 h(Text, { style: styles.charLabel }, 'FORMA'),
                 h(Text, { style: styles.charValue }, product.shape)
               )
-            ),
+            ) : null,
 
-            h(View, { style: styles.charItem },
-              h(View, { style: styles.charIcon },
-                h(Text, { style: styles.charIconText }, '📚')
-              ),
+            h(View, { style: styles.charRow },
+              h(View, { style: styles.bulletDot }),
               h(View, { style: styles.charContent },
                 h(Text, { style: styles.charLabel }, 'EMPILHÁVEL'),
-                h(Text, { style: styles.charValue }, product.stackable ? (product.stackingCapacity || '✓') : '✗')
+                h(Text, { style: styles.charValue }, product.stackable ? (product.stackingCapacity || 'Sim') : 'Não')
               )
             )
           )
         ),
 
         h(View, { style: styles.bottomSection },
-          h(View, { style: styles.recyclingSection },
-            h(Text, { style: styles.recyclingIcon }, '♻'),
-            h(Text, { style: styles.recyclingText }, '100%'),
-            h(Text, { style: styles.recyclingSubtext }, 'RECICLÁVEL')
-          ),
-
+          renderRecycling(),
           h(Text, { style: styles.websiteUrl }, 'WWW.SIE.PT'),
-
           h(Text, { style: styles.pageNumber }, 'pág. 1/2')
         )
       )
     ),
 
-    h(Page, { size: "A4", style: styles.page },
-      h(View, { style: styles.redHeader },
-        h(View, { style: styles.sieLogo },
-          h(Text, { style: styles.sieLogoText }, 'SIE')
-        ),
-        
-        h(View, { style: styles.headerSections },
-          h(View, { style: styles.headerSection },
-            h(Text, { style: styles.headerSectionIcon }, '🏭'),
-            h(Text, { style: styles.headerSectionText }, 'AGROALIMENTAR')
-          ),
-          h(View, { style: styles.headerSection },
-            h(Text, { style: styles.headerSectionIcon }, '💊'),
-            h(Text, { style: styles.headerSectionText }, 'FARMACÊUTICA')
-          ),
-          h(View, { style: styles.headerSection },
-            h(Text, { style: styles.headerSectionIcon }, '⚗️'),
-            h(Text, { style: styles.headerSectionText }, 'QUÍMICA')
-          ),
-          h(View, { style: styles.headerSection },
-            h(Text, { style: styles.headerSectionIcon }, '🧴'),
-            h(Text, { style: styles.headerSectionText }, 'FITOSSANITÁRIOS')
-          )
-        )
-      ),
+    // ---------- PAGE 2 ----------
+    h(Page, { size: 'A4', style: styles.page },
+      renderHeader(),
 
       h(View, { style: styles.page2Content },
-        h(Text, { style: styles.page2Subtitle }, 
-          `FICHA TÉCNICA | ${product.product.toUpperCase()} | ${product.productCode}`),
+        h(Text, { style: styles.page2Subtitle },
+          `FICHA TÉCNICA  |  ${(product.product || '').toUpperCase()}  |  ${product.productCode || '-'}`),
 
         h(View, { style: styles.twoColumnLayout },
+          // LEFT COLUMN
           h(View, { style: styles.leftColumnPage2 },
-            h(Text, { style: styles.sectionTitle }, 'DESENHO TÉCNICO 2D'),
-            h(Text, { style: styles.sectionSubtitle }, 
+            h(Text, { style: styles.sectionTitle }, 'Desenho Técnico 2D'),
+            h(Text, { style: styles.sectionSubtitle },
               'Medidas apresentadas em milímetros com tolerância de ±3%'),
-            
+
             h(View, { style: styles.technicalDrawingContainer },
-              resolveImagePath(product.technicalDrawing)
-                ? h(Image, { 
-                    style: styles.technicalDrawing, 
-                    src: resolveImagePath(product.technicalDrawing)! 
-                  })
-                : h(Text, { style: styles.drawingPlaceholder }, 
-                    'DESENHO TÉCNICO 2D\n(Blueprint será exibido aqui)')
+              technicalDrawingPath
+                ? h(Image, { style: styles.technicalDrawing, src: technicalDrawingPath })
+                : h(Text, { style: styles.drawingPlaceholder },
+                    'Desenho técnico 2D\n(não carregado)')
             ),
 
             h(View, { style: styles.packagingContainer },
-              h(Text, { style: styles.sectionTitle }, 'ESQUEMA DE\nACONDICIONAMENTO'),
-              
+              h(Text, { style: styles.sectionTitle }, 'Esquema de Acondicionamento'),
+
               h(View, { style: styles.packagingGrid },
-                h(Text, { style: styles.packagingLabel }, 'DIMENSÕES DA PALETE'),
-                h(Text, { style: styles.packagingValue }, 
+                packRow('Dimensões da palete',
                   product.palletDimensions || packaging.palletDimensions || '-'),
-                
-                h(Text, { style: styles.packagingLabel }, 'DIM. MERCADORIA NA PALETE'),
-                h(Text, { style: styles.packagingValue }, 
+                packRow('Dim. mercadoria na palete',
                   product.productOnPalletDimensions || packaging.stackHeight?.toString() || '-'),
-
-                h(Text, { style: styles.packagingLabel }, 'ESQUEMA DE ARRUMAÇÃO'),
-                h(Text, { style: styles.packagingValue }, 
+                packRow('Esquema de arrumação',
                   product.arrangementScheme || '-'),
-
-                h(Text, { style: styles.packagingLabel }, 'TOTAL DE UNIDADES'),
-                h(Text, { style: styles.packagingValue }, 
-                  (product.totalUnitsQuantity && product.totalUnitsType)
-                    ? `${product.totalUnitsQuantity} / ${product.totalUnitsType}`
-                    : product.totalUnits || packaging.unitsPerPallet?.toString() || '-')
+                packRow('Total de unidades', totalUnitsValue, true)
               ),
 
-              h(View, { style: styles.productImageSection },
-                resolveImagePath(product.productImage)
-                  ? h(Image, { 
-                      style: styles.productImage, 
-                      src: resolveImagePath(product.productImage)! 
-                    })
-                  : h(Text, { style: styles.productImagePlaceholder }, 
-                      'Imagem 3D do Produto')
+              h(View, { style: styles.palletizationImageContainer },
+                palletizationImagePath
+                  ? h(Image, { style: styles.palletizationImage, src: palletizationImagePath })
+                  : h(Text, { style: styles.drawingPlaceholder },
+                      'Imagem de paletização\n(não carregada)')
               )
             )
           ),
 
+          // RIGHT COLUMN
           h(View, { style: styles.rightColumnPage2 },
-            h(Text, { style: styles.sectionTitle }, 'CARACTERÍSTICAS TÉCNICAS'),
-            
+            h(Text, { style: styles.sectionTitle }, 'Características Técnicas'),
+
             h(View, { style: styles.specsTable },
-              h(View, { style: styles.specRow },
-                h(View, { style: styles.specIcon },
-                  h(Text, { style: styles.specIconSmall }, '⚱')
-                ),
-                h(Text, { style: styles.specLabel }, 'CAPACIDADE NOMINAL'),
-                h(Text, { style: styles.specValue }, `${product.nominalCapacity} ${product.nominalCapacityUnit || 'L'}`)
-              ),
-
-              product.totalCapacity && h(View, { style: styles.specRow },
-                h(View, { style: styles.specIcon },
-                  h(Text, { style: styles.specIconSmall }, '⚱')
-                ),
-                h(Text, { style: styles.specLabel }, 'CAPACIDADE TOTAL'),
-                h(Text, { style: styles.specValue }, `${product.totalCapacity} ${product.totalCapacityUnit || 'L'}`)
-              ),
-
-              h(View, { style: styles.specRow },
-                h(View, { style: styles.specIcon },
-                  h(Text, { style: styles.specIconSmall }, '⚖')
-                ),
-                h(Text, { style: styles.specLabel }, `PESO (±${product.weightTolerance || '5'}%)`),
-                h(Text, { style: styles.specValue }, `${product.weight} ${product.weightUnit || 'g'}`)
-              ),
-
-              product.weightWithAccessories && h(View, { style: styles.specRow },
-                h(View, { style: styles.specIcon },
-                  h(Text, { style: styles.specIconSmall }, '⚖')
-                ),
-                h(Text, { style: styles.specLabel }, `PESO C/ ACESSÓRIOS (±${product.weightTolerance || '5'}%)`),
-                h(Text, { style: styles.specValue }, `${product.weightWithAccessories} ${product.weightWithAccessoriesUnit || 'g'}`)
-              ),
-
-              product.accessories && h(View, { style: styles.specRow },
-                h(View, { style: styles.specIcon },
-                  h(Text, { style: styles.specIconSmall }, '🔧')
-                ),
-                h(Text, { style: styles.specLabel }, 'ACESSÓRIOS'),
-                h(Text, { style: styles.specValue }, product.accessories)
-              ),
-
-              product.shape && h(View, { style: styles.specRow },
-                h(View, { style: styles.specIcon },
-                  h(Text, { style: styles.specIconSmall }, '◇')
-                ),
-                h(Text, { style: styles.specLabel }, 'FORMA'),
-                h(Text, { style: styles.specValue }, product.shape)
-              ),
-
-              h(View, { style: styles.specRow },
-                h(View, { style: styles.specIcon },
-                  h(Text, { style: styles.specIconSmall }, '🔬')
-                ),
-                h(Text, { style: styles.specLabel }, 'MATERIAL PRIMA'),
-                h(Text, { style: styles.specValue }, product.rawMaterial)
-              ),
-
-              h(View, { style: styles.specRow },
-                h(View, { style: styles.specIcon },
-                  h(Text, { style: styles.specIconSmall }, '🎨')
-                ),
-                h(Text, { style: styles.specLabel }, 'CORES DISPONÍVEIS'),
-                h(Text, { style: styles.specValue }, product.colors)
-              ),
-
-              product.closingSystem && h(View, { style: styles.specRow },
-                h(View, { style: styles.specIcon },
-                  h(Text, { style: styles.specIconSmall }, '🔒')
-                ),
-                h(Text, { style: styles.specLabel }, 'SISTEMA DE FECHO'),
-                h(Text, { style: styles.specValue }, product.closingSystem)
-              ),
-
-              product.sealingType && h(View, { style: styles.specRow },
-                h(View, { style: styles.specIcon },
-                  h(Text, { style: styles.specIconSmall }, '🔗')
-                ),
-                h(Text, { style: styles.specLabel }, 'VEDANTE'),
-                h(Text, { style: styles.specValue }, product.sealingType)
-              ),
-
-              product.handlingSystem && h(View, { style: styles.specRow },
-                h(View, { style: styles.specIcon },
-                  h(Text, { style: styles.specIconSmall }, '🤲')
-                ),
-                h(Text, { style: styles.specLabel }, 'SISTEMA DE MANUSEAMENTO'),
-                h(Text, { style: styles.specValue }, product.handlingSystem)
-              ),
-
-              h(View, { style: styles.specRow },
-                h(View, { style: styles.specIcon },
-                  h(Text, { style: styles.specIconSmall }, '🍽')
-                ),
-                h(Text, { style: styles.specLabel }, 'CONTACTO ALIMENTAR'),
-                h(Text, { style: styles.specValue }, product.foodContact ? 'Apto' : 'Não Apto')
-              ),
-
-              product.adrCertified && h(View, { style: styles.specRow },
-                h(View, { style: styles.specIcon },
-                  h(Text, { style: styles.specIconSmall }, '⚠')
-                ),
-                h(Text, { style: styles.specLabel }, 'ADR'),
-                h(Text, { style: styles.specValue }, product.adrCode ? `Certificado - ${product.adrCode}` : 'Certificado')
-              ),
-
-              product.designation && h(View, { style: styles.specRow },
-                h(View, { style: styles.specIcon },
-                  h(Text, { style: styles.specIconSmall }, '📋')
-                ),
-                h(Text, { style: styles.specLabel }, 'DESIGNAÇÃO'),
-                h(Text, { style: styles.specValue }, product.designation)
-              ),
-
-              product.barcode && h(View, { style: styles.specRow },
-                h(View, { style: styles.specIcon },
-                  h(Text, { style: styles.specIconSmall }, '📊')
-                ),
-                h(Text, { style: styles.specLabel }, 'CÓDIGO DE BARRAS'),
-                h(Text, { style: styles.specValue }, product.barcode)
-              ),
-
-              product.capType && h(View, { style: styles.specRow },
-                h(View, { style: styles.specIcon },
-                  h(Text, { style: styles.specIconSmall }, '🔓')
-                ),
-                h(Text, { style: styles.specLabel }, 'TIPO DE TAMPA'),
-                h(Text, { style: styles.specValue }, product.capType)
-              ),
-
-              product.capDimensions && h(View, { style: styles.specRow },
-                h(View, { style: styles.specIcon },
-                  h(Text, { style: styles.specIconSmall }, '📐')
-                ),
-                h(Text, { style: styles.specLabel }, 'DIMENSÕES DA TAMPA'),
-                h(Text, { style: styles.specValue }, product.capDimensions)
-              ),
-
-              h(View, { style: styles.specRow },
-                h(View, { style: styles.specIcon },
-                  h(Text, { style: styles.specIconSmall }, '📚')
-                ),
-                h(Text, { style: styles.specLabel }, 'EMPILHÁVEL'),
-                h(Text, { style: styles.specValue }, product.stackable ? (product.stackingCapacity || '✓') : '✗')
-              ),
-
-              vedanteString && h(View, { style: styles.specRow },
-                h(View, { style: styles.specIcon },
-                  h(Text, { style: styles.specIconSmall }, '🔗')
-                ),
-                h(Text, { style: styles.specLabel }, 'VEDANTE'),
-                h(Text, { style: styles.specValue }, vedanteString)
-              ),
-
-              manuseamentoString && h(View, { style: styles.specRow },
-                h(View, { style: styles.specIcon },
-                  h(Text, { style: styles.specIconSmall }, '🤲')
-                ),
-                h(Text, { style: styles.specLabel }, 'SISTEMA DE MANUSEAMENTO'),
-                h(Text, { style: styles.specValue }, manuseamentoString)
-              ),
-
-              marcacoesString && h(View, { style: styles.specRow },
-                h(View, { style: styles.specIcon },
-                  h(Text, { style: styles.specIconSmall }, '🏷')
-                ),
-                h(Text, { style: styles.specLabel }, 'MARCAÇÕES'),
-                h(Text, { style: styles.specValue }, marcacoesString)
-              ),
-
-              outrasCaracteristicasString && h(View, { style: styles.specRow },
-                h(View, { style: styles.specIcon },
-                  h(Text, { style: styles.specIconSmall }, '✨')
-                ),
-                h(Text, { style: styles.specLabel }, 'OUTRAS CARACTERÍSTICAS'),
-                h(Text, { style: styles.specValue }, outrasCaracteristicasString)
-              )
+              specRow('Capacidade nominal', `${product.nominalCapacity || '-'} ${product.nominalCapacityUnit || 'L'}`),
+              product.totalCapacity ? specRow('Capacidade total', `${product.totalCapacity} ${product.totalCapacityUnit || 'L'}`) : null,
+              specRow(`Peso (±${product.weightTolerance || '5'}%)`, `${product.weight || '-'} ${product.weightUnit || 'g'}`),
+              product.weightWithAccessories ? specRow(`Peso c/ acessórios (±${product.weightTolerance || '5'}%)`, `${product.weightWithAccessories} ${product.weightWithAccessoriesUnit || 'g'}`) : null,
+              product.accessories ? specRow('Acessórios', product.accessories) : null,
+              product.shape ? specRow('Forma', product.shape) : null,
+              specRow('Matéria prima', product.rawMaterial || '-'),
+              specRow('Cores disponíveis', product.colors || '-'),
+              specRow('Contacto alimentar', product.foodContact ? 'Apto' : 'Não Apto'),
+              product.designation ? specRow('Designação', product.designation) : null,
+              product.barcode ? specRow('Código de barras', product.barcode) : null,
+              specRow('Empilhável', product.stackable ? (product.stackingCapacity || 'Sim') : 'Não'),
+              product.closingSystem ? specRow('Sistema de fecho', product.closingSystem) : null,
+              product.capType ? specRow('Tipo de tampa', product.capType) : null,
+              product.capDimensions ? specRow('Dimensões da tampa', product.capDimensions) : null,
+              vedanteString ? specRow('Vedante', vedanteString) : (product.sealingType ? specRow('Vedante', product.sealingType) : null),
+              manuseamentoString ? specRow('Sistema de manuseamento', manuseamentoString) : (product.handlingSystem ? specRow('Sistema de manuseamento', product.handlingSystem) : null),
+              marcacoesString ? specRow('Marcações', marcacoesString) : null,
+              outrasCaracteristicasString ? specRow('Outras características', outrasCaracteristicasString) : null,
+              product.adrCertified ? specRow('ADR', product.adrCode ? `Certificado - ${product.adrCode}` : 'Certificado') : null
             ),
 
             h(View, { style: styles.certificationSection },
-              h(Text, { style: styles.sectionTitle }, 'CERTIFICAÇÕES'),
-              h(Text, { style: styles.specLabel }, 'Produto certificado pelos organismos:'),
-              
+              h(Text, { style: styles.sectionTitle }, 'Certificações'),
+              h(Text, { style: styles.sectionSubtitle }, 'Produto certificado pelos organismos:'),
               h(View, { style: styles.certificationLogos },
                 h(View, { style: styles.certLogo },
                   h(Text, { style: styles.certLogoText }, 'CENTRO\n2020')
                 ),
                 h(View, { style: styles.certLogo },
-                  h(Text, { style: styles.certLogoText }, 'PT\n2020')
+                  h(Text, { style: styles.certLogoText }, 'PORTUGAL\n2020')
                 ),
                 h(View, { style: styles.certLogo },
-                  h(Text, { style: styles.certLogoText }, 'EU\nCOMM')
+                  h(Text, { style: styles.certLogoText }, 'UNIÃO\nEUROPEIA')
                 )
               )
             )
@@ -873,8 +735,8 @@ export function TechnicalDatasheetPDF({ product }: PDFTemplateProps) {
       ),
 
       h(View, { style: styles.footer },
-        h(Text, { style: styles.footerText }, 
-          `Aprovado por: ${product.approvedBy || '-'} | Data de Aprovação: ${product.approvalDate || formatDate(null)} | Revisão: ${String(product.currentVersionNumber).padStart(2, '0')}`),
+        h(Text, { style: styles.footerText },
+          `Aprovado por: ${product.approvedBy || '-'}  |  Data: ${product.approvalDate || formatDate(null)}  |  Revisão: ${String((product as any).currentVersionNumber ?? 1).padStart(2, '0')}`),
         h(Text, { style: styles.pageNumber }, 'pág. 2/2')
       )
     )
