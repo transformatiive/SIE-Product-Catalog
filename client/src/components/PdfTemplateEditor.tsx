@@ -39,8 +39,15 @@ import {
   Minus,
   Search,
   Pilcrow,
+  Columns2,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // ---- MergeField TipTap node ----
 const MergeFieldNode = Node.create({
@@ -169,6 +176,14 @@ export function PdfTemplateEditor({ initialContent, onChange, mergeFields }: Pro
     editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
   };
 
+  const insertColumns = (cols: number) => {
+    editor
+      .chain()
+      .focus()
+      .insertTable({ rows: 1, cols, withHeaderRow: false })
+      .run();
+  };
+
   return (
     <div className="grid grid-cols-[1fr_280px] gap-4 h-full">
       <div className="flex flex-col gap-2 min-w-0">
@@ -268,6 +283,30 @@ export function PdfTemplateEditor({ initialContent, onChange, mergeFields }: Pro
             <AlignRight className="w-4 h-4" />
           </ToolbarBtn>
           <Sep />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                title="Inserir colunas"
+                aria-label="Inserir colunas"
+              >
+                <Columns2 className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem onClick={() => insertColumns(2)}>
+                2 colunas
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => insertColumns(3)}>
+                3 colunas
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => insertColumns(4)}>
+                4 colunas
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <ToolbarBtn onClick={insertTable} label="Inserir tabela">
             <TableIcon className="w-4 h-4" />
           </ToolbarBtn>
