@@ -64,6 +64,8 @@ app.use(session({
 
 // Serve uploaded files statically
 app.use('/uploads', express.static('public/uploads'));
+// Serve attached assets (logos, branding images) for editor preview
+app.use('/attached_assets', express.static('attached_assets'));
 
 app.use((req, res, next) => {
   const start = Date.now();

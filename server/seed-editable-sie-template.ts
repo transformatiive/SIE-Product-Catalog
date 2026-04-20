@@ -43,6 +43,36 @@ const bold = (text: string) => ({
   text,
 });
 
+const white = (text: string) => ({
+  type: "text",
+  marks: [
+    { type: "bold" },
+    { type: "textStyle", attrs: { color: "#ffffff" } },
+    { type: "highlight", attrs: { color: "#E31E24" } },
+  ],
+  text,
+});
+
+const img = (src: string, width = 120) => ({
+  type: "image",
+  attrs: { src, alt: "", title: null, width },
+});
+
+const placeholder = (label: string) => ({
+  type: "paragraph",
+  attrs: { textAlign: "center" },
+  content: [
+    {
+      type: "text",
+      marks: [
+        { type: "italic" },
+        { type: "textStyle", attrs: { color: "#888888" } },
+      ],
+      text: `[ ${label} ]`,
+    },
+  ],
+});
+
 const specRow = (label: string, key: string, mfLabel: string) =>
   row([
     cell([p([bold(label)])]),
@@ -59,10 +89,32 @@ function buildDoc() {
   return {
     type: "doc",
     content: [
-      // ===== HEADER =====
+      // ===== HEADER: SIE LOGO + RED BAR =====
+      table([
+        row([
+          cell([
+            p([img("/attached_assets/sie-logo.png", 100)]),
+          ]),
+          cell([
+            p(
+              [
+                white("  AGROALIMENTAR  "),
+                t("  "),
+                white("  FARMACÊUTICA  "),
+                t("  "),
+                white("  QUÍMICA  "),
+                t("  "),
+                white("  FITOSSANITÁRIOS  "),
+              ],
+              "right",
+            ),
+          ]),
+        ]),
+      ]),
+
       h(3, [t("REF. "), mf("productCode", "Referência")]),
       h(1, [mf("product", "Produto")]),
-      p([mf("type", "Tipo")]),
+      p([bold("Tipo: "), mf("type", "Tipo")]),
       { type: "horizontalRule" },
 
       // ===== PAGE 1 - Two columns: image | tech characteristics =====
@@ -70,7 +122,8 @@ function buildDoc() {
       table([
         row([
           cell([
-            p([t("Imagem do produto:")], "center"),
+            p([bold("Imagem do produto")], "center"),
+            placeholder("Imagem do Produto"),
             p([mf("productImage", "Imagem do Produto")], "center"),
           ]),
           cell([
@@ -87,7 +140,29 @@ function buildDoc() {
         ]),
       ]),
 
-      p([t("100% Reciclável  •  WWW.SIE.PT")], "center"),
+      // ===== RECYCLING + EU LOGOS BAR =====
+      p(
+        [
+          {
+            type: "text",
+            marks: [
+              { type: "bold" },
+              { type: "textStyle", attrs: { color: "#16a34a" } },
+            ],
+            text: "♻ 100% Reciclável",
+          },
+          t("    •    "),
+          bold("WWW.SIE.PT"),
+        ],
+        "center",
+      ),
+      table([
+        row([
+          cell([p([img("/attached_assets/centro-2020-logo.png", 90)], "center")]),
+          cell([p([img("/attached_assets/portugal-2020-logo.png", 90)], "center")]),
+          cell([p([img("/attached_assets/uniao-europeia-logo.png", 90)], "center")]),
+        ]),
+      ]),
       { type: "horizontalRule" },
 
       // ===== PAGE 2 - Title =====
