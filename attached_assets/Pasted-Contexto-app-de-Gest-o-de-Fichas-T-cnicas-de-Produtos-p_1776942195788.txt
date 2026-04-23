@@ -1,0 +1,77 @@
+Contexto: app de Gestão de Fichas Técnicas de Produtos para o cliente SIE 
+(indústria de embalagens plásticas). Feedback de validação recebido hoje 
+(23/04/2026) identificou 2 pontos pendentes que precisam de ser resolvidos 
+e publicados amanhã (24/04/2026).
+
+─────────────────────────────────────────────
+PONTO 1 — Campo PCR (Post-Consumer Recycled)
+─────────────────────────────────────────────
+Requisito:
+No formulário do Produto, junto ao campo de "Matéria-Prima Principal", 
+adicionar um mecanismo para indicar material reciclado incorporado:
+
+• Toggle/checkbox "Incorpora PCR?" (default: desligado)
+• Quando ligado, mostrar input numérico "Percentagem PCR (%)" 
+  — valores 1 a 100, com validação
+• Quando desligado, a matéria-prima fica implicitamente a 100%
+• Quando ligado, semanticamente: matéria-prima principal + X% de PCR 
+  (NÃO é uma substituição, é uma composição — a % PCR refere-se à 
+  proporção de material reciclado dentro da matéria-prima)
+
+Exemplo de como deve aparecer na FT/PDF e na página partilhada:
+• Sem PCR ativo:   "PEAD"
+• Com PCR a 35%:   "PEAD e PCR 35%"
+
+Localização no PDF: secção de matéria-prima (mesmo sítio onde já aparece 
+hoje a matéria-prima principal).
+
+Localização no ecrã: mesma secção / mesmo agrupamento visual do campo 
+de matéria-prima principal, não uma secção separada.
+
+Persistência: adicionar 2 colunas ao schema do produto:
+  - pcr_enabled (boolean, default false)
+  - pcr_percentage (integer nullable, 1-100)
+
+Versionamento: alterações ao PCR devem gerar nova versão do produto, 
+como qualquer outro campo (seguir o padrão existente).
+
+─────────────────────────────────────────────
+PONTO 2 — Criação de Referências (regressão)
+─────────────────────────────────────────────
+Contexto: em Fevereiro foi corrigido um bug onde ao criar um produto 
+aparecia "código já existe" por problema na ligação à BD. A correção 
+incluía:
+  (a) resolução do problema de ligação à BD,
+  (b) geração automática de sufixo único em caso de código duplicado,
+  (c) geração de códigos temporários quando o código ainda não está definido.
+
+Marco tentou validar hoje e NÃO conseguiu criar uma nova referência. 
+Investigar e corrigir:
+
+1. Reproduzir o fluxo de criação de uma nova referência do zero 
+   (produto novo, sem código pré-definido, e produto novo com código 
+   que colida com um existente).
+2. Verificar:
+   • A ligação à BD está a funcionar no ambiente de produção?
+   • O mecanismo de sufixo único continua a funcionar?
+   • O mecanismo de código temporário continua a funcionar?
+   • Há alguma regressão introduzida depois de 26/02 que possa ter 
+     voltado a partir este fluxo?
+3. Adicionar:
+   • Logging detalhado no fluxo de criação (para debug futuro).
+   • Mensagem clara no UI quando aplicamos sufixo automático 
+     ("Código XYZ já existia. Guardado como XYZ-2.").
+   • Mensagem clara quando é gerado código temporário 
+     ("Código temporário TMP-xxx atribuído. Edite depois para 
+     definir o código final.").
+4. Testar end-to-end: criar → editar código → salvar → gerar PDF → 
+   confirmar que o código aparece correto em todo o lado.
+
+─────────────────────────────────────────────
+ENTREGÁVEIS
+─────────────────────────────────────────────
+• Código alterado e testado.
+• Nova versão publicada no mesmo link que o Marco tem.
+• Lista do que foi alterado (changelog curto) para eu enviar por email.
+• Confirmar que nada dos 14 pontos já validados foi quebrado 
+  (regressão check).
