@@ -328,6 +328,7 @@ export const families = pgTable("families", {
   code: text("code").notNull().unique(),
   description: text("description").notNull(),
   defaultTemplateId: varchar("default_template_id"), // FK to pdf_templates (optional)
+  zohoWriterTemplateId: text("zoho_writer_template_id"), // Zoho Writer document ID for the family's datasheet template
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

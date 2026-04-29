@@ -46,6 +46,14 @@ import {
 } from "@shared/schema";
 import { renderTemplateToDocument } from "./template-renderer";
 import { MERGE_FIELDS } from "@shared/mergeFields";
+import {
+  isZohoConfigured,
+  listTemplates as listZohoTemplates,
+  mergeTemplate as mergeZohoTemplate,
+  ZohoConfigError,
+  ZohoApiError,
+} from "./zoho-writer";
+import { buildMergeData as buildZohoMergeData } from "./zoho-merge-data";
 import { fromZodError } from "zod-validation-error";
 import { renderToBuffer } from '@react-pdf/renderer';
 import React from 'react';
@@ -590,10 +598,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
     } catch (error) {
       console.error("Error generating PDF:", error);
-      res.status(500).json({ 
-        message: "Falha ao gerar PDF", 
-        error: error instanceof Error ? error.message : "Erro desconhecido" 
+      res.status(500).json({
+        message: "Falha ao gerar PDF",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
       });
+    }
+  });
+
+  // GET /api/products/:id/zoho-datasheet - Generate datasheet via Zoho Writer template assigned to the product's family
+  app.get("/api/products/:id/zoho-datasheet", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { versionId } = req.query;
+
+      const product = await storage.getProduct(id);
+      if (!product) {
+        return res.status(404).json({ message: "Produto não encontrado" });
+      }
+
+      let productData: any = product;
+      if (versionId && typeof versionId === "string") {
+        const version = await storage.getProductVersion(versionId);
+        if (version && version.productId === id && !version.isAnnulled) {
+          productData = { ...product, ...version, id: product.id };
+        }
+      }
+
+      if (!product.family) {
+        return res.status(400).json({ message: "Produto sem família atribuída" });
+      }
+
+      const fam = await db
+        .select()
+        .from(families)
+        .where(eq(families.description, product.family))
+        .limit(1);
+      const family = fam[0] ?? null;
+
+      if (!family?.zohoWriterTemplateId) {
+        return res.status(400).json({
+          message: "Família sem template Zoho Writer configurado. Defina o template em Admin → Famílias.",
+        });
+      }
+
+      const mergeData = buildZohoMergeData(productData, family);
+      const docxBuffer = await mergeZohoTemplate(family.zohoWriterTemplateId, mergeData, "docx");
+
+      const filename = `${productData.productCode}-Datasheet.docx`;
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      );
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.setHeader("Content-Length", docxBuffer.length);
+      res.send(docxBuffer);
+    } catch (error) {
+      if (error instanceof ZohoConfigError) {
+        return res.status(503).json({ message: error.message });
+      }
+      if (error instanceof ZohoApiError) {
+        console.error("Zoho Writer API error:", error.status, error.details);
+        return res.status(502).json({ message: error.message });
+      }
+      console.error("Error generating Zoho datasheet:", error);
+      res.status(500).json({
+        message: "Falha ao gerar datasheet via Zoho Writer",
+        error: error instanceof Error ? error.message : "Erro desconhecido",
+      });
+    }
+  });
+
+  // GET /api/admin/zoho-writer/templates - List Zoho Writer documents for the family admin picker
+  app.get("/api/admin/zoho-writer/templates", requireAuth, async (_req, res) => {
+    if (!isZohoConfigured()) {
+      return res.status(503).json({
+        message: "Zoho Writer não configurado. Defina ZOHO_CLIENT_ID, ZOHO_CLIENT_SECRET, ZOHO_REFRESH_TOKEN.",
+      });
+    }
+    try {
+      const templates = await listZohoTemplates();
+      res.json(templates);
+    } catch (error) {
+      if (error instanceof ZohoConfigError) {
+        return res.status(503).json({ message: error.message });
+      }
+      if (error instanceof ZohoApiError) {
+        console.error("Zoho Writer API error:", error.status, error.details);
+        return res.status(502).json({ message: error.message });
+      }
+      console.error("Error listing Zoho templates:", error);
+      res.status(500).json({ message: "Falha ao listar templates Zoho Writer" });
     }
   });
 

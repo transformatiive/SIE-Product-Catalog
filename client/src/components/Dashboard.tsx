@@ -263,6 +263,51 @@ export default function Dashboard() {
     generatePDFMutation.mutate(product.id);
   };
 
+  // Zoho Writer datasheet generation mutation (DOCX based on per-family Zoho template)
+  const generateZohoDatasheetMutation = useMutation({
+    mutationFn: async (productId: string) => {
+      const response = await fetch(`/api/products/${productId}/zoho-datasheet`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Falhou a gerar datasheet via Zoho Writer');
+      }
+      return response.blob();
+    },
+    onSuccess: (docxBlob, productId) => {
+      const product = products.find(p => p.id === productId) ||
+                    allProducts.find(p => p.id === productId) ||
+                    selectedProduct;
+
+      const url = window.URL.createObjectURL(docxBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${product?.productCode ?? 'produto'}-Datasheet.docx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Datasheet Zoho gerada com sucesso",
+        description: product
+          ? `Documento para ${product.productCode} foi descarregado.`
+          : "Documento foi descarregado.",
+      });
+    },
+    onError: (error: Error) => {
+      console.error('Zoho datasheet generation error:', error);
+      toast({
+        title: "Erro ao gerar datasheet Zoho",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleGenerateZohoDatasheet = (product: Product) => {
+    generateZohoDatasheetMutation.mutate(product.id);
+  };
+
   const handleBack = () => {
     setCurrentView('list');
     setSelectedProduct(null);
@@ -301,9 +346,11 @@ export default function Dashboard() {
             onSave={handleSaveProduct}
             onCancel={handleBack}
             onGeneratePDF={handleGeneratePDF}
+            onGenerateZohoDatasheet={handleGenerateZohoDatasheet}
             onClone={handleCloneProduct}
             isLoading={updateProductMutation.isPending}
             isGeneratingPDF={generatePDFMutation.isPending}
+            isGeneratingZohoDatasheet={generateZohoDatasheetMutation.isPending}
           />
         );
       
