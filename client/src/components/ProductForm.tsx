@@ -23,9 +23,11 @@ interface ProductFormProps {
   onSave?: (product: InsertProduct) => void;
   onCancel?: () => void;
   onGeneratePDF?: (product: Product) => void;
+  onGenerateZohoDatasheet?: (product: Product) => void;
   onClone?: (product: Product) => void;
   isLoading?: boolean;
   isGeneratingPDF?: boolean;
+  isGeneratingZohoDatasheet?: boolean;
 }
 
 interface DimensionField {
@@ -56,10 +58,10 @@ interface PackagingData {
   stackHeight: string;
 }
 
-export default function ProductForm({ product, initialData, onSave, onCancel, onGeneratePDF, onClone, isLoading = false, isGeneratingPDF = false }: ProductFormProps) {
+export default function ProductForm({ product, initialData, onSave, onCancel, onGeneratePDF, onGenerateZohoDatasheet, onClone, isLoading = false, isGeneratingPDF = false, isGeneratingZohoDatasheet = false }: ProductFormProps) {
   // Use initialData for cloning when no product is provided
   const sourceData = product || initialData;
-  const { data: familyOptions = [], isLoading: familiesLoading } = useQuery<{id: string, code: string, description: string}[]>({
+  const { data: familyOptions = [], isLoading: familiesLoading } = useQuery<{id: string, code: string, description: string, zohoWriterTemplateId?: string | null}[]>({
     queryKey: ['/api/admin/families'],
   });
 
@@ -623,6 +625,18 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
       onGeneratePDF?.(product);
     }
   };
+
+  const handleGenerateZohoDatasheet = () => {
+    if (product) {
+      console.log('Generate Zoho datasheet triggered', product.productCode);
+      onGenerateZohoDatasheet?.(product);
+    }
+  };
+
+  const productFamilyTemplate = product?.family
+    ? familyOptions.find((f) => f.description === product.family)?.zohoWriterTemplateId
+    : undefined;
+  const zohoDatasheetEnabled = Boolean(product && productFamilyTemplate);
 
   return (
     <div className="max-w-6xl mx-auto p-4">
@@ -1953,8 +1967,8 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                       <Copy className="w-4 h-4 mr-2" />
                       Duplicar
                     </Button>
-                    <Button 
-                      type="button" 
+                    <Button
+                      type="button"
                       variant="outline"
                       onClick={handleGeneratePDF}
                       disabled={isGeneratingPDF}
@@ -1963,6 +1977,22 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                     >
                       <FileText className="w-4 h-4 mr-2" />
                       {isGeneratingPDF ? 'A gerar...' : 'Gerar PDF'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleGenerateZohoDatasheet}
+                      disabled={isGeneratingZohoDatasheet || !zohoDatasheetEnabled}
+                      data-testid="button-generate-zoho-datasheet"
+                      className="min-w-32"
+                      title={
+                        zohoDatasheetEnabled
+                          ? "Gerar datasheet via template Zoho Writer da família"
+                          : "Família sem template Zoho Writer configurado"
+                      }
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      {isGeneratingZohoDatasheet ? 'A gerar...' : 'Gerar Datasheet (Zoho)'}
                     </Button>
                   </>
                 )}

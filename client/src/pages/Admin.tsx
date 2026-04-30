@@ -37,9 +37,17 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Settings, Users } from "lucide-react";
 import { UsersManagement } from "@/components/UsersManagement";
 import type { DropdownOption } from "@shared/schema";
+
+interface ZohoTemplateOption {
+  id: string;
+  name: string;
+}
+
+const ZOHO_TEMPLATE_NONE = "__none__";
 
 type TableName = 
   | "families"
@@ -80,11 +88,13 @@ interface OptionFormData {
   displayCode?: string;
   abbreviation?: string;
   shortCode?: string;
+  zohoWriterTemplateId?: string | null;
 }
 
 // Tables that need extended fields
 const tablesWithDisplayCode = ["models", "specifications"];
 const tablesWithAbbreviations = ["certificationTypes", "packagingTypes"];
+const tablesWithZohoTemplate: TableName[] = ["families"];
 
 function AdminTable({ tableName }: { tableName: TableName }) {
   const { toast } = useToast();
@@ -98,17 +108,29 @@ function AdminTable({ tableName }: { tableName: TableName }) {
     displayCode: "",
     abbreviation: "",
     shortCode: "",
+    zohoWriterTemplateId: null,
   });
 
   const needsDisplayCode = tablesWithDisplayCode.includes(tableName);
   const needsAbbreviations = tablesWithAbbreviations.includes(tableName);
+  const needsZohoTemplate = tablesWithZohoTemplate.includes(tableName);
 
   // Extended type to include optional fields for models/specifications and certification/packaging types
-  type ExtendedDropdownOption = DropdownOption & { 
-    displayCode?: string; 
-    abbreviation?: string; 
+  type ExtendedDropdownOption = DropdownOption & {
+    displayCode?: string;
+    abbreviation?: string;
     shortCode?: string;
+    zohoWriterTemplateId?: string | null;
   };
+
+  const zohoTemplatesQuery = useQuery<ZohoTemplateOption[]>({
+    queryKey: ["/api/admin/zoho-writer/templates"],
+    enabled: needsZohoTemplate && isEditOpen,
+    retry: false,
+  });
+  const zohoUnavailable =
+    needsZohoTemplate &&
+    zohoTemplatesQuery.isError; // 503 (creds missing) or other API failure
 
   const { data: options = [], isLoading } = useQuery<ExtendedDropdownOption[]>({
     queryKey: ["/api/admin", tableName, "?all=true"],
@@ -182,18 +204,18 @@ function AdminTable({ tableName }: { tableName: TableName }) {
   });
 
   const resetForm = () => {
-    setFormData({ code: "", description: "", isActive: true, displayCode: "", abbreviation: "", shortCode: "" });
+    setFormData({ code: "", description: "", isActive: true, displayCode: "", abbreviation: "", shortCode: "", zohoWriterTemplateId: null });
     setSelectedOption(null);
     setIsEditOpen(false);
   };
 
   const handleCreate = () => {
     setSelectedOption(null);
-    setFormData({ code: "", description: "", isActive: true, displayCode: "", abbreviation: "", shortCode: "" });
+    setFormData({ code: "", description: "", isActive: true, displayCode: "", abbreviation: "", shortCode: "", zohoWriterTemplateId: null });
     setIsEditOpen(true);
   };
 
-  const handleEdit = (option: DropdownOption & { displayCode?: string; abbreviation?: string; shortCode?: string }) => {
+  const handleEdit = (option: ExtendedDropdownOption) => {
     setSelectedOption(option);
     setFormData({
       code: option.code,
@@ -202,6 +224,7 @@ function AdminTable({ tableName }: { tableName: TableName }) {
       displayCode: option.displayCode || "",
       abbreviation: option.abbreviation || "",
       shortCode: option.shortCode || "",
+      zohoWriterTemplateId: option.zohoWriterTemplateId ?? null,
     });
     setIsEditOpen(true);
   };
@@ -226,7 +249,10 @@ function AdminTable({ tableName }: { tableName: TableName }) {
       submitData.abbreviation = formData.abbreviation;
       submitData.shortCode = formData.shortCode;
     }
-    
+    if (needsZohoTemplate) {
+      submitData.zohoWriterTemplateId = formData.zohoWriterTemplateId || null;
+    }
+
     if (selectedOption) {
       updateMutation.mutate({
         id: selectedOption.id,
@@ -367,6 +393,60 @@ function AdminTable({ tableName }: { tableName: TableName }) {
                   required
                 />
               </div>
+              {needsZohoTemplate && (
+                <div className="space-y-2">
+                  <Label htmlFor="zohoWriterTemplateId">Template Zoho Writer</Label>
+                  {zohoUnavailable ? (
+                    <>
+                      <Input
+                        id="zohoWriterTemplateId"
+                        value=""
+                        disabled
+                        placeholder="Credenciais Zoho Writer não configuradas"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Defina ZOHO_CLIENT_ID, ZOHO_CLIENT_SECRET e ZOHO_REFRESH_TOKEN para activar a selecção.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <Select
+                        value={formData.zohoWriterTemplateId || ZOHO_TEMPLATE_NONE}
+                        onValueChange={(v) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            zohoWriterTemplateId: v === ZOHO_TEMPLATE_NONE ? null : v,
+                          }))
+                        }
+                        disabled={zohoTemplatesQuery.isLoading}
+                      >
+                        <SelectTrigger id="zohoWriterTemplateId">
+                          <SelectValue placeholder={zohoTemplatesQuery.isLoading ? "A carregar..." : "Seleccione um template"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={ZOHO_TEMPLATE_NONE}>— Sem template —</SelectItem>
+                          {(zohoTemplatesQuery.data ?? []).map((t) => (
+                            <SelectItem key={t.id} value={t.id}>
+                              {t.name}
+                            </SelectItem>
+                          ))}
+                          {formData.zohoWriterTemplateId &&
+                            !(zohoTemplatesQuery.data ?? []).some(
+                              (t) => t.id === formData.zohoWriterTemplateId,
+                            ) && (
+                              <SelectItem value={formData.zohoWriterTemplateId}>
+                                (Template guardado: {formData.zohoWriterTemplateId})
+                              </SelectItem>
+                            )}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Os produtos desta família usarão este template ao gerar a datasheet via Zoho.
+                      </p>
+                    </>
+                  )}
+                </div>
+              )}
               {needsDisplayCode && (
                 <div className="space-y-2">
                   <Label htmlFor="displayCode">Código de Exibição</Label>
