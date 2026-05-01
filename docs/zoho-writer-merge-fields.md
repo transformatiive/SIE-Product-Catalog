@@ -2,9 +2,24 @@
 
 When you click **Gerar Datasheet (Zoho)** on a product page, the app sends the entire product record (plus its family) to Zoho Writer's mail-merge API as a flat JSON payload. Your Zoho Writer template just needs to include merge field placeholders whose names match the keys below.
 
-## How to use
+## Quickstart: starter template
 
-1. In Zoho Writer, create your datasheet template document.
+A ready-made starter document is committed at [`templates/zoho-writer-starter.docx`](../templates/zoho-writer-starter.docx). It mirrors the layout of the built-in PDF datasheet (red SIE header, two-page A4 layout, technical characteristics, packaging grid, certifications) and already contains every merge field placeholder.
+
+**To use it:**
+
+1. Download `templates/zoho-writer-starter.docx` from the repo.
+2. Upload it to your Zoho WorkDrive (drag-and-drop into the WorkDrive web UI).
+3. Right-click → **Open in Zoho Writer**. Zoho recognises `{{...}}` as merge field placeholders automatically.
+4. Save it (Zoho Writer auto-saves as a Zoho Writer document; the `.docx` original stays in WorkDrive).
+5. Tweak styling, layout, copy as needed — the merge fields stay intact as long as you don't break the `{{name}}` syntax.
+6. In this app, **Admin → Famílias**, edit the family, pick the saved template from the dropdown, save.
+
+To regenerate the starter from source after schema changes: `npx tsx scripts/generate-zoho-template.ts`.
+
+## How it works
+
+1. In Zoho Writer, create your datasheet template document (or use the starter above).
 2. Insert merge fields with the exact names shown in the **Merge field name** column (e.g. `product_code`, `capacity_nominal`).
 3. Save the template in Zoho Writer.
 4. In this app, go to **Admin → Famílias**, edit the product family, and pick the template from the **Template Zoho Writer** dropdown.
