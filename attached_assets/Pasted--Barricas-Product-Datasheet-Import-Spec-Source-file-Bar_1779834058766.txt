@@ -1,0 +1,226 @@
+# Barricas Product Datasheet — Import Spec
+
+**Source file:** `Barricas___familia_teste_FT___26_05_2026.xlsx`
+**Single sheet:** `Planilha1`
+**Rows:** 147 data rows
+**Columns:** 45
+**Domain:** Plastic industrial drums (“barricas”) manufactured by the client. Each row represents either a parent/template product or a specific commercial variant.
+
+This document describes the source data exhaustively so you can map it onto the existing app schema, identify gaps, and answer the integration questions at the bottom.
+
+-----
+
+## 1. File structure
+
+The Excel file has a **two-tier header**:
+
+- **Row 1** (category band): `DIMENSOES`, `SISTEMA DE FECHO`, `CERTIFICAÇÕES`, `VEDANTE`, `SISTEMA DE MANUSEAMENTO`, `Marcações`, `OUTRAS`, `EMBALAMENTO`. These are visual groupings only and span multiple columns each.
+- **Row 2** (actual field names): the 45 column names listed in section 3 below.
+- **Rows 3–149**: data.
+
+When loading with pandas, use `header=1` to skip the category band.
+
+**Duplicate column names in the source.** The header row contains four columns with non-unique names that pandas auto-renames:
+
+|Source name (raw)            |Pandas-renamed        |Semantic meaning                                                     |
+|-----------------------------|----------------------|---------------------------------------------------------------------|
+|`Tipo` (col 2)               |`Tipo`                |Product type (Tampa Calha, Tampa Rosca, Boca Estreita, Cônica)       |
+|`Tipo` (col 14)              |`Tipo.1`              |Certification type (ALIMENTAR, CERTIFICADO, NORMAL)                  |
+|`Tipo` (col 39)              |`Tipo.2`              |Packaging type (PALETE, SACO)                                        |
+|`Outros` (col 19)            |`Outros`              |Other vedante / sealing material — empty in source                   |
+|`Outros` (col 23)            |`Outros.1`            |Other handling feature — “Frisos para Empilhador”                    |
+|`Capacidade Nominal` (col 4) |`Capacidade Nominal`  |Nominal capacity (e.g. “30L”)                                        |
+|`Capacidade Nominal` (col 27)|`Capacidade Nominal.1`|Marking flag (boolean) indicating capacity is engraved on the product|
+
+The import code must resolve these by column index, not by name.
+
+-----
+
+## 2. The 1:N parent/variant relationship (critical)
+
+The flat sheet hides a hierarchy. There are **30 unique `Modelo` codes** (parent products / FT families) and **147 rows** of variants. Each Modelo has between 1 and 18 rows.
+
+**The first row of each Modelo group is a template/parent row.** It is identifiable by these patterns:
+
+- `Cores` column contains a **comma-separated list** of available colors (e.g. `"Incolor, Cinzento, Azul, Preto, Vermelho"`) rather than a single color.
+- `Tipo.1` (certification type) is empty.
+- `Gravação Cliente` is `"0"` or empty (no specific client engraving).
+- Most variant-specific fields (`Adaptação`, `Caracteristicas Especiais`, `Observações`) are empty.
+- Has the full packaging block populated with the **default palletization scheme** that applies to all variants of that Modelo.
+
+**Subsequent rows for the same Modelo are concrete variants.** Each has:
+
+- A single specific color (often UPPERCASE — see data quality issues).
+- A specific certification (`ALIMENTAR` / `CERTIFICADO` / `NORMAL`) and possibly an ADR code.
+- Optionally a client code in `Gravação Cliente` (e.g. `G.FILTAPOR`, `G.BIOOESTE`).
+- An `Adaptação` (handle type: `CAV`, `ASA`, `P/T CAV`, `P/T ASA`).
+- Variant-specific packaging override OR `N/A` / `SACO` indicating a different shipping configuration.
+
+**Variant counts by Modelo:**
+
+```
+1250: 9   1252: 18  1254: 7   1256: 4   1258: 3
+1259: 2   1261: 7   1264: 11  1267: 3   1271: 3
+1277: 2   1280: 2   1283: 2   1286: 3   1330: 4
+1251: 7   1253: 6   1255: 3   1257: 16  1260: 3
+1262: 2   1265: 5   1269: 5   1273: 2   1279: 2
+1281: 2   1285: 2   1312: 1   1340: 5   1350: 6
+```
+
+**Modelo 1312** is an anomaly — only 1 row, missing Familia/Tipo/Produto/Capacidade. May be an orphan or test record. Flag during import.
+
+-----
+
+## 3. Field inventory (all 45 columns)
+
+Listed in source order. `idx` = zero-based column index. Type column shows the *actual storage* in the source, not the ideal target type.
+
+### Identity & classification
+
+|idx|Field               |Type in source        |Notes                                                                                                                                                                           |
+|---|--------------------|----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|0  |`Modelo`            |int as string         |Parent product code. 30 unique values, range 1250–1350. Foreign key to itself for grouping.                                                                                     |
+|1  |`Familia`           |enum string           |3 values: `Embalagem` (vast majority), `Mercadoria`, `Produto Cliente`. One row of Modelo 1252 has `Produto Cliente` — likely a typo, all others in that Modelo are `Embalagem`.|
+|2  |`Tipo`              |enum string           |4 values: `Tampa Calha`, `Tampa Rosca`, `Boca Estreita`, `Cônica`. Some rows have it empty.                                                                                     |
+|3  |`Produto`           |enum string           |1 value: `BARRICA`. Effectively a constant in this dataset but the column exists for future product categories.                                                                 |
+|4  |`Capacidade Nominal`|string with “L” suffix|14 values: 30L, 40L, 45L, 50L, 55L, 60L, 65L, 70L, 75L, 125L, 150L, 200L, 220L, 230L. Should be split into numeric + unit.                                                      |
+
+### Material & color
+
+|idx|Field          |Type                |Notes                                                                                                                                                                                                                                                                                                             |
+|---|---------------|--------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|5  |`Matéria Prima`|string, inconsistent|Intended values: `PEAD`, `RECICLADO`. **Data quality issue**: also contains `"32. Cor / Preto / Inc"` and `"51. Cor / Inc Corado"` which are clearly color/material codes that drifted from another column. ~30% of rows have these. Import should flag these for cleanup.                                        |
+|6  |`Cores`        |string, mixed case  |20 distinct values mixing single colors (`AZUL`, `CINZENTO`, `INCOLOR`, `PRETO`, `VERDE`, `LARANJA`, `VERMELHO`, `BRANCO`) and comma-separated lists for parent rows (`"Incolor, Cinzento, Azul, Preto, Vermelho"`). Parent rows use Title Case; variant rows use UPPERCASE. Normalize to a controlled vocabulary.|
+
+### Weight & dimensions
+
+|idx|Field                 |Type                               |Notes                                                                                                                                                                                                                                                                                                                                                                                                  |
+|---|----------------------|-----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|7  |`Peso (+/- 5%) (g)`   |string with unit                   |Values mix units: `1300G`, `8500G`, `5,3Kg`, `5,830Kg`. Portuguese decimal comma. Parse to grams as float.                                                                                                                                                                                                                                                                                             |
+|8  |`Capacidade total (L)`|string with “L” suffix and PT comma|E.g. `33,5L`, `134L`, `231,2L`. Parse to float liters.                                                                                                                                                                                                                                                                                                                                                 |
+|9  |`c / Ø (mm)`          |string with “Ø” prefix             |Diameter or width. E.g. `Ø320`, `Ø400`. One row (Modelo 1312) has bare `195` — a rectangular product. **Data anomaly**: Modelo 1250 variants show Ø320 → Ø326 across 7 rows — almost certainly an Excel autofill error (the diameter should be identical for all variants of the same Modelo). Same pattern in `h (mm)` for that Modelo. Treat the value from the parent/template row as authoritative.|
+|10 |`l (mm)`              |float                              |Width when product is rectangular. Only 2 non-null values (Modelo 1258 = 330, Modelo 1312 = 145). Otherwise null because `c / Ø` is a diameter.                                                                                                                                                                                                                                                        |
+|11 |`h (mm)`              |float                              |Height in mm. See note above about Modelo 1250 drift.                                                                                                                                                                                                                                                                                                                                                  |
+
+### Closure system
+
+|idx|Field           |Type                  |Notes                                                                                                                                                    |
+|---|----------------|----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+|12 |`Tipo de Tampa` |enum string           |4 values: `Tampa cinta Calha`, `Tampa Rosca`, `Tampa cinta Fita`, `Tampa de Rosca`. Note `Tampa Rosca` vs `Tampa de Rosca` is the same thing — normalize.|
+|13 |`Dimensões (mm)`|string with “Ø” prefix|Lid diameter. 12 values from Ø28 to Ø410. One special: `Ø45/26` (dual-size).                                                                             |
+
+### Certifications
+
+|idx|Field                   |Type        |Notes                                                                                                                                                                                                                                                                    |
+|---|------------------------|------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|14 |`Tipo.1`                |enum string |3 values: `ALIMENTAR`, `CERTIFICADO`, `NORMAL`. Empty on parent/template rows. Also one row has `N/A` as a string (Modelo 1285).                                                                                                                                         |
+|15 |`ADR`                   |string      |ADR/UN dangerous goods code. 10 unique values: `1H1/Y1,6`, `1H2/X56`, `1H2/X82`, `1H2/X90`, `1H2/X114`, `1H2/X114/S`, `1H2/X225/S`, `1H2/X268/S`, `3H1/Y1,9`, `1H1/Y1,9`. Present only when `Tipo.1 = CERTIFICADO`. Validate against regex `^\d[HG]\d/[XYZ][\d,]+(/S)?$`.|
+|16 |`APTO CONTATO ALIMENTAR`|emoji/string|3 values: `🍴` (food-safe), `🍴*` (food-safe with conditions), `▲` (one row, Modelo 1258 — meaning unclear, possibly “warning”). Map to enum: `none` / `yes` / `yes_conditional` / `warning`.                                                                              |
+
+### Vedante (sealing material)
+
+|idx|Field   |Type               |Notes                                                                                        |
+|---|--------|-------------------|---------------------------------------------------------------------------------------------|
+|17 |`PEAD`  |boolean (1/blank)  |Sealing material is PEAD.                                                                    |
+|18 |`EPDM`  |boolean (1/blank/0)|Sealing material is EPDM. Has explicit `0` in some rows vs blank in others — both mean false.|
+|19 |`Outros`|(empty)            |No values in source. Reserved for future.                                                    |
+
+### Handling system
+
+|idx|Field           |Type             |Notes                                                                                                    |
+|---|----------------|-----------------|---------------------------------------------------------------------------------------------------------|
+|20 |`Pegas laterais`|boolean (1/blank)|Has side handles.                                                                                        |
+|21 |`Pega superior` |boolean (1/blank)|Has top handle.                                                                                          |
+|22 |`Cavidades`     |boolean (1/blank)|Has cavities.                                                                                            |
+|23 |`Outros.1`      |string (1 value) |Only value: `"Frisos para Empilhador"` (forklift ribs). Should probably be a boolean `has_forklift_ribs`.|
+
+### Markings (Marcações)
+
+|idx|Field                 |Type               |Notes                                                                                                                                                                                                                                                                                                                                                                              |
+|---|----------------------|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|24 |`Datador`             |boolean (1/0/blank)|Date stamp marking. Parent rows have explicit `0`.                                                                                                                                                                                                                                                                                                                                 |
+|25 |`Símbolo SIE`         |boolean            |SIE symbol marking.                                                                                                                                                                                                                                                                                                                                                                |
+|26 |`Simbolo MP`          |boolean            |Raw material symbol marking.                                                                                                                                                                                                                                                                                                                                                       |
+|27 |`Capacidade Nominal.1`|boolean            |Capacity marking engraved on product.                                                                                                                                                                                                                                                                                                                                              |
+|28 |`Gravação Cliente`    |string             |Client engraving code. 26 unique values, all prefixed `G.` (e.g. `G.FILTAPOR`, `G.BIOOESTE`, `G.SERCAÇA`, `G.PUMARIEGA`, `G.BIOAÇORES`, `G.ECOMOVIMENTO`, `G.OGREEN`, `G.MWR`, `G.HARD.LEVEL`, `G.HOVIONE`, `G.BLUEPHARMA`, …). Two formatting variants exist: `G.SERENDIPITY` and `G. SERENDIPITY` (with space). Should be FK to a `clients` table, with the `G.` prefix stripped.|
+
+### Other features
+
+|idx|Field                          |Type       |Notes                                                                                       |
+|---|-------------------------------|-----------|--------------------------------------------------------------------------------------------|
+|29 |`Visor`                        |boolean    |Has viewing window.                                                                         |
+|30 |`BICA`                         |boolean    |Has spout/nozzle.                                                                           |
+|31 |`COEX - Poliamida`             |(empty)    |No values. Reserved.                                                                        |
+|32 |`Adaptação`                    |enum string|4 values: `CAV`, `ASA`, `P/T CAV`, `P/T ASA`. Handle/adapter type.                          |
+|33 |`Autocolante Cliente`          |(empty)    |No values. Reserved for client stickers.                                                    |
+|34 |`Especificações Emb. Fléxiveis`|(empty)    |No values. Reserved for flexible packaging specs.                                           |
+|35 |`Caracteristicas Especiais`    |string     |3 values: `T. CALHA`, `T. ROSCA Ø270`, `T. CALHA PAL 60`. Free-form special characteristics.|
+|36 |`Observações`                  |string     |3 values: `BORDEAUX PR (PULVERIZADOR RAIN)`, `518`, `SPOUT AZUL`. Free-form notes.          |
+
+### Packaging (Embalamento)
+
+|idx|Field                                   |Type       |Notes                                                                                                                                                                                                               |
+|---|----------------------------------------|-----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|37 |`Empilhável`                            |boolean    |Is stackable.                                                                                                                                                                                                       |
+|38 |`Capacidade de Empilhamento`            |string     |4 values, free text describing stacking capacity. Examples: `"Estático com 2 unidades para produtos com densidade menor ou igual a 1,6g/cm³"`, `"Empilhável em vazio"`.                                             |
+|39 |`Tipo.2`                                |enum string|2 values: `PALETE`, `SACO`. Also `N/A` and `#N/A` (literal Excel error string) appear — both meaning “no standard packaging”.                                                                                       |
+|40 |`Dimensões da Palete/saco (mm)`         |string     |Pallet base dimensions, e.g. `1200x800`, `1300x1100`, `1115x1115`. 5 unique values. Parse into width × depth.                                                                                                       |
+|41 |`Dimensões da mercadoria na palete (mm)`|string     |Total stack dimensions (W × D × H), e.g. `1300x1000x2615`. Parse into 3 numbers.                                                                                                                                    |
+|42 |`Esquema de arrumação`                  |string     |Stacking pattern, e.g. `"4 x 3 x 5 fiadas"` (4 wide × 3 deep × 5 layers), `"3 x 2 x 3 fiadas + fiada de topo: 3 x 1"`. 14 unique patterns. Free text; pattern is regular enough to parse but currently stored as-is.|
+|43 |`Total (unid)`                          |string     |Total units per pallet. Mostly integers (12–320) but some have alternates: `"15 | 18"`, `"72 | 120"`. The pipe-separated values correspond to alternative stacking schemes mentioned in `Esquema de arrumação`.     |
+|44 |`Notas`                                 |string     |Free-text instructions. 13 unique values. Multi-line (contains `\n`). **One row contains `"Erro:509"`** (Modelo 1255 row 3) — a leaked Excel error string that needs sanitization on import.                        |
+
+-----
+
+## 4. Data quality issues to surface during import
+
+1. **Matéria Prima column pollution.** ~30% of rows have color codes (`"32. Cor / Preto / Inc"`, `"51. Cor / Inc Corado"`) where the material should be. Import should either reject these or map them to `PEAD` (the assumed default) and flag the row.
+1. **Color casing inconsistency.** Parent rows: Title Case (`Azul`). Variants: UPPERCASE (`AZUL`). Normalize on import. Build a canonical color table.
+1. **Numeric+unit fields.** `Peso`, `Capacidade total`, all dimension fields embed units as strings. Parse into separate numeric + unit columns OR a single canonical-units numeric field.
+1. **Diameter drift in Modelo 1250.** Variants show Ø320, Ø321, Ø322, …, Ø326 across consecutive rows. Almost certainly Excel autofill error. The parent row value (Ø320) should be authoritative for all variants of that Modelo. Same for height (495 → 501). Recommend: take dimensions from the parent row, not from each variant row.
+1. **`Tampa Rosca` vs `Tampa de Rosca`.** Same thing, two spellings. Normalize.
+1. **Client code formatting.** `G.SERENDIPITY` vs `G. SERENDIPITY`. Strip whitespace after the dot.
+1. **`#N/A` leaked into Tipo.2.** Excel error string. Replace with null.
+1. **`Erro:509` in Notas.** Excel error code in a free-text field. Replace with null.
+1. **Boolean inconsistency.** Some boolean columns use explicit `0` for false, others leave it blank. Treat both as false on import.
+1. **Modelo 1312 incomplete.** Only 1 row, no Familia/Tipo/Capacidade. Decide: skip, import as draft, or fail.
+1. **Truncated rows.** Modelos 1259, 1279, 1280, 1285 have rows that stop mid-record (no packaging data). Import should accept partial records but log a warning.
+1. **One Modelo 1252 row has `Familia = "Produto Cliente"`** while all other rows of the same Modelo are `Embalagem`. Inconsistency in classification.
+1. **The `Erro:509` row** (Modelo 1255) and the truncated rows suggest the source spreadsheet was edited under time pressure. Expect more such errors in production data.
+
+-----
+
+## 5. Recommended import strategy
+
+Given the 1:N parent-variant pattern, the cleanest approach is:
+
+1. **Group rows by `Modelo`.**
+1. **For each group, identify the parent/template row** using the heuristics in section 2 (empty `Tipo.1`, comma-separated `Cores`, etc.). If no row matches the parent pattern (single-variant Modelos), the only row IS both parent and variant.
+1. **Extract Modelo-level attributes** from the parent row: family, tipo, produto, capacidade nominal, materia prima, dimensions, peso, tipo de tampa, dimensoes da tampa, default packaging block, available colors (parse the comma list), stackability defaults.
+1. **Extract variant-level attributes** from each non-parent row: specific color, certification, ADR code, food-contact flag, vedante material, handling features, markings, client engraving, adaptação, observações, packaging override (if different from parent).
+1. **Sanitize on the fly**: trim whitespace, uppercase canonical fields, parse numeric+unit strings, replace error strings with null, normalize boolean columns.
+1. **Log all anomalies** to an import report: rows with Matéria Prima pollution, dimension drift, missing required fields, client codes not in the master list, etc.
+
+-----
+
+## 6. Questions for you to answer about the existing Replit app
+
+Please answer these so we can finalize the import plan:
+
+1. **Schema shape.** Does the current app store products as a flat table (one row per variant) or as a 1:N parent/variant relationship (Modelo → Variants)? If flat, do you want this import to populate it as-is, or is this a good moment to refactor?
+1. **Master tables.** Do you already have lookup/master tables for: Familia, Tipo (product type), Produto, Capacidade Nominal, Matéria Prima, Cor, Tipo de Tampa, Certificação, Vedante, Adaptação, Cliente, Pallet dimensions? If yes, list their current values so I can build the mapping. If no, this import will need to create them.
+1. **Existing fields.** What fields does the current `Product` (or equivalent) model have? Paste the model definition or schema if possible — that’s the fastest way to map. Without it, I have to guess which of the 45 source fields already exist.
+1. **Numeric units.** Does the app currently store weight, capacity, and dimensions as numbers with separate unit columns, or as strings? This determines how aggressive the parsing needs to be.
+1. **Color handling.** Is color a single value per product or a multi-value (a product can have multiple available colors)? The source has both patterns — parent rows list multiple colors, variant rows have one.
+1. **Client engraving.** Is there a Clients table the engraving codes (`G.FILTAPOR`, etc.) should link to? Or is the engraving a free-text field on the variant?
+1. **Packaging.** Is packaging stored on the same record as the product, or in a separate Packaging table? Does each variant have its own packaging configuration, or does packaging belong to the Modelo level only?
+1. **Idempotency / re-imports.** Should this import be idempotent (re-running it updates existing records by Modelo+color+certification) or is it a one-shot seed? What’s the natural unique key for a variant?
+1. **Validation strictness.** Should the import reject rows with data quality issues (e.g. polluted Matéria Prima, missing fields) or accept-and-flag for manual review?
+1. **Required vs optional.** Which fields are required in the current schema? The source has many empty cells — knowing what’s required tells us which rows will fail.
+1. **Anomalies handling.** For the diameter drift issue in Modelo 1250 (Ø320 → Ø326 across variants), should the import take the parent value as authoritative for all variants, or preserve the per-variant values as-is (treating each variant as having genuinely different dimensions)?
+1. **Special rows.** What should happen to Modelo 1312 (incomplete) and the truncated rows? Skip, import as draft, or fail the whole import?
+1. **`APTO CONTATO ALIMENTAR` semantics.** The emoji `▲` appears on one row (Modelo 1258). Do you know what it means in the client’s domain? If not, we need to ask before deciding how to map it.
+1. **File format expectations.** Will future imports always be this Excel shape (one sheet, two-tier header, 45 columns, this exact column order), or should the importer be tolerant of column reordering and renaming?
+1. **History / audit.** Should the import preserve the source filename and import date on each record, so we can trace back? Should re-imports show a diff?
+
+Once you answer these, I’ll produce the actual Python/TypeScript importer code matching your existing schema.
