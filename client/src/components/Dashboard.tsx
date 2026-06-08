@@ -335,6 +335,7 @@ export default function Dashboard() {
             onEdit={handleEditProduct}
             onDelete={handleDeleteProduct}
             onCreateNew={handleCreateNew}
+            onAddVariant={handleCloneProduct}
           />
         );
       
