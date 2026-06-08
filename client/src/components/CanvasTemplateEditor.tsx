@@ -55,6 +55,10 @@ import {
   Eye,
   Loader2,
   Upload,
+  Square,
+  RectangleHorizontal,
+  Circle,
+  Shapes,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Product } from "@shared/schema";
@@ -67,6 +71,8 @@ import {
   type CanvasElement,
   type CanvasTextElement,
   type CanvasImageElement,
+  type CanvasShapeElement,
+  type ShapeKind,
   type CanvasRegion,
   type PageSize,
   type Orientation,
@@ -84,6 +90,39 @@ const FONT_FAMILIES = [
 
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
 const round = (v: number) => Math.round(v * 10) / 10;
+
+// Palette tokens encode both the element kind and any subtype.
+type AddToken =
+  | "text"
+  | "image-dynamic"
+  | "image-static"
+  | "shape-rectangle"
+  | "shape-rounded"
+  | "shape-ellipse";
+
+function PaletteItem({
+  token,
+  icon,
+  label,
+  addElement,
+}: {
+  token: AddToken;
+  icon: React.ReactNode;
+  label: string;
+  addElement: (token: AddToken, topAbs: number, left: number) => void;
+}) {
+  return (
+    <div
+      draggable
+      onDragStart={(e) => e.dataTransfer.setData("application/x-canvas-add", token)}
+      onClick={() => addElement(token, 60, 60)}
+      className="flex items-center gap-2 p-2 border rounded-md cursor-grab hover-elevate active-elevate-2 bg-background"
+    >
+      {icon}
+      <span className="text-sm">{label}</span>
+    </div>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // MergeField TipTap node (shared shape with the legacy editor / server)
@@ -408,7 +447,8 @@ export function CanvasTemplateEditor({ doc, onChange, mergeFields, products, tem
     };
   }
 
-  function makeImage(x: number, y: number): CanvasImageElement {
+  // `dynamic` = bound to a product image field; otherwise upload/static only.
+  function makeImage(x: number, y: number, dynamic: boolean): CanvasImageElement {
     return {
       id: nanoid(8),
       type: "image",
@@ -417,31 +457,65 @@ export function CanvasTemplateEditor({ doc, onChange, mergeFields, products, tem
       y,
       width: 140,
       height: 140,
-      fieldKey: "productImage",
+      fieldKey: dynamic ? "productImage" : undefined,
       objectFit: "contain",
     };
   }
 
-  function addElement(kind: "text" | "image", topAbs: number, left: number) {
-    const w = kind === "text" ? 240 : 140;
-    const h = kind === "text" ? 40 : 140;
-    const x = clamp(left, 0, dims.width - w);
-    const top = clamp(topAbs, 0, dims.height - h);
+  function makeShape(x: number, y: number, shape: ShapeKind, borderRadius: number): CanvasShapeElement {
+    return {
+      id: nanoid(8),
+      type: "shape",
+      region: "body",
+      x,
+      y,
+      width: shape === "ellipse" ? 120 : 140,
+      height: shape === "ellipse" ? 120 : 90,
+      shape,
+      fill: "#e2e8f0",
+      stroke: "#64748b",
+      strokeWidth: 1,
+      borderRadius,
+    };
+  }
+
+  function elementFromToken(token: AddToken, x: number, y: number): CanvasElement {
+    switch (token) {
+      case "text":
+        return makeText(x, y);
+      case "image-dynamic":
+        return makeImage(x, y, true);
+      case "image-static":
+        return makeImage(x, y, false);
+      case "shape-rectangle":
+        return makeShape(x, y, "rectangle", 0);
+      case "shape-rounded":
+        return makeShape(x, y, "rectangle", 12);
+      case "shape-ellipse":
+        return makeShape(x, y, "ellipse", 0);
+    }
+  }
+
+  function addElement(token: AddToken, topAbs: number, left: number) {
+    const proto = elementFromToken(token, 0, 0);
+    const x = clamp(left, 0, dims.width - proto.width);
+    const top = clamp(topAbs, 0, dims.height - proto.height);
     const { region, y } = assignRegion(top);
-    const base = kind === "text" ? makeText(x, y) : makeImage(x, y);
-    const el = { ...base, region } as CanvasElement;
+    const el = { ...proto, x, y, region } as CanvasElement;
     onChange({ ...doc, elements: [...doc.elements, el] });
     setSelectedId(el.id);
   }
 
   function onCanvasDrop(e: React.DragEvent) {
     e.preventDefault();
-    const kind = e.dataTransfer.getData("application/x-canvas-add") as "text" | "image";
-    if (kind !== "text" && kind !== "image") return;
+    const token = e.dataTransfer.getData("application/x-canvas-add") as AddToken;
+    if (!token) return;
+    const proto = elementFromToken(token, 0, 0);
     const rect = pageRef.current!.getBoundingClientRect();
     const topAbs = (e.clientY - rect.top) / zoom;
     const left = (e.clientX - rect.left) / zoom;
-    addElement(kind, topAbs - (kind === "text" ? 20 : 70), left - (kind === "text" ? 120 : 70));
+    // Centre the dropped element under the cursor.
+    addElement(token, topAbs - proto.height / 2, left - proto.width / 2);
   }
 
   function deleteEl(id: string) {
@@ -630,32 +704,30 @@ export function CanvasTemplateEditor({ doc, onChange, mergeFields, products, tem
       {/* Body: palette | canvas | properties */}
       <div className="grid grid-cols-[150px_1fr_300px] gap-2 flex-1 min-h-0">
         {/* Palette */}
-        <div className="border rounded-md bg-card p-2 space-y-2">
-          <p className="text-xs font-semibold text-muted-foreground">Componentes</p>
-          <p className="text-[11px] text-muted-foreground">Arraste para a página ou clique para adicionar.</p>
-          <div
-            draggable
-            onDragStart={(e) => e.dataTransfer.setData("application/x-canvas-add", "text")}
-            onClick={() => addElement("text", 60, 60)}
-            className="flex items-center gap-2 p-2 border rounded-md cursor-grab hover-elevate active-elevate-2 bg-background"
-          >
-            <Type className="w-4 h-4" />
-            <span className="text-sm">Texto</span>
+        <ScrollArea className="border rounded-md bg-card">
+          <div className="p-2 space-y-2">
+            <p className="text-xs font-semibold text-muted-foreground">Componentes</p>
+            <p className="text-[11px] text-muted-foreground">Arraste para a página ou clique para adicionar.</p>
+
+            <PaletteItem token="text" icon={<Type className="w-4 h-4" />} label="Texto" addElement={addElement} />
+
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold pt-1">Imagens</p>
+            <PaletteItem token="image-dynamic" icon={<ImageIcon className="w-4 h-4" />} label="Imagem (campo)" addElement={addElement} />
+            <PaletteItem token="image-static" icon={<Upload className="w-4 h-4" />} label="Imagem (upload)" addElement={addElement} />
+
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold pt-1 flex items-center gap-1">
+              <Shapes className="w-3 h-3" /> Formas
+            </p>
+            <PaletteItem token="shape-rectangle" icon={<RectangleHorizontal className="w-4 h-4" />} label="Rectângulo" addElement={addElement} />
+            <PaletteItem token="shape-rounded" icon={<Square className="w-4 h-4" />} label="Rect. arredondado" addElement={addElement} />
+            <PaletteItem token="shape-ellipse" icon={<Circle className="w-4 h-4" />} label="Círculo / Elipse" addElement={addElement} />
+
+            <Separator />
+            <p className="text-[11px] text-muted-foreground">
+              Imagem (campo) preenche-se com o URL da imagem do produto; Imagem (upload) é uma imagem fixa.
+            </p>
           </div>
-          <div
-            draggable
-            onDragStart={(e) => e.dataTransfer.setData("application/x-canvas-add", "image")}
-            onClick={() => addElement("image", 60, 60)}
-            className="flex items-center gap-2 p-2 border rounded-md cursor-grab hover-elevate active-elevate-2 bg-background"
-          >
-            <ImageIcon className="w-4 h-4" />
-            <span className="text-sm">Imagem</span>
-          </div>
-          <Separator />
-          <p className="text-[11px] text-muted-foreground">
-            As imagens são marcadores de campos dinâmicos que contêm o URL da imagem.
-          </p>
-        </div>
+        </ScrollArea>
 
         {/* Canvas */}
         <div className="border rounded-md bg-muted/30 overflow-auto p-6 flex justify-center">
@@ -740,8 +812,10 @@ export function CanvasTemplateEditor({ doc, onChange, mergeFields, products, tem
                     >
                       <RichTextDisplay doc={el.content} fill={fillProduct} />
                     </div>
-                  ) : (
+                  ) : el.type === "image" ? (
                     <ImageElementView el={el as CanvasImageElement} src={imageSrcFor(el as CanvasImageElement)} />
+                  ) : (
+                    <ShapeElementView el={el as CanvasShapeElement} zoom={zoom} />
                   )}
 
                   {isSel && (
@@ -812,6 +886,25 @@ function ImageElementView({ el, src }: { el: CanvasImageElement; src: string | n
   );
 }
 
+function ShapeElementView({ el, zoom }: { el: CanvasShapeElement; zoom: number }) {
+  return (
+    <div
+      className="pointer-events-none"
+      style={{
+        width: "100%",
+        height: "100%",
+        boxSizing: "border-box",
+        background: el.fill && el.fill !== "none" ? el.fill : "transparent",
+        border: el.strokeWidth
+          ? `${el.strokeWidth * zoom}px solid ${el.stroke || "#000"}`
+          : undefined,
+        borderRadius:
+          el.shape === "ellipse" ? "50%" : (el.borderRadius || 0) * zoom,
+      }}
+    />
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Properties panel
 // ---------------------------------------------------------------------------
@@ -857,8 +950,8 @@ function PropertiesPanel({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold flex items-center gap-1.5">
-          {el.type === "text" ? <Type className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />}
-          {el.type === "text" ? "Texto" : "Imagem"}
+          {el.type === "text" ? <Type className="w-4 h-4" /> : el.type === "image" ? <ImageIcon className="w-4 h-4" /> : <Shapes className="w-4 h-4" />}
+          {el.type === "text" ? "Texto" : el.type === "image" ? "Imagem" : "Forma"}
         </p>
         <div className="flex gap-0.5">
           <Button size="icon" variant="ghost" className="h-7 w-7" title="Trazer para a frente" onClick={() => onReorder("front")}>
@@ -899,8 +992,10 @@ function PropertiesPanel({
 
       {el.type === "text" ? (
         <TextProps el={el as CanvasTextElement} mergeFields={mergeFields} onPatch={onPatch} />
-      ) : (
+      ) : el.type === "image" ? (
         <ImageProps el={el as CanvasImageElement} imageFields={imageFields} onPatch={onPatch} />
+      ) : (
+        <ShapeProps el={el as CanvasShapeElement} onPatch={onPatch} />
       )}
     </div>
   );
@@ -1116,6 +1211,89 @@ function ImageProps({
           </SelectContent>
         </Select>
       </div>
+    </div>
+  );
+}
+
+function ShapeProps({
+  el,
+  onPatch,
+}: {
+  el: CanvasShapeElement;
+  onPatch: (patch: Partial<CanvasElement>) => void;
+}) {
+  const hasFill = !!el.fill && el.fill !== "none";
+  const hasStroke = (el.strokeWidth ?? 0) > 0;
+  return (
+    <div className="space-y-3">
+      <div className="space-y-1">
+        <Label className="text-[11px] text-muted-foreground">Forma</Label>
+        <Select value={el.shape} onValueChange={(v) => onPatch({ shape: v as ShapeKind } as Partial<CanvasElement>)}>
+          <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="rectangle">Rectângulo</SelectItem>
+            <SelectItem value="ellipse">Elipse / Círculo</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-1">
+        <Label className="text-[11px] text-muted-foreground">Preenchimento</Label>
+        <div className="flex gap-1">
+          <input
+            type="color"
+            className="h-8 w-full cursor-pointer rounded border border-border bg-transparent"
+            value={hasFill ? (el.fill as string) : "#e2e8f0"}
+            onChange={(e) => onPatch({ fill: e.target.value } as Partial<CanvasElement>)}
+          />
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-8 w-8 shrink-0"
+            title="Sem preenchimento"
+            onClick={() => onPatch({ fill: "none" } as Partial<CanvasElement>)}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1">
+          <Label className="text-[11px] text-muted-foreground">Contorno</Label>
+          <input
+            type="color"
+            className="h-8 w-full cursor-pointer rounded border border-border bg-transparent"
+            value={el.stroke || "#64748b"}
+            onChange={(e) => onPatch({ stroke: e.target.value } as Partial<CanvasElement>)}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[11px] text-muted-foreground">Espessura (pt)</Label>
+          <Input
+            type="number"
+            className="h-8"
+            value={el.strokeWidth ?? 0}
+            onChange={(e) => onPatch({ strokeWidth: clamp(Number(e.target.value), 0, 40) } as Partial<CanvasElement>)}
+          />
+        </div>
+      </div>
+
+      {el.shape === "rectangle" && (
+        <div className="space-y-1">
+          <Label className="text-[11px] text-muted-foreground">Raio dos cantos (pt)</Label>
+          <Input
+            type="number"
+            className="h-8"
+            value={el.borderRadius ?? 0}
+            onChange={(e) => onPatch({ borderRadius: clamp(Number(e.target.value), 0, 400) } as Partial<CanvasElement>)}
+          />
+        </div>
+      )}
+
+      {!hasFill && !hasStroke && (
+        <p className="text-[11px] text-amber-600">Sem preenchimento nem contorno — a forma ficará invisível.</p>
+      )}
     </div>
   );
 }

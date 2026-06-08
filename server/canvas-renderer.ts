@@ -1,5 +1,5 @@
 import { createElement as h, Fragment } from 'react';
-import { Document, Page, Text, View, Image } from '@react-pdf/renderer';
+import { Document, Page, Text, View, Image, Svg, Rect, Ellipse } from '@react-pdf/renderer';
 import type { Product, PdfTemplate } from '@shared/schema';
 import { resolveMergeField } from '@shared/mergeFields';
 import {
@@ -8,6 +8,7 @@ import {
   type CanvasElement,
   type CanvasTextElement,
   type CanvasImageElement,
+  type CanvasShapeElement,
   type PageSize,
   type Orientation,
 } from '@shared/canvasTemplate';
@@ -122,6 +123,51 @@ function renderImage(el: CanvasImageElement, ctx: RenderCtx, top: number, key: s
   }
 }
 
+function renderShape(el: CanvasShapeElement, top: number, key: string): any {
+  const bw = el.width;
+  const bh = el.height;
+  const sw = el.strokeWidth || 0;
+  const inset = sw / 2; // keep the stroke inside the element box
+  const fill = el.fill || 'none';
+  const stroke = el.stroke || 'none';
+
+  const style: any = { position: 'absolute', left: el.x, top, width: bw, height: bh };
+  if (typeof el.opacity === 'number') style.opacity = el.opacity;
+
+  if (el.shape === 'ellipse') {
+    return h(
+      Svg,
+      { key, style, viewBox: `0 0 ${bw} ${bh}` },
+      h(Ellipse, {
+        cx: bw / 2,
+        cy: bh / 2,
+        rx: Math.max(0, bw / 2 - inset),
+        ry: Math.max(0, bh / 2 - inset),
+        fill,
+        stroke,
+        strokeWidth: sw,
+      }),
+    );
+  }
+
+  const r = Math.max(0, el.borderRadius || 0);
+  return h(
+    Svg,
+    { key, style, viewBox: `0 0 ${bw} ${bh}` },
+    h(Rect, {
+      x: inset,
+      y: inset,
+      width: Math.max(0, bw - sw),
+      height: Math.max(0, bh - sw),
+      rx: r,
+      ry: r,
+      fill,
+      stroke,
+      strokeWidth: sw,
+    }),
+  );
+}
+
 function renderElement(
   el: CanvasElement,
   ctx: RenderCtx,
@@ -131,6 +177,7 @@ function renderElement(
   const top = el.y + bandOffset;
   if (el.type === 'text') return renderText(el, ctx, top, key);
   if (el.type === 'image') return renderImage(el, ctx, top, key);
+  if (el.type === 'shape') return renderShape(el, top, key);
   return null;
 }
 
