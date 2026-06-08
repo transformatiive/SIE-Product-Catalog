@@ -344,6 +344,7 @@ export default function Dashboard() {
             key={`edit-${selectedProduct?.id}`}
             product={selectedProduct || undefined}
             onSave={handleSaveProduct}
+            onSaveAsNew={(data) => createProductMutation.mutate(data)}
             onCancel={handleBack}
             onGeneratePDF={handleGeneratePDF}
             onGenerateZohoDatasheet={handleGenerateZohoDatasheet}

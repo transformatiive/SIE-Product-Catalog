@@ -21,6 +21,7 @@ interface ProductFormProps {
   product?: Product;
   initialData?: Partial<InsertProduct>;
   onSave?: (product: InsertProduct) => void;
+  onSaveAsNew?: (product: InsertProduct) => void;
   onCancel?: () => void;
   onGeneratePDF?: (product: Product) => void;
   onGenerateZohoDatasheet?: (product: Product) => void;
@@ -58,7 +59,7 @@ interface PackagingData {
   stackHeight: string;
 }
 
-export default function ProductForm({ product, initialData, onSave, onCancel, onGeneratePDF, onGenerateZohoDatasheet, onClone, isLoading = false, isGeneratingPDF = false, isGeneratingZohoDatasheet = false }: ProductFormProps) {
+export default function ProductForm({ product, initialData, onSave, onSaveAsNew, onCancel, onGeneratePDF, onGenerateZohoDatasheet, onClone, isLoading = false, isGeneratingPDF = false, isGeneratingZohoDatasheet = false }: ProductFormProps) {
   // Use initialData for cloning when no product is provided
   const sourceData = product || initialData;
   const { data: familyOptions = [], isLoading: familiesLoading } = useQuery<{id: string, code: string, description: string, zohoWriterTemplateId?: string | null}[]>({
@@ -517,7 +518,7 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
     setPackagingData(prev => ({ ...prev, [field]: value }));
   };
 
-  const onSubmit = (data: InsertProduct) => {
+  const buildFinalData = (data: InsertProduct): InsertProduct => {
     const dimensionsObject = dimensions.reduce((acc, dim) => {
       if (dim.name && dim.value) {
         acc[dim.name] = dim.value;
@@ -610,8 +611,19 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
       approvalDate: data.approvalDate || '',
     };
 
-    console.log('Form submitted with data:', finalData);
-    onSave?.(finalData);
+    return finalData;
+  };
+
+  // Default submit updates the existing record (edit) or creates (create mode).
+  const onSubmit = (data: InsertProduct) => {
+    onSave?.(buildFinalData(data));
+  };
+
+  // Edit-mode only: save the current form as a brand-new reference instead of
+  // overwriting the open product. Prevents the "each variant overwrites the
+  // previous" problem when entering several barricas of the same model group.
+  const onSubmitAsNew = (data: InsertProduct) => {
+    onSaveAsNew?.(buildFinalData(data));
   };
 
   const handleCancel = () => {
@@ -1996,15 +2008,30 @@ export default function ProductForm({ product, initialData, onSave, onCancel, on
                     </Button>
                   </>
                 )}
-                <Button 
-                  type="submit" 
+                {product && onSaveAsNew && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    data-testid="button-save-as-new"
+                    className="min-w-32 font-medium"
+                    disabled={isLoading}
+                    onClick={form.handleSubmit(onSubmitAsNew)}
+                    title="Cria uma nova referência a partir destes dados, sem substituir o produto aberto. Útil para inserir várias barricas do mesmo modelo."
+                  >
+                    <Copy className="w-4 h-4 mr-2" />
+                    Guardar como nova referência
+                  </Button>
+                )}
+                <Button
+                  type="submit"
                   data-testid="button-save"
                   className="min-w-32 font-medium"
                   disabled={isLoading}
+                  title={product ? "Substitui (actualiza) o produto actualmente aberto" : undefined}
                 >
                   <Save className="w-4 h-4 mr-2" />
-                  {isLoading 
-                    ? (product ? 'A actualizar...' : 'A guardar...') 
+                  {isLoading
+                    ? (product ? 'A actualizar...' : 'A guardar...')
                     : (product ? 'Actualizar Produto' : 'Guardar Produto')
                   }
                 </Button>
