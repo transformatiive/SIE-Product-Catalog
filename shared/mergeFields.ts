@@ -1,6 +1,9 @@
 // Catalog of merge fields available inside PDF templates.
 // Each field has a stable `key` referenced by the editor and a human `label`.
-// Server-side extractors live in server/template-renderer.ts.
+// The value resolver (`resolveMergeField`) is pure and shared between the
+// browser (live canvas fill) and the server (PDF rendering).
+
+import type { Product } from "./schema";
 
 export interface MergeFieldDef {
   key: string;
@@ -148,4 +151,138 @@ export const MERGE_FIELDS_BY_KEY: Record<string, MergeFieldDef> = MERGE_FIELDS.r
 
 export function getMergeFieldLabel(key: string): string {
   return MERGE_FIELDS_BY_KEY[key]?.label ?? key;
+}
+
+// Merge fields whose resolved value is an image URL/path. Used by the canvas
+// designer to offer image-bound dynamic fields.
+export const IMAGE_MERGE_FIELD_KEYS = [
+  "productImage",
+  "technicalDrawing",
+  "palletizationImage",
+] as const;
+
+export function isImageMergeField(key: string): boolean {
+  return (IMAGE_MERGE_FIELD_KEYS as readonly string[]).includes(key);
+}
+
+// ---------------------------------------------------------------------------
+// Value resolution (pure — no react-pdf / DOM dependencies)
+// ---------------------------------------------------------------------------
+
+function fmtBool(v: any): string {
+  return v ? "Sim" : "Não";
+}
+
+function withUnit(v: any, unit: any, fallbackUnit = ""): string {
+  if (v === null || v === undefined || v === "") return "";
+  return `${v} ${unit || fallbackUnit}`.trim();
+}
+
+function buildMarcacoes(p: Product): string {
+  const parts: string[] = [];
+  if (p.datador) parts.push("Datador");
+  if (p.simboloSie) parts.push("Símbolo SIE");
+  if (p.simboloMp) parts.push("Símbolo MP");
+  if (p.gravacaoCliente) {
+    let label = "Gravação Cliente";
+    if (p.gravacaoClienteDetails) label += ` (${p.gravacaoClienteDetails})`;
+    parts.push(label);
+  }
+  return parts.join(", ");
+}
+
+function buildOutras(p: Product): string {
+  const parts: string[] = [];
+  if (p.visor) parts.push("Visor");
+  if (p.bica) parts.push("Bica");
+  if (p.coexPoliamida) parts.push("COEX - Poliamida");
+  if (p.adaptacao) parts.push("Adaptação");
+  if (p.autoculanteCliente) parts.push(`Autocolante: ${p.autoculanteCliente}`);
+  if (p.especificacoesEmbFlexiveis)
+    parts.push(`Emb. Flexíveis: ${p.especificacoesEmbFlexiveis}`);
+  return parts.join(", ");
+}
+
+function buildVedante(p: Product): string {
+  const parts: string[] = [];
+  if (p.vedantePead) parts.push("PEAD");
+  if (p.vedanteEpdm) parts.push("EPDM");
+  if (p.vedanteOutros) parts.push(p.vedanteOutros);
+  return parts.join(", ");
+}
+
+function buildManuseamento(p: Product): string {
+  const parts: string[] = [];
+  if (p.pegasLaterais) parts.push("Pegas Laterais");
+  if (p.pegaSuperior) parts.push("Pega Superior");
+  if (p.cavidades) parts.push("Cavidades");
+  if (p.manuseamentoOutros) parts.push(p.manuseamentoOutros);
+  return parts.join(", ");
+}
+
+function fmtDate(d: any): string {
+  if (!d) return "";
+  try {
+    return new Date(d).toLocaleDateString("pt-PT");
+  } catch {
+    return String(d);
+  }
+}
+
+function totalUnitsDisplay(p: Product): string {
+  if (p.totalUnitsQuantity && p.totalUnitsType) {
+    return `${p.totalUnitsQuantity} / ${p.totalUnitsType}`;
+  }
+  return p.totalUnits || "-";
+}
+
+/**
+ * Resolve a merge-field key to its display string for a given product.
+ * Shared by the browser canvas preview and the server PDF renderer so the
+ * on-screen fill matches the exported PDF exactly.
+ */
+export function resolveMergeField(key: string, product: Product): string {
+  switch (key) {
+    case "_capacityWithUnit":
+      return withUnit(product.nominalCapacity, product.nominalCapacityUnit, "L");
+    case "_totalCapacityWithUnit":
+      return withUnit(product.totalCapacity, product.totalCapacityUnit, "L");
+    case "_weightWithUnit":
+      return withUnit(product.weight, product.weightUnit, "g");
+    case "_weightAccWithUnit":
+      return withUnit(
+        product.weightWithAccessories,
+        product.weightWithAccessoriesUnit,
+        "g",
+      );
+    case "_marcacoesList":
+      return buildMarcacoes(product);
+    case "_outrasList":
+      return buildOutras(product);
+    case "_vedanteList":
+      return buildVedante(product);
+    case "_manuseamentoList":
+      return buildManuseamento(product);
+    case "_stackingDisplay":
+      return product.stackable ? product.stackingCapacity || "Sim" : "Não";
+    case "_foodContactDisplay":
+      return product.foodContact ? "Apto" : "Não Apto";
+    case "_totalUnitsDisplay":
+      return totalUnitsDisplay(product);
+    case "_adrDisplay":
+      if (!product.adrCertified) return "Não";
+      return product.adrCode ? `Certificado - ${product.adrCode}` : "Certificado";
+    case "today":
+      return new Date().toLocaleDateString("pt-PT");
+    case "createdAt":
+    case "updatedAt":
+    case "approvalDate":
+      return fmtDate((product as any)[key]);
+    default: {
+      const v = (product as any)[key];
+      if (v === null || v === undefined) return "";
+      if (typeof v === "boolean") return fmtBool(v);
+      return String(v);
+    }
+  }
 }

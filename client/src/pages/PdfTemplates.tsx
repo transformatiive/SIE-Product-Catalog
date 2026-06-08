@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation, useRoute } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -26,13 +26,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -57,16 +50,15 @@ import {
   Copy,
   FileText,
   ChevronLeft,
-  Eye,
 } from "lucide-react";
+import { CanvasTemplateEditor } from "@/components/CanvasTemplateEditor";
+import type { MergeFieldDef } from "@shared/mergeFields";
 import {
-  PdfTemplateEditor,
-  type MergeFieldDef,
-} from "@/components/PdfTemplateEditor";
+  createEmptyCanvasTemplate,
+  parseCanvasTemplate,
+  type CanvasTemplateDoc,
+} from "@shared/canvasTemplate";
 import type { PdfTemplate, Family, Product } from "@shared/schema";
-
-const PAGE_SIZES = ["A4", "A3", "Letter", "Legal"] as const;
-const ORIENTATIONS = ["portrait", "landscape"] as const;
 
 // ============================================================================
 // LIST PAGE
@@ -88,10 +80,7 @@ function TemplatesList() {
         name,
         pageSize: "A4",
         orientation: "portrait",
-        content: JSON.stringify({
-          type: "doc",
-          content: [{ type: "paragraph" }],
-        }),
+        content: JSON.stringify(createEmptyCanvasTemplate("A4", "portrait")),
         isActive: true,
         isGlobalDefault: false,
       });
@@ -281,7 +270,8 @@ function TemplatesList() {
           <DialogHeader>
             <DialogTitle>Novo template</DialogTitle>
             <DialogDescription>
-              Dê um nome ao template. Pode editar o conteúdo a seguir.
+              Dê um nome ao template. Pode desenhar o conteúdo a seguir no editor
+              de canvas.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 py-4">
@@ -341,7 +331,6 @@ function TemplatesList() {
 // ============================================================================
 function TemplateEdit({ id }: { id: string }) {
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
 
   const { data: template, isLoading } = useQuery<PdfTemplate>({
     queryKey: ["/api/admin/pdf-templates", id],
@@ -359,35 +348,42 @@ function TemplateEdit({ id }: { id: string }) {
   // Form state
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [pageSize, setPageSize] = useState<string>("A4");
-  const [orientation, setOrientation] = useState<string>("portrait");
   const [isGlobalDefault, setIsGlobalDefault] = useState(false);
   const [isActive, setIsActive] = useState(true);
-  const [content, setContent] = useState<any>(null);
-  const [contentLoadedFor, setContentLoadedFor] = useState<string | null>(null);
-  const [previewProductId, setPreviewProductId] = useState<string>("");
-  const [previewUrl, setPreviewUrl] = useState<string>("");
-  const [previewLoading, setPreviewLoading] = useState(false);
-  const [previewError, setPreviewError] = useState<string>("");
+  const [doc, setDoc] = useState<CanvasTemplateDoc | null>(null);
+  const [wasLegacy, setWasLegacy] = useState(false);
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
+
+  const isBuiltIn = !!template?.builtInRenderer;
 
   useEffect(() => {
     if (!template) return;
-    if (contentLoadedFor === template.id) return;
+    if (loadedFor === template.id) return;
     setName(template.name);
     setDescription(template.description || "");
-    setPageSize(template.pageSize);
-    setOrientation(template.orientation);
     setIsGlobalDefault(template.isGlobalDefault);
     setIsActive(template.isActive);
-    try {
-      setContent(template.content ? JSON.parse(template.content) : null);
-    } catch {
-      setContent(null);
-    }
-    setContentLoadedFor(template.id);
-  }, [template, contentLoadedFor]);
 
-  const isBuiltIn = !!template?.builtInRenderer;
+    if (template.builtInRenderer) {
+      setDoc(null);
+      setWasLegacy(false);
+    } else {
+      const canvas = parseCanvasTemplate(template.content);
+      if (canvas) {
+        setDoc(canvas);
+        setWasLegacy(false);
+      } else {
+        setDoc(
+          createEmptyCanvasTemplate(
+            (template.pageSize as any) || "A4",
+            (template.orientation as any) || "portrait",
+          ),
+        );
+        setWasLegacy(!!template.content);
+      }
+    }
+    setLoadedFor(template.id);
+  }, [template, loadedFor]);
 
   const linkedFamilies = useMemo(
     () => families.filter((f) => f.defaultTemplateId === id).map((f) => f.id),
@@ -400,16 +396,17 @@ function TemplateEdit({ id }: { id: string }) {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      // Save template
       const body: any = {
         name,
         description,
-        pageSize,
-        orientation,
         isGlobalDefault,
         isActive,
       };
-      if (!isBuiltIn) body.content = JSON.stringify(content || { type: "doc", content: [{ type: "paragraph" }] });
+      if (!isBuiltIn && doc) {
+        body.content = JSON.stringify(doc);
+        body.pageSize = doc.page.size;
+        body.orientation = doc.page.orientation;
+      }
       await apiRequest("PUT", `/api/admin/pdf-templates/${id}`, body);
 
       // Sync family assignments
@@ -432,86 +429,14 @@ function TemplateEdit({ id }: { id: string }) {
         queryKey: ["/api/admin/pdf-templates", id],
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/families"] });
+      setWasLegacy(false);
       toast({ title: "Template guardado" });
-      refreshPreview();
     },
     onError: (e: Error) =>
       toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
 
-  const previewTimerRef = useRef<number | null>(null);
-  const refreshPreview = () => {
-    if (previewTimerRef.current) window.clearTimeout(previewTimerRef.current);
-    previewTimerRef.current = window.setTimeout(async () => {
-      try {
-        setPreviewLoading(true);
-        setPreviewError("");
-        const res = await fetch(
-          "/api/admin/pdf-templates/preview-draft",
-          {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              template: {
-                content: isBuiltIn
-                  ? null
-                  : JSON.stringify(content || { type: "doc", content: [{ type: "paragraph" }] }),
-                pageSize,
-                orientation,
-              },
-              productId: previewProductId || undefined,
-            }),
-          },
-        );
-        if (!res.ok) {
-          // Built-in templates can't be previewed via draft endpoint; fall back to saved preview
-          if (isBuiltIn) {
-            const params = new URLSearchParams();
-            if (previewProductId) params.set("productId", previewProductId);
-            params.set("_t", String(Date.now()));
-            setPreviewUrl(
-              `/api/admin/pdf-templates/${id}/preview-pdf?${params.toString()}`,
-            );
-            setPreviewLoading(false);
-            return;
-          }
-          const j = await res.json().catch(() => ({}));
-          throw new Error(j.message || "Falha na pré-visualização");
-        }
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        setPreviewUrl((old) => {
-          if (old) URL.revokeObjectURL(old);
-          return url;
-        });
-      } catch (e: any) {
-        setPreviewError(e.message);
-      } finally {
-        setPreviewLoading(false);
-      }
-    }, 500);
-  };
-
-  // Auto-refresh preview when content/page settings/product change
-  useEffect(() => {
-    if (!template) return;
-    refreshPreview();
-    return () => {
-      if (previewTimerRef.current) window.clearTimeout(previewTimerRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [content, pageSize, orientation, previewProductId, template?.id]);
-
-  // Cleanup blob URL on unmount
-  useEffect(() => {
-    return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  if (isLoading || !template || contentLoadedFor !== template.id) {
+  if (isLoading || !template || loadedFor !== template.id) {
     return <p className="p-6 text-muted-foreground">A carregar template...</p>;
   }
 
@@ -543,67 +468,21 @@ function TemplateEdit({ id }: { id: string }) {
         </Card>
       )}
 
+      {wasLegacy && !isBuiltIn && (
+        <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
+          <CardContent className="py-3 text-sm">
+            Este template foi criado no editor antigo. Ao guardar, será convertido
+            para o novo editor de canvas. O conteúdo anterior continua a ser usado
+            para gerar PDFs até guardar.
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6">
           <div className="space-y-2 md:col-span-2">
             <Label>Nome</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label>Pré-visualizar com</Label>
-            <Select
-              value={previewProductId || (products[0]?.id ?? "")}
-              onValueChange={setPreviewProductId}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Escolher produto" />
-              </SelectTrigger>
-              <SelectContent>
-                {products.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.productCode || p.id} — {p.product || ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2 md:col-span-3">
-            <Label>Descrição</Label>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={2}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Tamanho da página</Label>
-            <Select value={pageSize} onValueChange={setPageSize} disabled={isBuiltIn}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PAGE_SIZES.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Orientação</Label>
-            <Select value={orientation} onValueChange={setOrientation} disabled={isBuiltIn}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ORIENTATIONS.map((o) => (
-                  <SelectItem key={o} value={o}>
-                    {o === "portrait" ? "Vertical" : "Horizontal"}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
           <div className="space-y-2">
             <Label>Estado</Label>
@@ -620,6 +499,14 @@ function TemplateEdit({ id }: { id: string }) {
                 <span className="text-sm">Pré-definido global</span>
               </div>
             </div>
+          </div>
+          <div className="space-y-2 md:col-span-3">
+            <Label>Descrição</Label>
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+            />
           </div>
           <div className="space-y-2 md:col-span-3">
             <Label>Famílias que usam este template</Label>
@@ -652,70 +539,32 @@ function TemplateEdit({ id }: { id: string }) {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-[70vh]">
-        <Card className="flex flex-col">
-          <CardHeader className="py-3">
-            <CardTitle className="text-base">Editor</CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 overflow-hidden">
-            {isBuiltIn ? (
-              <div className="h-full flex flex-col items-center justify-center gap-4 text-sm text-muted-foreground border rounded-md bg-muted/20 p-6 text-center">
-                <div>
-                  <p className="font-medium text-foreground mb-1">
-                    Este é o template do sistema
-                  </p>
-                  <p>
-                    O "SIE Padrão" usa o motor de renderização interno e não
-                    tem editor visual. Para criar um template editável tipo
-                    Word, duplique este ou crie um novo.
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button asChild variant="outline">
-                    <Link href="/admin/pdf-templates">Voltar à lista</Link>
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <PdfTemplateEditor
-                key={template?.id || "loading"}
-                initialContent={content}
-                onChange={setContent}
-                mergeFields={mergeFields}
-              />
-            )}
+      {isBuiltIn ? (
+        <Card>
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            <p className="font-medium text-foreground mb-1">
+              Template do sistema
+            </p>
+            <p>
+              O "SIE Padrão" usa o motor de renderização interno e não tem editor
+              visual. Para desenhar um template livre, crie um novo.
+            </p>
           </CardContent>
         </Card>
-
-        <Card className="flex flex-col">
-          <CardHeader className="py-3 flex flex-row items-center justify-between gap-2 space-y-0">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Eye className="w-4 h-4" />
-              Pré-visualização
-            </CardTitle>
-            <Button size="sm" variant="outline" onClick={refreshPreview}>
-              Actualizar
-            </Button>
-          </CardHeader>
-          <CardContent className="flex-1 overflow-hidden">
-            {previewError ? (
-              <p className="text-sm text-destructive p-4">{previewError}</p>
-            ) : previewLoading && !previewUrl ? (
-              <p className="text-sm text-muted-foreground p-4">A gerar...</p>
-            ) : previewUrl ? (
-              <iframe
-                title="Pré-visualização"
-                src={previewUrl}
-                className="w-full h-full min-h-[60vh] border rounded-md bg-white"
-              />
-            ) : (
-              <p className="text-sm text-muted-foreground p-4">
-                Sem pré-visualização.
-              </p>
-            )}
-          </CardContent>
+      ) : doc ? (
+        <Card className="p-2">
+          <div className="h-[78vh]">
+            <CanvasTemplateEditor
+              key={template.id}
+              doc={doc}
+              onChange={setDoc}
+              mergeFields={mergeFields}
+              products={products}
+              templateName={name}
+            />
+          </div>
         </Card>
-      </div>
+      ) : null}
     </div>
   );
 }
@@ -754,7 +603,7 @@ export default function PdfTemplates() {
               <div>
                 <h1 className="text-lg font-semibold">Templates de PDF</h1>
                 <p className="text-sm text-muted-foreground">
-                  Crie e atribua templates de fichas técnicas por família
+                  Desenhe e atribua templates de fichas técnicas por família
                 </p>
               </div>
             </div>
