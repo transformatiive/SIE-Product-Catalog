@@ -220,6 +220,12 @@ export default function ProductForm({ product, initialData, onSave, onSaveAsNew,
   // When editing an existing product, preserve the existing code by default
   const [productCodeManuallyEdited, setProductCodeManuallyEdited] = useState(!!product?.productCode);
 
+  // Auto-build the reference/barcode/designation from the selected support-table
+  // values (default for NEW articles). For articles already defined in the
+  // client's ERP (PHC), the user turns this off and types reference, código de
+  // barras and designação by hand. Default off when editing an existing record.
+  const [autoGenerate, setAutoGenerate] = useState<boolean>(!product);
+
   const form = useForm<InsertProduct>({
     resolver: zodResolver(insertProductSchema),
     defaultValues: {
@@ -309,7 +315,7 @@ export default function ProductForm({ product, initialData, onSave, onSaveAsNew,
       if (product?.selectedCertificationTypeId) {
         const saved = certificationTypeOptions.find(ct => ct.id === product.selectedCertificationTypeId);
         setSelectedCertification(saved?.description || certificationTypeOptions[0].description);
-      } else if (!selectedCertification) {
+      } else if (!selectedCertification && autoGenerate) {
         setSelectedCertification(certificationTypeOptions[0].description);
       }
     }
@@ -319,7 +325,7 @@ export default function ProductForm({ product, initialData, onSave, onSaveAsNew,
       if (product?.selectedPackagingTypeId) {
         const saved = packagingTypeOptions.find(pt => pt.id === product.selectedPackagingTypeId);
         setSelectedPackaging(saved?.description || packagingTypeOptions[0].description);
-      } else if (!selectedPackaging) {
+      } else if (!selectedPackaging && autoGenerate) {
         setSelectedPackaging(packagingTypeOptions[0].description);
       }
     }
@@ -329,14 +335,14 @@ export default function ProductForm({ product, initialData, onSave, onSaveAsNew,
       if (product?.selectedSpecificationId) {
         const saved = specificationOptions.find(s => s.id === product.selectedSpecificationId);
         setSelectedSpecification(saved?.description || specificationOptions[0].description);
-      } else if (!selectedSpecification) {
+      } else if (!selectedSpecification && autoGenerate) {
         setSelectedSpecification(specificationOptions[0].description);
       }
     }
 
     // Mark as initialized once we've attempted initialization (even if some options are empty)
     setInitializedFromProduct(true);
-  }, [certificationTypeOptions, packagingTypeOptions, specificationOptions, initializedFromProduct, product, selectedCertification, selectedPackaging, selectedSpecification]);
+  }, [certificationTypeOptions, packagingTypeOptions, specificationOptions, initializedFromProduct, product, selectedCertification, selectedPackaging, selectedSpecification, autoGenerate]);
 
   // Watch form values for auto-generation
   const watchedProductType = form.watch('type');
@@ -361,7 +367,12 @@ export default function ProductForm({ product, initialData, onSave, onSaveAsNew,
       console.log('Auto-generation skipped: not initialized yet');
       return;
     }
-    
+
+    // Existing/PHC article: identifiers are entered by hand — never overwrite.
+    if (!autoGenerate) {
+      return;
+    }
+
     console.log('Auto-generation running with:', {
       selectedCertification,
       selectedPackaging,
@@ -451,7 +462,7 @@ export default function ProductForm({ product, initialData, onSave, onSaveAsNew,
     productTypeOptions, capacityOptions, modelOptions, colorOptions, 
     capSizeOptions, rawMaterialOptions, closingSystemOptions,
     certificationTypeOptions, packagingTypeOptions, specificationOptions,
-    form, productCodeManuallyEdited, initializedFromProduct
+    form, productCodeManuallyEdited, initializedFromProduct, autoGenerate
   ]);
 
   const addDimension = () => {
@@ -1059,22 +1070,58 @@ export default function ProductForm({ product, initialData, onSave, onSaveAsNew,
                   </div>
                 </div>
 
-                {/* 5. Auto-generated Codes Section (derived fields at bottom) */}
+                {/* 5. Codes Section (auto-generated for new articles, manual for existing/PHC) */}
                 <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">Campos calculados automaticamente com base nos dados inseridos</p>
+                  <div className="flex items-center justify-between gap-4 rounded-md border bg-muted/30 p-3">
+                    <div>
+                      <Label htmlFor="auto-generate" className="text-sm font-medium text-foreground">
+                        Construir referência, código e designação automaticamente
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {autoGenerate
+                          ? "Gerados a partir dos campos seleccionados (artigo novo)."
+                          : "Modo manual — para artigos já existentes (PHC), introduza referência, código de barras e designação à mão."}
+                      </p>
+                    </div>
+                    <Switch
+                      id="auto-generate"
+                      checked={autoGenerate}
+                      onCheckedChange={(checked) => {
+                        setAutoGenerate(checked);
+                        // Turning auto on regenerates the reference too; turning
+                        // off freezes whatever is currently in the fields.
+                        setProductCodeManuallyEdited(!checked);
+                      }}
+                      data-testid="switch-auto-generate"
+                    />
+                  </div>
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="designation" className="text-sm font-medium text-foreground">Designação</Label>
-                      <Input
-                        id="designation"
-                        value={watchedDesignation || ''}
-                        placeholder="Gerado automaticamente"
-                        data-testid="input-designation"
-                        className="h-9 bg-muted cursor-not-allowed"
-                        disabled
-                        readOnly
-                      />
-                      <p className="text-xs text-muted-foreground">Descrição técnica auto-gerada a partir dos campos selecionados</p>
+                      <Label htmlFor="designation" className="text-sm font-medium text-foreground">Designação{autoGenerate ? '' : ' *'}</Label>
+                      {autoGenerate ? (
+                        <Input
+                          id="designation"
+                          value={watchedDesignation || ''}
+                          placeholder="Gerado automaticamente"
+                          data-testid="input-designation"
+                          className="h-9 bg-muted cursor-not-allowed"
+                          disabled
+                          readOnly
+                        />
+                      ) : (
+                        <Input
+                          id="designation"
+                          {...form.register('designation')}
+                          placeholder="Introduza a designação do artigo"
+                          data-testid="input-designation"
+                          className="h-9"
+                        />
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        {autoGenerate
+                          ? 'Descrição técnica auto-gerada a partir dos campos selecionados'
+                          : 'Modo manual — introduza a designação tal como está registada'}
+                      </p>
                     </div>
 
                     <div className="space-y-2">
@@ -1086,24 +1133,38 @@ export default function ProductForm({ product, initialData, onSave, onSaveAsNew,
                         })}
                         data-testid="input-product-code"
                         placeholder="Gerado automaticamente ou introduza manualmente"
-                        className={`h-9 font-mono ${productCodeManuallyEdited ? '' : 'bg-muted'}`}
+                        className={`h-9 font-mono ${autoGenerate && !productCodeManuallyEdited ? 'bg-muted' : ''}`}
                       />
                       <p className="text-xs text-muted-foreground">
-                        {productCodeManuallyEdited ? 'Modo manual - edite livremente' : 'Gerado automaticamente - clique para editar'}
+                        {!autoGenerate
+                          ? 'Modo manual — introduza a referência registada'
+                          : productCodeManuallyEdited
+                          ? 'Modo manual - edite livremente'
+                          : 'Gerado automaticamente - clique para editar'}
                       </p>
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="barcode" className="text-sm font-medium text-foreground">Código de Barras</Label>
-                      <Input
-                        id="barcode"
-                        value={watchedBarcode || ''}
-                        placeholder="Gerado automaticamente"
-                        data-testid="input-barcode"
-                        className="h-9 font-mono bg-muted cursor-not-allowed"
-                        disabled
-                        readOnly
-                      />
+                      {autoGenerate ? (
+                        <Input
+                          id="barcode"
+                          value={watchedBarcode || ''}
+                          placeholder="Gerado automaticamente"
+                          data-testid="input-barcode"
+                          className="h-9 font-mono bg-muted cursor-not-allowed"
+                          disabled
+                          readOnly
+                        />
+                      ) : (
+                        <Input
+                          id="barcode"
+                          {...form.register('barcode')}
+                          placeholder="Introduza o código de barras"
+                          data-testid="input-barcode"
+                          className="h-9 font-mono"
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1119,12 +1180,12 @@ export default function ProductForm({ product, initialData, onSave, onSaveAsNew,
                           setSelectedCertification(val);
                         }}
                         options={certificationTypeOptions.map(ct => ({ id: ct.id, code: ct.code, description: ct.description }))}
-                        label="Tipo de Certificação *"
+                        label="Tipo de Certificação"
                         placeholder="Seleccionar certificação..."
                         apiEndpoint="/api/admin/certificationTypes"
                         isLoading={false}
                         onOptionAdded={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/certificationTypes'] })}
-                        required
+                        required={autoGenerate}
                       />
                     </div>
 
@@ -1136,12 +1197,12 @@ export default function ProductForm({ product, initialData, onSave, onSaveAsNew,
                           setSelectedPackaging(val);
                         }}
                         options={packagingTypeOptions.map(pt => ({ id: pt.id, code: pt.code, description: pt.description }))}
-                        label="Tipo de Embalagem *"
+                        label="Tipo de Embalagem"
                         placeholder="Seleccionar embalagem..."
                         apiEndpoint="/api/admin/packagingTypes"
                         isLoading={false}
                         onOptionAdded={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/packagingTypes'] })}
-                        required
+                        required={autoGenerate}
                       />
                     </div>
 
@@ -1150,12 +1211,12 @@ export default function ProductForm({ product, initialData, onSave, onSaveAsNew,
                         value={selectedSpecification}
                         onChange={(val) => setSelectedSpecification(val)}
                         options={specificationOptions.map(s => ({ id: s.id, code: s.code, description: s.description }))}
-                        label="Especificação *"
+                        label="Especificação"
                         placeholder="Seleccionar especificação..."
                         apiEndpoint="/api/admin/specifications"
                         isLoading={false}
                         onOptionAdded={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/specifications'] })}
-                        required
+                        required={autoGenerate}
                       />
                     </div>
                   </div>
