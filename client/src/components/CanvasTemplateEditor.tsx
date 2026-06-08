@@ -77,7 +77,7 @@ const PAGE_SIZES: PageSize[] = ["A4", "A3", "Letter", "Legal"];
 const ZOOM_STEPS = [0.5, 0.65, 0.8, 1, 1.25, 1.5];
 
 const FONT_FAMILIES = [
-  { label: "Sans-serif", value: "" },
+  { label: "Sans-serif (padrão)", value: "sans-serif" },
   { label: "Serif (Times)", value: "Georgia, 'Times New Roman', serif" },
   { label: "Monoespaçada", value: "'Courier New', Courier, monospace" },
 ];
@@ -938,7 +938,7 @@ function TextProps({
         </div>
         <div className="space-y-1">
           <Label className="text-[11px] text-muted-foreground">Tipo de letra</Label>
-          <Select value={el.fontFamily || ""} onValueChange={(v) => onPatch({ fontFamily: v || undefined } as Partial<CanvasElement>)}>
+          <Select value={el.fontFamily || "sans-serif"} onValueChange={(v) => onPatch({ fontFamily: v === "sans-serif" ? undefined : v } as Partial<CanvasElement>)}>
             <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
             <SelectContent>
               {FONT_FAMILIES.map((f) => (

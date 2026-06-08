@@ -391,7 +391,10 @@ function TemplateEdit({ id }: { id: string }) {
   );
   const [familyAssignments, setFamilyAssignments] = useState<string[]>([]);
   useEffect(() => {
-    setFamilyAssignments(linkedFamilies);
+    setFamilyAssignments(prev => {
+      const same = prev.length === linkedFamilies.length && linkedFamilies.every(id => prev.includes(id));
+      return same ? prev : [...linkedFamilies];
+    });
   }, [linkedFamilies]);
 
   const saveMutation = useMutation({
