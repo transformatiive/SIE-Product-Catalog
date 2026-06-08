@@ -35,7 +35,7 @@ export function getPageDimensions(
 
 export interface CanvasElementBase {
   id: string;
-  type: "text" | "image";
+  type: "text" | "image" | "shape";
   region: CanvasRegion;
   // Position/size in points. For body elements the coordinates are
   // page-absolute; for header/footer they are relative to the band's top-left.
@@ -67,14 +67,28 @@ export interface CanvasImageElement extends CanvasElementBase {
   type: "image";
   // An image element is a placeholder for a dynamic field that holds the image
   // URL. When `fieldKey` is set the URL comes from the product at render time;
-  // `staticSrc` is an optional fixed image (e.g. a logo) used otherwise.
+  // `staticSrc` is a fixed uploaded image (e.g. a logo) used otherwise. Either
+  // mode is valid — an image bound to no field is simply an upload-only image.
   fieldKey?: string;
   staticSrc?: string;
   objectFit?: "contain" | "cover" | "fill";
   borderRadius?: number;
 }
 
-export type CanvasElement = CanvasTextElement | CanvasImageElement;
+export type ShapeKind = "rectangle" | "ellipse";
+
+export interface CanvasShapeElement extends CanvasElementBase {
+  type: "shape";
+  // "rectangle" with borderRadius 0 = square/rectangle; with borderRadius > 0 =
+  // rounded rectangle. "ellipse" = circle (when width === height) or oval.
+  shape: ShapeKind;
+  fill?: string; // fill colour; undefined / "none" = no fill
+  stroke?: string; // outline colour
+  strokeWidth?: number; // outline width in points
+  borderRadius?: number; // corner radius (points) — rectangles only
+}
+
+export type CanvasElement = CanvasTextElement | CanvasImageElement | CanvasShapeElement;
 
 export interface CanvasBandConfig {
   enabled: boolean;
@@ -131,9 +145,20 @@ export const canvasImageElementSchema = z.object({
   borderRadius: z.number().optional(),
 });
 
+export const canvasShapeElementSchema = z.object({
+  ...elementBaseShape,
+  type: z.literal("shape"),
+  shape: z.enum(["rectangle", "ellipse"]).default("rectangle"),
+  fill: z.string().optional(),
+  stroke: z.string().optional(),
+  strokeWidth: z.number().optional(),
+  borderRadius: z.number().optional(),
+});
+
 export const canvasElementSchema = z.discriminatedUnion("type", [
   canvasTextElementSchema,
   canvasImageElementSchema,
+  canvasShapeElementSchema,
 ]);
 
 export const canvasBandSchema = z.object({
