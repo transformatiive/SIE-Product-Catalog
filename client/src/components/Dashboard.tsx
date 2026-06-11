@@ -100,11 +100,23 @@ export default function Dashboard() {
       queryClient.invalidateQueries({ queryKey: ['/api/products'] });
       setCurrentView('list');
     },
-    onError: (error: Error) => {
-      toast({ 
-        title: "Erro ao atualizar produto", 
+    onError: (error: Error, variables) => {
+      // The open record no longer exists (e.g. a stale edit, or it was already
+      // replaced by a sibling). Don't lose the user's work or throw a confusing
+      // 404 — save it as a NEW reference instead.
+      if (/\b404\b|não encontrado/i.test(error.message)) {
+        toast({
+          title: "Registo já não existia — criada nova referência",
+          description: "O produto aberto já não estava na base de dados; os dados foram guardados como uma nova referência.",
+        });
+        setSelectedProduct(null);
+        createProductMutation.mutate(variables.data);
+        return;
+      }
+      toast({
+        title: "Erro ao atualizar produto",
         description: error.message,
-        variant: "destructive" 
+        variant: "destructive"
       });
     },
   });
